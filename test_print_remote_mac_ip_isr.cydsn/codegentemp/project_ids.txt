@@ -1,0 +1,11 @@
+C:\Users\d3bug\Documents\Creator\W5x00\W5500.cylib\W5500.cyprj|f0a48b9e-1dcc-4df5-b559-b61c236d1167
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|7bf7c223-8821-4e3c-9c93-896539d7acb6
+C:\Users\d3bug\Documents\PSoC Creator\4.2\Downloads ( 4.2).cylib\Downloads ( 4.2).cyprj|886e5360-cc8a-476a-8f73-378ea80d4266
+C:\Users\d3bug\Documents\PSoC Creator\4.1\Downloads ( 4.1).cylib\Downloads ( 4.1).cyprj|a23dc64e-af59-4057-aaa5-ee07a35bffb9
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|787c82aa-3041-4064-a5a8-b611538c85d0
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|28f420ff-f7ef-4be7-88d7-119317cbcf3d
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|0bbc8fe3-2c2d-44fd-9a9b-108e13b1a2c2
+C:\Users\d3bug\Documents\Creator\W5x00\test_W5500.cydsn\test_W5500.cyprj|6f6f3875-bd0f-4ea4-9922-5e1f9a36ed06
+C:\Users\d3bug\Documents\Creator\W5x00\test_state_machine_TCP_server.cydsn\test_state_machine_TCP_server.cyprj|384902d7-ee03-4357-8279-dae52b0da499
+C:\Users\d3bug\Documents\Creator\W5x00\test_print_remote_mac_ip.cydsn\test_print_remote_mac_ip.cyprj|baab8796-7ef7-474e-a418-466b12e80b95
+C:\Users\d3bug\Documents\Creator\W5x00\test_print_remote_mac_ip_isr.cydsn\test_print_remote_mac_ip_isr.cyprj|9074a698-701c-43fc-917a-d2f6f158b382

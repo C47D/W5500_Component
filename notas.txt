@@ -1,0 +1,36 @@
+Los sockets del W5500 estan representados por un struct, de esta forma sabemos
+su estado y diferentes propiedades sin necesidad de leer los registros del
+W5500.
+
+struct socket {
+    socket_sts  status;
+    uint32_t    base_address;
+    uint16_t    port;
+    uint8_t     protocol;
+};
+
+El struct socket no deberia de ser modificado por el usuario, las funciones
+en socket.c son las encargadas de la modificacion de este struct.
+
+Por defecto el registro Socket n Mode Register (SnMR) tiene un valor de 0x00
+por lo que:
+
+socket.protocol = Closed
+socket.unicast blocking in udp mode: disabled
+socket.use no delayed ACK: disabled
+socket.broadcast blocking in MACRAW and UDO mode: disabled
+socket.multicasting in UDP mode: disabled
+
+Sn_IR (Socket n Interrupt Register) [RCW1] [0x0002] [0x00]
+Indicates the status of Socket Interrupt such as establishment, termination,
+receiving data, timeout. When an interrupt occurs and the corresponding bit of
+Sn_IMR is 1, the corresponding bit of Sn_IR becomes 1.
+In order to clear the Sn_IR bit, the host should write the bit to 1.
+
+Bit     Symbol      Description
+4       SEND_OK     This is issued when SEND command is completed.
+3       TIMEOUT     This is issued when ARP_TO or TCP_TO occurs.
+2       RECV        This is issued whenever data is received from a peer.
+1       DISCON      This is issued when FIN or FIN/ACK packet is received from a peer.
+0       CON         This is issued one time when the connection with peer is successful
+                    and then SN_SR is changed to SOCK_ESTABLISHED

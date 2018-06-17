@@ -1,0 +1,9 @@
+--------------- Build Started: 06/16/2018 19:10:45 Project: test_print_remote_mac_ip_isr, Configuration: ARM GCC 5.4-2016-q2-update Debug ---------------
+The code generation step is up to date.
+arm-none-eabi-gcc.exe -mcpu=cortex-m3 -mthumb -I. -IGenerated_Source\PSoC5 -Wa,-alh=.\CortexM3\ARM_GCC_541\Debug/main.lst -g -D DEBUG -D CY_CORE_ID=0 -Wall -ffunction-sections -ffat-lto-objects -Og -c main.c -o .\CortexM3\ARM_GCC_541\Debug\main.o
+In file included from main.c:5:0:
+W5500.h:8:31: error: unknown type name 'socket_n'
+ socket_sts print_socket_state(socket_n socket_n);
+                               ^
+The command 'arm-none-eabi-gcc.exe' failed with exit code '1'.
+--------------- Build Failed: 06/16/2018 19:10:58 ---------------

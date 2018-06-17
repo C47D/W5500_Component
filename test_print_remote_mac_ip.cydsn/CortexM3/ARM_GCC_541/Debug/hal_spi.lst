@@ -1,0 +1,3148 @@
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"hal_spi.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.W5500_spi,"ax",%progbits
+  20              		.align	2
+  21              		.thumb
+  22              		.thumb_func
+  23              		.type	W5500_spi, %function
+  24              	W5500_spi:
+  25              	.LFB63:
+  26              		.file 1 "hal_spi.c"
+   1:hal_spi.c     **** #include "project.h"
+   2:hal_spi.c     **** 
+   3:hal_spi.c     **** #include "hal_spi.h"
+   4:hal_spi.c     **** #include "common.h"
+   5:hal_spi.c     **** 
+   6:hal_spi.c     **** enum {
+   7:hal_spi.c     ****     _SPI_MODE_POS       = 0,
+   8:hal_spi.c     ****     _ACCESS_MODE_POS    = 2,
+   9:hal_spi.c     ****     _BLOCK_POS          = 3,
+  10:hal_spi.c     **** };
+  11:hal_spi.c     **** 
+  12:hal_spi.c     **** static void W5500_spi(const block block, const uint16_t address,
+  13:hal_spi.c     ****                       const access_mode access_mode, const spi_operation_mode spi_mode,
+  14:hal_spi.c     ****                       uint8_t *data, const size_t data_size)
+  15:hal_spi.c     **** {
+  27              		.loc 1 15 0
+  28              		.cfi_startproc
+  29              		@ args = 8, pretend = 0, frame = 8
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              	.LVL0:
+  32 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+  33              		.cfi_def_cfa_offset 20
+  34              		.cfi_offset 4, -20
+  35              		.cfi_offset 5, -16
+  36              		.cfi_offset 6, -12
+  37              		.cfi_offset 7, -8
+  38              		.cfi_offset 14, -4
+  39 0002 83B0     		sub	sp, sp, #12
+  40              		.cfi_def_cfa_offset 32
+  41 0004 1746     		mov	r7, r2
+  42 0006 089E     		ldr	r6, [sp, #32]
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 2
+
+
+  43 0008 099D     		ldr	r5, [sp, #36]
+  16:hal_spi.c     ****     const uint8_t control_phase = (block << _BLOCK_POS) |
+  17:hal_spi.c     ****                                   (access_mode << _ACCESS_MODE_POS) |
+  44              		.loc 1 17 0
+  45 000a 9200     		lsls	r2, r2, #2
+  46              	.LVL1:
+  16:hal_spi.c     ****     const uint8_t control_phase = (block << _BLOCK_POS) |
+  47              		.loc 1 16 0
+  48 000c 42EAC000 		orr	r0, r2, r0, lsl #3
+  49              	.LVL2:
+  50 0010 0343     		orrs	r3, r3, r0
+  51              	.LVL3:
+  18:hal_spi.c     ****                                   (spi_mode << _SPI_MODE_POS);
+  19:hal_spi.c     **** 
+  20:hal_spi.c     ****     const uint8_t addr_ctrl_phase[] = {
+  21:hal_spi.c     ****         HI8(address), LO8(address), control_phase
+  52              		.loc 1 21 0
+  53 0012 0A0A     		lsrs	r2, r1, #8
+  20:hal_spi.c     ****         HI8(address), LO8(address), control_phase
+  54              		.loc 1 20 0
+  55 0014 8DF80420 		strb	r2, [sp, #4]
+  56 0018 8DF80510 		strb	r1, [sp, #5]
+  57 001c 8DF80630 		strb	r3, [sp, #6]
+  22:hal_spi.c     ****     };
+  23:hal_spi.c     **** 
+  24:hal_spi.c     ****     SPI_ClearFIFO();
+  58              		.loc 1 24 0
+  59 0020 FFF7FEFF 		bl	SPI_ClearFIFO
+  60              	.LVL4:
+  25:hal_spi.c     ****     
+  26:hal_spi.c     ****     SS_Write(0);
+  61              		.loc 1 26 0
+  62 0024 0020     		movs	r0, #0
+  63 0026 FFF7FEFF 		bl	SS_Write
+  64              	.LVL5:
+  65              	.LBB2:
+  27:hal_spi.c     ****     
+  28:hal_spi.c     ****     for (size_t i = 0; i < sizeof(addr_ctrl_phase); i++) {
+  66              		.loc 1 28 0
+  67 002a 0024     		movs	r4, #0
+  68 002c 0BE0     		b	.L2
+  69              	.LVL6:
+  70              	.L4:
+  29:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+  71              		.loc 1 29 0
+  72 002e 02AB     		add	r3, sp, #8
+  73 0030 2344     		add	r3, r3, r4
+  74 0032 13F8040C 		ldrb	r0, [r3, #-4]	@ zero_extendqisi2
+  75 0036 FFF7FEFF 		bl	SPI_WriteTxData
+  76              	.LVL7:
+  77              	.L3:
+  30:hal_spi.c     ****         while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+  78              		.loc 1 30 0 discriminator 1
+  79 003a FFF7FEFF 		bl	SPI_ReadTxStatus
+  80              	.LVL8:
+  81 003e 10F0080F 		tst	r0, #8
+  82 0042 FAD0     		beq	.L3
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 3
+
+
+  28:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+  83              		.loc 1 28 0 discriminator 2
+  84 0044 0134     		adds	r4, r4, #1
+  85              	.LVL9:
+  86              	.L2:
+  28:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+  87              		.loc 1 28 0 is_stmt 0 discriminator 1
+  88 0046 022C     		cmp	r4, #2
+  89 0048 F1D9     		bls	.L4
+  90              	.LBE2:
+  31:hal_spi.c     ****         }
+  32:hal_spi.c     ****     }
+  33:hal_spi.c     ****     SPI_ClearFIFO();
+  91              		.loc 1 33 0 is_stmt 1
+  92 004a FFF7FEFF 		bl	SPI_ClearFIFO
+  93              	.LVL10:
+  34:hal_spi.c     **** 
+  35:hal_spi.c     ****     if (ACCESS_MODE_READ == access_mode) {
+  94              		.loc 1 35 0
+  95 004e 77B1     		cbz	r7, .L12
+  96 0050 0024     		movs	r4, #0
+  97              	.LVL11:
+  98 0052 19E0     		b	.L6
+  99              	.LVL12:
+ 100              	.L8:
+ 101              	.LBB3:
+  36:hal_spi.c     ****         for (size_t i = 0; i < data_size; i++) {
+  37:hal_spi.c     ****             SPI_WriteTxData(0xFF);
+ 102              		.loc 1 37 0
+ 103 0054 FF20     		movs	r0, #255
+ 104 0056 FFF7FEFF 		bl	SPI_WriteTxData
+ 105              	.LVL13:
+ 106              	.L7:
+  38:hal_spi.c     ****             while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+ 107              		.loc 1 38 0 discriminator 1
+ 108 005a FFF7FEFF 		bl	SPI_ReadTxStatus
+ 109              	.LVL14:
+ 110 005e 10F0080F 		tst	r0, #8
+ 111 0062 FAD0     		beq	.L7
+  39:hal_spi.c     ****             }
+  40:hal_spi.c     ****             data[i] = SPI_ReadRxData();
+ 112              		.loc 1 40 0 discriminator 2
+ 113 0064 FFF7FEFF 		bl	SPI_ReadRxData
+ 114              	.LVL15:
+ 115 0068 3055     		strb	r0, [r6, r4]
+  36:hal_spi.c     ****             SPI_WriteTxData(0xFF);
+ 116              		.loc 1 36 0 discriminator 2
+ 117 006a 0134     		adds	r4, r4, #1
+ 118              	.LVL16:
+ 119 006c 00E0     		b	.L5
+ 120              	.LVL17:
+ 121              	.L12:
+ 122              	.LBE3:
+ 123 006e 0024     		movs	r4, #0
+ 124              	.LVL18:
+ 125              	.L5:
+ 126              	.LBB4:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 4
+
+
+  36:hal_spi.c     ****             SPI_WriteTxData(0xFF);
+ 127              		.loc 1 36 0 is_stmt 0 discriminator 1
+ 128 0070 AC42     		cmp	r4, r5
+ 129 0072 EFD3     		bcc	.L8
+ 130 0074 0AE0     		b	.L9
+ 131              	.LVL19:
+ 132              	.L11:
+ 133              	.LBE4:
+ 134              	.LBB5:
+  41:hal_spi.c     ****         }
+  42:hal_spi.c     ****     } else { /* ACCESS_MODE_WRITE */
+  43:hal_spi.c     ****         for (size_t i = 0; i < data_size; i++) {
+  44:hal_spi.c     ****             SPI_WriteTxData(data[i]);
+ 135              		.loc 1 44 0 is_stmt 1
+ 136 0076 305D     		ldrb	r0, [r6, r4]	@ zero_extendqisi2
+ 137 0078 FFF7FEFF 		bl	SPI_WriteTxData
+ 138              	.LVL20:
+ 139              	.L10:
+  45:hal_spi.c     ****             while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+ 140              		.loc 1 45 0 discriminator 1
+ 141 007c FFF7FEFF 		bl	SPI_ReadTxStatus
+ 142              	.LVL21:
+ 143 0080 10F0080F 		tst	r0, #8
+ 144 0084 FAD0     		beq	.L10
+  43:hal_spi.c     ****             SPI_WriteTxData(data[i]);
+ 145              		.loc 1 43 0 discriminator 2
+ 146 0086 0134     		adds	r4, r4, #1
+ 147              	.LVL22:
+ 148              	.L6:
+  43:hal_spi.c     ****             SPI_WriteTxData(data[i]);
+ 149              		.loc 1 43 0 is_stmt 0 discriminator 1
+ 150 0088 AC42     		cmp	r4, r5
+ 151 008a F4D3     		bcc	.L11
+ 152              	.LVL23:
+ 153              	.L9:
+ 154              	.LBE5:
+  46:hal_spi.c     ****             }
+  47:hal_spi.c     ****         }
+  48:hal_spi.c     ****     }
+  49:hal_spi.c     ****     
+  50:hal_spi.c     ****     SS_Write(1);
+ 155              		.loc 1 50 0 is_stmt 1
+ 156 008c 0120     		movs	r0, #1
+ 157 008e FFF7FEFF 		bl	SS_Write
+ 158              	.LVL24:
+  51:hal_spi.c     **** }
+ 159              		.loc 1 51 0
+ 160 0092 03B0     		add	sp, sp, #12
+ 161              		.cfi_def_cfa_offset 20
+ 162              		@ sp needed
+ 163 0094 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 164              		.cfi_endproc
+ 165              	.LFE63:
+ 166              		.size	W5500_spi, .-W5500_spi
+ 167 0096 00BF     		.section	.text.W5500_spi_read,"ax",%progbits
+ 168              		.align	2
+ 169              		.global	W5500_spi_read
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 5
+
+
+ 170              		.thumb
+ 171              		.thumb_func
+ 172              		.type	W5500_spi_read, %function
+ 173              	W5500_spi_read:
+ 174              	.LFB64:
+  52:hal_spi.c     **** 
+  53:hal_spi.c     **** void W5500_spi_read(const block block, const uint16_t address,
+  54:hal_spi.c     ****                            uint8_t *data, const size_t data_size)
+  55:hal_spi.c     **** {
+ 175              		.loc 1 55 0
+ 176              		.cfi_startproc
+ 177              		@ args = 0, pretend = 0, frame = 0
+ 178              		@ frame_needed = 0, uses_anonymous_args = 0
+ 179              	.LVL25:
+  56:hal_spi.c     ****     if ((NULL == data) || (0 == data_size)) {
+ 180              		.loc 1 56 0
+ 181 0000 9AB1     		cbz	r2, .L17
+  55:hal_spi.c     ****     if ((NULL == data) || (0 == data_size)) {
+ 182              		.loc 1 55 0 discriminator 1
+ 183 0002 F0B5     		push	{r4, r5, r6, r7, lr}
+ 184              		.cfi_def_cfa_offset 20
+ 185              		.cfi_offset 4, -20
+ 186              		.cfi_offset 5, -16
+ 187              		.cfi_offset 6, -12
+ 188              		.cfi_offset 7, -8
+ 189              		.cfi_offset 14, -4
+ 190 0004 83B0     		sub	sp, sp, #12
+ 191              		.cfi_def_cfa_offset 32
+ 192              		.loc 1 56 0 discriminator 1
+ 193 0006 73B1     		cbz	r3, .L14
+ 194 0008 1746     		mov	r7, r2
+ 195 000a 1C46     		mov	r4, r3
+ 196 000c 0E46     		mov	r6, r1
+ 197 000e 0546     		mov	r5, r0
+  57:hal_spi.c     ****         return;
+  58:hal_spi.c     ****     }
+  59:hal_spi.c     ****     
+  60:hal_spi.c     ****     if (_is_invalid_block(block)) {
+ 198              		.loc 1 60 0
+ 199 0010 FFF7FEFF 		bl	_is_invalid_block
+ 200              	.LVL26:
+ 201 0014 38B9     		cbnz	r0, .L14
+  61:hal_spi.c     ****         return;
+  62:hal_spi.c     ****     }
+  63:hal_spi.c     **** #if 1
+  64:hal_spi.c     ****     W5500_spi(block, address, ACCESS_MODE_READ, SPI_OPERATION_MODE_VDM, data, data_size);
+ 202              		.loc 1 64 0
+ 203 0016 0194     		str	r4, [sp, #4]
+ 204 0018 0097     		str	r7, [sp]
+ 205 001a 0023     		movs	r3, #0
+ 206 001c 1A46     		mov	r2, r3
+ 207 001e 3146     		mov	r1, r6
+ 208 0020 2846     		mov	r0, r5
+ 209 0022 FFF7FEFF 		bl	W5500_spi
+ 210              	.LVL27:
+ 211              	.L14:
+  65:hal_spi.c     **** #else
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 6
+
+
+  66:hal_spi.c     ****     const uint8_t control_phase = (block << _BLOCK_POS) |
+  67:hal_spi.c     ****                                   (ACCESS_MODE_READ << _ACCESS_MODE_POS) |
+  68:hal_spi.c     ****                                   (SPI_OPERATION_MODE_VDM << _SPI_MODE_POS);
+  69:hal_spi.c     **** 
+  70:hal_spi.c     ****     const uint8_t addr_ctrl_phase[] = {
+  71:hal_spi.c     ****         HI8(address), LO8(address), control_phase
+  72:hal_spi.c     ****     };
+  73:hal_spi.c     **** 
+  74:hal_spi.c     ****     SPI_ClearFIFO();
+  75:hal_spi.c     ****     
+  76:hal_spi.c     ****     SS_Write(0);
+  77:hal_spi.c     ****     
+  78:hal_spi.c     ****     for (size_t i = 0; i < sizeof(addr_ctrl_phase); i++) {
+  79:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+  80:hal_spi.c     ****         while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+  81:hal_spi.c     ****         }
+  82:hal_spi.c     ****     }
+  83:hal_spi.c     ****     SPI_ClearFIFO();
+  84:hal_spi.c     **** 
+  85:hal_spi.c     ****     for (size_t i = 0; i < data_size; i++) {
+  86:hal_spi.c     ****         SPI_WriteTxData(0xFF);
+  87:hal_spi.c     ****         while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+  88:hal_spi.c     ****         }
+  89:hal_spi.c     ****         data[i] = SPI_ReadRxData();
+  90:hal_spi.c     ****     }
+  91:hal_spi.c     ****     
+  92:hal_spi.c     ****     SS_Write(1);
+  93:hal_spi.c     **** #endif
+  94:hal_spi.c     **** }
+ 212              		.loc 1 94 0
+ 213 0026 03B0     		add	sp, sp, #12
+ 214              		.cfi_def_cfa_offset 20
+ 215              		@ sp needed
+ 216 0028 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 217              	.LVL28:
+ 218              	.L17:
+ 219              		.cfi_def_cfa_offset 0
+ 220              		.cfi_restore 4
+ 221              		.cfi_restore 5
+ 222              		.cfi_restore 6
+ 223              		.cfi_restore 7
+ 224              		.cfi_restore 14
+ 225 002a 7047     		bx	lr
+ 226              		.cfi_endproc
+ 227              	.LFE64:
+ 228              		.size	W5500_spi_read, .-W5500_spi_read
+ 229              		.section	.text.W5500_spi_write,"ax",%progbits
+ 230              		.align	2
+ 231              		.global	W5500_spi_write
+ 232              		.thumb
+ 233              		.thumb_func
+ 234              		.type	W5500_spi_write, %function
+ 235              	W5500_spi_write:
+ 236              	.LFB65:
+  95:hal_spi.c     **** 
+  96:hal_spi.c     **** void W5500_spi_write(const block block, const uint16_t address,
+  97:hal_spi.c     ****                      const uint8_t *data, const size_t data_size)
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 7
+
+
+  98:hal_spi.c     **** {
+ 237              		.loc 1 98 0
+ 238              		.cfi_startproc
+ 239              		@ args = 0, pretend = 0, frame = 0
+ 240              		@ frame_needed = 0, uses_anonymous_args = 0
+ 241              	.LVL29:
+  99:hal_spi.c     ****     if ((NULL == data) || (0 == data_size)) {
+ 242              		.loc 1 99 0
+ 243 0000 9AB1     		cbz	r2, .L21
+  98:hal_spi.c     ****     if ((NULL == data) || (0 == data_size)) {
+ 244              		.loc 1 98 0 discriminator 1
+ 245 0002 F0B5     		push	{r4, r5, r6, r7, lr}
+ 246              		.cfi_def_cfa_offset 20
+ 247              		.cfi_offset 4, -20
+ 248              		.cfi_offset 5, -16
+ 249              		.cfi_offset 6, -12
+ 250              		.cfi_offset 7, -8
+ 251              		.cfi_offset 14, -4
+ 252 0004 83B0     		sub	sp, sp, #12
+ 253              		.cfi_def_cfa_offset 32
+ 254              		.loc 1 99 0 discriminator 1
+ 255 0006 73B1     		cbz	r3, .L18
+ 256 0008 1746     		mov	r7, r2
+ 257 000a 1C46     		mov	r4, r3
+ 258 000c 0E46     		mov	r6, r1
+ 259 000e 0546     		mov	r5, r0
+ 100:hal_spi.c     ****         return;
+ 101:hal_spi.c     ****     }
+ 102:hal_spi.c     ****     
+ 103:hal_spi.c     ****     if (_is_invalid_block(block)) {
+ 260              		.loc 1 103 0
+ 261 0010 FFF7FEFF 		bl	_is_invalid_block
+ 262              	.LVL30:
+ 263 0014 38B9     		cbnz	r0, .L18
+ 104:hal_spi.c     ****         return;
+ 105:hal_spi.c     ****     }
+ 106:hal_spi.c     **** #if 1
+ 107:hal_spi.c     ****     W5500_spi(block, address, ACCESS_MODE_WRITE, SPI_OPERATION_MODE_VDM, data, data_size);
+ 264              		.loc 1 107 0
+ 265 0016 0194     		str	r4, [sp, #4]
+ 266 0018 0097     		str	r7, [sp]
+ 267 001a 0023     		movs	r3, #0
+ 268 001c 0122     		movs	r2, #1
+ 269 001e 3146     		mov	r1, r6
+ 270 0020 2846     		mov	r0, r5
+ 271 0022 FFF7FEFF 		bl	W5500_spi
+ 272              	.LVL31:
+ 273              	.L18:
+ 108:hal_spi.c     **** #else
+ 109:hal_spi.c     ****     const uint8_t control_phase = (block << _BLOCK_POS) |
+ 110:hal_spi.c     ****                                   (ACCESS_MODE_WRITE << _ACCESS_MODE_POS) |
+ 111:hal_spi.c     ****                                   (SPI_OPERATION_MODE_VDM << _SPI_MODE_POS);
+ 112:hal_spi.c     **** 
+ 113:hal_spi.c     ****     const uint8_t addr_ctrl_phase[] = {
+ 114:hal_spi.c     ****         HI8(address), LO8(address), control_phase
+ 115:hal_spi.c     ****     };
+ 116:hal_spi.c     **** 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 8
+
+
+ 117:hal_spi.c     ****     SPI_ClearFIFO();
+ 118:hal_spi.c     ****     
+ 119:hal_spi.c     ****     SS_Write(0);
+ 120:hal_spi.c     ****     
+ 121:hal_spi.c     ****     for (size_t i = 0; i < sizeof(addr_ctrl_phase); i++) {
+ 122:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+ 123:hal_spi.c     ****         while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+ 124:hal_spi.c     ****         }
+ 125:hal_spi.c     ****     }
+ 126:hal_spi.c     ****     SPI_ClearFIFO();
+ 127:hal_spi.c     **** 
+ 128:hal_spi.c     ****     for (size_t i = 0; i < data_size; i++) {
+ 129:hal_spi.c     ****         SPI_WriteTxData(data[i]);
+ 130:hal_spi.c     ****         while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+ 131:hal_spi.c     ****         }
+ 132:hal_spi.c     ****     }
+ 133:hal_spi.c     ****     
+ 134:hal_spi.c     ****     SS_Write(1);
+ 135:hal_spi.c     **** #endif
+ 136:hal_spi.c     **** }
+ 274              		.loc 1 136 0
+ 275 0026 03B0     		add	sp, sp, #12
+ 276              		.cfi_def_cfa_offset 20
+ 277              		@ sp needed
+ 278 0028 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 279              	.LVL32:
+ 280              	.L21:
+ 281              		.cfi_def_cfa_offset 0
+ 282              		.cfi_restore 4
+ 283              		.cfi_restore 5
+ 284              		.cfi_restore 6
+ 285              		.cfi_restore 7
+ 286              		.cfi_restore 14
+ 287 002a 7047     		bx	lr
+ 288              		.cfi_endproc
+ 289              	.LFE65:
+ 290              		.size	W5500_spi_write, .-W5500_spi_write
+ 291              		.section	.text.W5500_spi_read_byte,"ax",%progbits
+ 292              		.align	2
+ 293              		.global	W5500_spi_read_byte
+ 294              		.thumb
+ 295              		.thumb_func
+ 296              		.type	W5500_spi_read_byte, %function
+ 297              	W5500_spi_read_byte:
+ 298              	.LFB66:
+ 137:hal_spi.c     **** 
+ 138:hal_spi.c     **** uint8_t W5500_spi_read_byte(const block block, const uint16_t address)
+ 139:hal_spi.c     **** {
+ 299              		.loc 1 139 0
+ 300              		.cfi_startproc
+ 301              		@ args = 0, pretend = 0, frame = 8
+ 302              		@ frame_needed = 0, uses_anonymous_args = 0
+ 303              	.LVL33:
+ 304 0000 30B5     		push	{r4, r5, lr}
+ 305              		.cfi_def_cfa_offset 12
+ 306              		.cfi_offset 4, -12
+ 307              		.cfi_offset 5, -8
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 9
+
+
+ 308              		.cfi_offset 14, -4
+ 309 0002 83B0     		sub	sp, sp, #12
+ 310              		.cfi_def_cfa_offset 24
+ 311 0004 0446     		mov	r4, r0
+ 312 0006 0D46     		mov	r5, r1
+ 313              	.LVL34:
+ 140:hal_spi.c     ****     uint8_t result = 0;
+ 141:hal_spi.c     ****     
+ 142:hal_spi.c     ****     if (_is_invalid_block(block)) {
+ 314              		.loc 1 142 0
+ 315 0008 FFF7FEFF 		bl	_is_invalid_block
+ 316              	.LVL35:
+ 317 000c 70BB     		cbnz	r0, .L28
+ 143:hal_spi.c     ****         return 0;
+ 144:hal_spi.c     ****     }
+ 145:hal_spi.c     ****     
+ 146:hal_spi.c     ****     const uint8_t control_phase = (block << _BLOCK_POS) |
+ 318              		.loc 1 146 0
+ 319 000e E400     		lsls	r4, r4, #3
+ 320              	.LVL36:
+ 147:hal_spi.c     ****                                   (ACCESS_MODE_READ << _ACCESS_MODE_POS) |
+ 148:hal_spi.c     ****                                   (SPI_OPERATION_MODE_VDM << _SPI_MODE_POS);
+ 149:hal_spi.c     **** 
+ 150:hal_spi.c     ****     const uint8_t addr_ctrl_phase[] = {
+ 151:hal_spi.c     ****         HI8(address), LO8(address), control_phase
+ 321              		.loc 1 151 0
+ 322 0010 2B0A     		lsrs	r3, r5, #8
+ 150:hal_spi.c     ****         HI8(address), LO8(address), control_phase
+ 323              		.loc 1 150 0
+ 324 0012 8DF80430 		strb	r3, [sp, #4]
+ 325 0016 8DF80550 		strb	r5, [sp, #5]
+ 326 001a 8DF80640 		strb	r4, [sp, #6]
+ 152:hal_spi.c     ****     };
+ 153:hal_spi.c     **** 
+ 154:hal_spi.c     ****     SPI_ClearFIFO();
+ 327              		.loc 1 154 0
+ 328 001e FFF7FEFF 		bl	SPI_ClearFIFO
+ 329              	.LVL37:
+ 155:hal_spi.c     ****     
+ 156:hal_spi.c     ****     SS_Write(0);
+ 330              		.loc 1 156 0
+ 331 0022 0020     		movs	r0, #0
+ 332 0024 FFF7FEFF 		bl	SS_Write
+ 333              	.LVL38:
+ 334              	.LBB6:
+ 157:hal_spi.c     ****     
+ 158:hal_spi.c     ****     for (size_t i = 0; i < sizeof(addr_ctrl_phase); i++) {
+ 335              		.loc 1 158 0
+ 336 0028 0024     		movs	r4, #0
+ 337              	.LVL39:
+ 338 002a 0BE0     		b	.L24
+ 339              	.LVL40:
+ 340              	.L26:
+ 159:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+ 341              		.loc 1 159 0
+ 342 002c 02AB     		add	r3, sp, #8
+ 343 002e 2344     		add	r3, r3, r4
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 10
+
+
+ 344 0030 13F8040C 		ldrb	r0, [r3, #-4]	@ zero_extendqisi2
+ 345 0034 FFF7FEFF 		bl	SPI_WriteTxData
+ 346              	.LVL41:
+ 347              	.L25:
+ 160:hal_spi.c     ****         while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+ 348              		.loc 1 160 0 discriminator 1
+ 349 0038 FFF7FEFF 		bl	SPI_ReadTxStatus
+ 350              	.LVL42:
+ 351 003c 10F0080F 		tst	r0, #8
+ 352 0040 FAD0     		beq	.L25
+ 158:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+ 353              		.loc 1 158 0 discriminator 2
+ 354 0042 0134     		adds	r4, r4, #1
+ 355              	.LVL43:
+ 356              	.L24:
+ 158:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+ 357              		.loc 1 158 0 is_stmt 0 discriminator 1
+ 358 0044 022C     		cmp	r4, #2
+ 359 0046 F1D9     		bls	.L26
+ 360              	.LBE6:
+ 161:hal_spi.c     ****         }
+ 162:hal_spi.c     ****     }
+ 163:hal_spi.c     ****     SPI_ClearFIFO();
+ 361              		.loc 1 163 0 is_stmt 1
+ 362 0048 FFF7FEFF 		bl	SPI_ClearFIFO
+ 363              	.LVL44:
+ 164:hal_spi.c     **** 
+ 165:hal_spi.c     ****     SPI_WriteTxData(0xFF);
+ 364              		.loc 1 165 0
+ 365 004c FF20     		movs	r0, #255
+ 366 004e FFF7FEFF 		bl	SPI_WriteTxData
+ 367              	.LVL45:
+ 368              	.L27:
+ 166:hal_spi.c     ****     while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+ 369              		.loc 1 166 0 discriminator 1
+ 370 0052 FFF7FEFF 		bl	SPI_ReadTxStatus
+ 371              	.LVL46:
+ 372 0056 10F0080F 		tst	r0, #8
+ 373 005a FAD0     		beq	.L27
+ 167:hal_spi.c     ****     }
+ 168:hal_spi.c     ****     result = SPI_ReadRxData();
+ 374              		.loc 1 168 0
+ 375 005c FFF7FEFF 		bl	SPI_ReadRxData
+ 376              	.LVL47:
+ 377 0060 0446     		mov	r4, r0
+ 378              	.LVL48:
+ 169:hal_spi.c     ****     
+ 170:hal_spi.c     ****     SS_Write(1);
+ 379              		.loc 1 170 0
+ 380 0062 0120     		movs	r0, #1
+ 381 0064 FFF7FEFF 		bl	SS_Write
+ 382              	.LVL49:
+ 171:hal_spi.c     ****     
+ 172:hal_spi.c     ****     return result;
+ 383              		.loc 1 172 0
+ 384 0068 2046     		mov	r0, r4
+ 385 006a 00E0     		b	.L23
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 11
+
+
+ 386              	.LVL50:
+ 387              	.L28:
+ 143:hal_spi.c     ****     }
+ 388              		.loc 1 143 0
+ 389 006c 0020     		movs	r0, #0
+ 390              	.LVL51:
+ 391              	.L23:
+ 173:hal_spi.c     **** }
+ 392              		.loc 1 173 0
+ 393 006e 03B0     		add	sp, sp, #12
+ 394              		.cfi_def_cfa_offset 12
+ 395              		@ sp needed
+ 396 0070 30BD     		pop	{r4, r5, pc}
+ 397              		.cfi_endproc
+ 398              	.LFE66:
+ 399              		.size	W5500_spi_read_byte, .-W5500_spi_read_byte
+ 400 0072 00BF     		.section	.text.W5500_spi_write_byte,"ax",%progbits
+ 401              		.align	2
+ 402              		.global	W5500_spi_write_byte
+ 403              		.thumb
+ 404              		.thumb_func
+ 405              		.type	W5500_spi_write_byte, %function
+ 406              	W5500_spi_write_byte:
+ 407              	.LFB67:
+ 174:hal_spi.c     **** 
+ 175:hal_spi.c     **** void W5500_spi_write_byte(const block block, const uint16_t address, uint8_t data)
+ 176:hal_spi.c     **** {
+ 408              		.loc 1 176 0
+ 409              		.cfi_startproc
+ 410              		@ args = 0, pretend = 0, frame = 8
+ 411              		@ frame_needed = 0, uses_anonymous_args = 0
+ 412              	.LVL52:
+ 413 0000 70B5     		push	{r4, r5, r6, lr}
+ 414              		.cfi_def_cfa_offset 16
+ 415              		.cfi_offset 4, -16
+ 416              		.cfi_offset 5, -12
+ 417              		.cfi_offset 6, -8
+ 418              		.cfi_offset 14, -4
+ 419 0002 82B0     		sub	sp, sp, #8
+ 420              		.cfi_def_cfa_offset 24
+ 421 0004 0446     		mov	r4, r0
+ 422 0006 0D46     		mov	r5, r1
+ 423 0008 1646     		mov	r6, r2
+ 177:hal_spi.c     ****     if (_is_invalid_block(block)) {
+ 424              		.loc 1 177 0
+ 425 000a FFF7FEFF 		bl	_is_invalid_block
+ 426              	.LVL53:
+ 427 000e 58BB     		cbnz	r0, .L30
+ 178:hal_spi.c     ****         return;
+ 179:hal_spi.c     ****     }
+ 180:hal_spi.c     **** 
+ 181:hal_spi.c     ****     const uint8_t control_phase = (block << _BLOCK_POS) |
+ 428              		.loc 1 181 0
+ 429 0010 E400     		lsls	r4, r4, #3
+ 430 0012 44F00404 		orr	r4, r4, #4
+ 431              	.LVL54:
+ 182:hal_spi.c     ****                                   (ACCESS_MODE_WRITE << _ACCESS_MODE_POS) |
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 12
+
+
+ 183:hal_spi.c     ****                                   (SPI_OPERATION_MODE_VDM << _SPI_MODE_POS);
+ 184:hal_spi.c     **** 
+ 185:hal_spi.c     ****     const uint8_t addr_ctrl_phase[] = {
+ 186:hal_spi.c     ****         HI8(address), LO8(address), control_phase
+ 432              		.loc 1 186 0
+ 433 0016 2B0A     		lsrs	r3, r5, #8
+ 185:hal_spi.c     ****         HI8(address), LO8(address), control_phase
+ 434              		.loc 1 185 0
+ 435 0018 8DF80430 		strb	r3, [sp, #4]
+ 436 001c 8DF80550 		strb	r5, [sp, #5]
+ 437 0020 8DF80640 		strb	r4, [sp, #6]
+ 187:hal_spi.c     ****     };
+ 188:hal_spi.c     **** 
+ 189:hal_spi.c     ****     SPI_ClearFIFO();
+ 438              		.loc 1 189 0
+ 439 0024 FFF7FEFF 		bl	SPI_ClearFIFO
+ 440              	.LVL55:
+ 190:hal_spi.c     ****     
+ 191:hal_spi.c     ****     SS_Write(0);
+ 441              		.loc 1 191 0
+ 442 0028 0020     		movs	r0, #0
+ 443 002a FFF7FEFF 		bl	SS_Write
+ 444              	.LVL56:
+ 445              	.LBB7:
+ 192:hal_spi.c     ****     
+ 193:hal_spi.c     ****     for (size_t i = 0; i < sizeof(addr_ctrl_phase); i++) {
+ 446              		.loc 1 193 0
+ 447 002e 0024     		movs	r4, #0
+ 448              	.LVL57:
+ 449 0030 0BE0     		b	.L32
+ 450              	.LVL58:
+ 451              	.L34:
+ 194:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+ 452              		.loc 1 194 0
+ 453 0032 02AB     		add	r3, sp, #8
+ 454 0034 2344     		add	r3, r3, r4
+ 455 0036 13F8040C 		ldrb	r0, [r3, #-4]	@ zero_extendqisi2
+ 456 003a FFF7FEFF 		bl	SPI_WriteTxData
+ 457              	.LVL59:
+ 458              	.L33:
+ 195:hal_spi.c     ****         while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+ 459              		.loc 1 195 0 discriminator 1
+ 460 003e FFF7FEFF 		bl	SPI_ReadTxStatus
+ 461              	.LVL60:
+ 462 0042 10F0080F 		tst	r0, #8
+ 463 0046 FAD0     		beq	.L33
+ 193:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+ 464              		.loc 1 193 0 discriminator 2
+ 465 0048 0134     		adds	r4, r4, #1
+ 466              	.LVL61:
+ 467              	.L32:
+ 193:hal_spi.c     ****         SPI_WriteTxData(addr_ctrl_phase[i]);
+ 468              		.loc 1 193 0 is_stmt 0 discriminator 1
+ 469 004a 022C     		cmp	r4, #2
+ 470 004c F1D9     		bls	.L34
+ 471              	.LBE7:
+ 196:hal_spi.c     ****         }
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 13
+
+
+ 197:hal_spi.c     ****     }
+ 198:hal_spi.c     ****     SPI_ClearFIFO();
+ 472              		.loc 1 198 0 is_stmt 1
+ 473 004e FFF7FEFF 		bl	SPI_ClearFIFO
+ 474              	.LVL62:
+ 199:hal_spi.c     **** 
+ 200:hal_spi.c     ****     SPI_WriteTxData(data);
+ 475              		.loc 1 200 0
+ 476 0052 3046     		mov	r0, r6
+ 477 0054 FFF7FEFF 		bl	SPI_WriteTxData
+ 478              	.LVL63:
+ 479              	.L35:
+ 201:hal_spi.c     ****     while (!(SPI_ReadTxStatus() & SPI_STS_BYTE_COMPLETE)) {
+ 480              		.loc 1 201 0 discriminator 1
+ 481 0058 FFF7FEFF 		bl	SPI_ReadTxStatus
+ 482              	.LVL64:
+ 483 005c 10F0080F 		tst	r0, #8
+ 484 0060 FAD0     		beq	.L35
+ 202:hal_spi.c     ****     }
+ 203:hal_spi.c     ****     
+ 204:hal_spi.c     ****     SS_Write(1);
+ 485              		.loc 1 204 0
+ 486 0062 0120     		movs	r0, #1
+ 487 0064 FFF7FEFF 		bl	SS_Write
+ 488              	.LVL65:
+ 489              	.L30:
+ 205:hal_spi.c     **** }
+ 490              		.loc 1 205 0
+ 491 0068 02B0     		add	sp, sp, #8
+ 492              		.cfi_def_cfa_offset 16
+ 493              		@ sp needed
+ 494 006a 70BD     		pop	{r4, r5, r6, pc}
+ 495              		.cfi_endproc
+ 496              	.LFE67:
+ 497              		.size	W5500_spi_write_byte, .-W5500_spi_write_byte
+ 498              		.text
+ 499              	.Letext0:
+ 500              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 501              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 502              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 503              		.file 5 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 504              		.file 6 "common.h"
+ 505              		.file 7 "Generated_Source\\PSoC5/SPI.h"
+ 506              		.file 8 "Generated_Source\\PSoC5/SS.h"
+ 507              		.file 9 "Generated_Source\\PSoC5/core_cm3.h"
+ 508              		.section	.debug_info,"",%progbits
+ 509              	.Ldebug_info0:
+ 510 0000 8E070000 		.4byte	0x78e
+ 511 0004 0400     		.2byte	0x4
+ 512 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 513 000a 04       		.byte	0x4
+ 514 000b 01       		.uleb128 0x1
+ 515 000c EB050000 		.4byte	.LASF86
+ 516 0010 0C       		.byte	0xc
+ 517 0011 16000000 		.4byte	.LASF87
+ 518 0015 79050000 		.4byte	.LASF88
+ 519 0019 18000000 		.4byte	.Ldebug_ranges0+0x18
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 14
+
+
+ 520 001d 00000000 		.4byte	0
+ 521 0021 00000000 		.4byte	.Ldebug_line0
+ 522 0025 02       		.uleb128 0x2
+ 523 0026 01       		.byte	0x1
+ 524 0027 06       		.byte	0x6
+ 525 0028 AD010000 		.4byte	.LASF0
+ 526 002c 03       		.uleb128 0x3
+ 527 002d 41020000 		.4byte	.LASF3
+ 528 0031 02       		.byte	0x2
+ 529 0032 1D       		.byte	0x1d
+ 530 0033 37000000 		.4byte	0x37
+ 531 0037 02       		.uleb128 0x2
+ 532 0038 01       		.byte	0x1
+ 533 0039 08       		.byte	0x8
+ 534 003a 67020000 		.4byte	.LASF1
+ 535 003e 02       		.uleb128 0x2
+ 536 003f 02       		.byte	0x2
+ 537 0040 05       		.byte	0x5
+ 538 0041 1C010000 		.4byte	.LASF2
+ 539 0045 03       		.uleb128 0x3
+ 540 0046 9C000000 		.4byte	.LASF4
+ 541 004a 02       		.byte	0x2
+ 542 004b 2B       		.byte	0x2b
+ 543 004c 50000000 		.4byte	0x50
+ 544 0050 02       		.uleb128 0x2
+ 545 0051 02       		.byte	0x2
+ 546 0052 07       		.byte	0x7
+ 547 0053 9D030000 		.4byte	.LASF5
+ 548 0057 03       		.uleb128 0x3
+ 549 0058 4B050000 		.4byte	.LASF6
+ 550 005c 02       		.byte	0x2
+ 551 005d 3F       		.byte	0x3f
+ 552 005e 62000000 		.4byte	0x62
+ 553 0062 02       		.uleb128 0x2
+ 554 0063 04       		.byte	0x4
+ 555 0064 05       		.byte	0x5
+ 556 0065 B5030000 		.4byte	.LASF7
+ 557 0069 02       		.uleb128 0x2
+ 558 006a 04       		.byte	0x4
+ 559 006b 07       		.byte	0x7
+ 560 006c 3C030000 		.4byte	.LASF8
+ 561 0070 02       		.uleb128 0x2
+ 562 0071 08       		.byte	0x8
+ 563 0072 05       		.byte	0x5
+ 564 0073 D7010000 		.4byte	.LASF9
+ 565 0077 02       		.uleb128 0x2
+ 566 0078 08       		.byte	0x8
+ 567 0079 07       		.byte	0x7
+ 568 007a D9020000 		.4byte	.LASF10
+ 569 007e 04       		.uleb128 0x4
+ 570 007f 04       		.byte	0x4
+ 571 0080 05       		.byte	0x5
+ 572 0081 696E7400 		.ascii	"int\000"
+ 573 0085 02       		.uleb128 0x2
+ 574 0086 04       		.byte	0x4
+ 575 0087 07       		.byte	0x7
+ 576 0088 0D030000 		.4byte	.LASF11
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 15
+
+
+ 577 008c 03       		.uleb128 0x3
+ 578 008d 76010000 		.4byte	.LASF12
+ 579 0091 03       		.byte	0x3
+ 580 0092 18       		.byte	0x18
+ 581 0093 2C000000 		.4byte	0x2c
+ 582 0097 03       		.uleb128 0x3
+ 583 0098 1A030000 		.4byte	.LASF13
+ 584 009c 03       		.byte	0x3
+ 585 009d 24       		.byte	0x24
+ 586 009e 45000000 		.4byte	0x45
+ 587 00a2 03       		.uleb128 0x3
+ 588 00a3 D6030000 		.4byte	.LASF14
+ 589 00a7 03       		.byte	0x3
+ 590 00a8 2C       		.byte	0x2c
+ 591 00a9 57000000 		.4byte	0x57
+ 592 00ad 05       		.uleb128 0x5
+ 593 00ae 8E010000 		.4byte	.LASF15
+ 594 00b2 04       		.byte	0x4
+ 595 00b3 E401     		.2byte	0x1e4
+ 596 00b5 37000000 		.4byte	0x37
+ 597 00b9 05       		.uleb128 0x5
+ 598 00ba 63010000 		.4byte	.LASF16
+ 599 00be 04       		.byte	0x4
+ 600 00bf E501     		.2byte	0x1e5
+ 601 00c1 50000000 		.4byte	0x50
+ 602 00c5 02       		.uleb128 0x2
+ 603 00c6 04       		.byte	0x4
+ 604 00c7 04       		.byte	0x4
+ 605 00c8 D1010000 		.4byte	.LASF17
+ 606 00cc 02       		.uleb128 0x2
+ 607 00cd 08       		.byte	0x8
+ 608 00ce 04       		.byte	0x4
+ 609 00cf D7050000 		.4byte	.LASF18
+ 610 00d3 02       		.uleb128 0x2
+ 611 00d4 01       		.byte	0x1
+ 612 00d5 08       		.byte	0x8
+ 613 00d6 B0030000 		.4byte	.LASF19
+ 614 00da 03       		.uleb128 0x3
+ 615 00db 6F000000 		.4byte	.LASF20
+ 616 00df 05       		.byte	0x5
+ 617 00e0 D8       		.byte	0xd8
+ 618 00e1 85000000 		.4byte	0x85
+ 619 00e5 02       		.uleb128 0x2
+ 620 00e6 08       		.byte	0x8
+ 621 00e7 04       		.byte	0x4
+ 622 00e8 5B020000 		.4byte	.LASF21
+ 623 00ec 02       		.uleb128 0x2
+ 624 00ed 04       		.byte	0x4
+ 625 00ee 07       		.byte	0x7
+ 626 00ef 84000000 		.4byte	.LASF22
+ 627 00f3 06       		.uleb128 0x6
+ 628 00f4 01       		.byte	0x1
+ 629 00f5 37000000 		.4byte	0x37
+ 630 00f9 06       		.byte	0x6
+ 631 00fa 6C       		.byte	0x6c
+ 632 00fb C6010000 		.4byte	0x1c6
+ 633 00ff 07       		.uleb128 0x7
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 16
+
+
+ 634 0100 00000000 		.4byte	.LASF23
+ 635 0104 00       		.byte	0
+ 636 0105 07       		.uleb128 0x7
+ 637 0106 33050000 		.4byte	.LASF24
+ 638 010a 01       		.byte	0x1
+ 639 010b 07       		.uleb128 0x7
+ 640 010c 94010000 		.4byte	.LASF25
+ 641 0110 02       		.byte	0x2
+ 642 0111 07       		.uleb128 0x7
+ 643 0112 03010000 		.4byte	.LASF26
+ 644 0116 03       		.byte	0x3
+ 645 0117 07       		.uleb128 0x7
+ 646 0118 41040000 		.4byte	.LASF27
+ 647 011c 04       		.byte	0x4
+ 648 011d 07       		.uleb128 0x7
+ 649 011e 26010000 		.4byte	.LASF28
+ 650 0122 05       		.byte	0x5
+ 651 0123 07       		.uleb128 0x7
+ 652 0124 DC000000 		.4byte	.LASF29
+ 653 0128 06       		.byte	0x6
+ 654 0129 07       		.uleb128 0x7
+ 655 012a 3E000000 		.4byte	.LASF30
+ 656 012e 07       		.byte	0x7
+ 657 012f 07       		.uleb128 0x7
+ 658 0130 52040000 		.4byte	.LASF31
+ 659 0134 08       		.byte	0x8
+ 660 0135 07       		.uleb128 0x7
+ 661 0136 57000000 		.4byte	.LASF32
+ 662 013a 09       		.byte	0x9
+ 663 013b 07       		.uleb128 0x7
+ 664 013c 23030000 		.4byte	.LASF33
+ 665 0140 0A       		.byte	0xa
+ 666 0141 07       		.uleb128 0x7
+ 667 0142 75020000 		.4byte	.LASF34
+ 668 0146 0B       		.byte	0xb
+ 669 0147 07       		.uleb128 0x7
+ 670 0148 63040000 		.4byte	.LASF35
+ 671 014c 0C       		.byte	0xc
+ 672 014d 07       		.uleb128 0x7
+ 673 014e BE030000 		.4byte	.LASF36
+ 674 0152 0D       		.byte	0xd
+ 675 0153 07       		.uleb128 0x7
+ 676 0154 E5010000 		.4byte	.LASF37
+ 677 0158 0E       		.byte	0xe
+ 678 0159 07       		.uleb128 0x7
+ 679 015a 28020000 		.4byte	.LASF38
+ 680 015e 0F       		.byte	0xf
+ 681 015f 07       		.uleb128 0x7
+ 682 0160 74040000 		.4byte	.LASF39
+ 683 0164 10       		.byte	0x10
+ 684 0165 07       		.uleb128 0x7
+ 685 0166 BF050000 		.4byte	.LASF40
+ 686 016a 11       		.byte	0x11
+ 687 016b 07       		.uleb128 0x7
+ 688 016c 07020000 		.4byte	.LASF41
+ 689 0170 12       		.byte	0x12
+ 690 0171 07       		.uleb128 0x7
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 17
+
+
+ 691 0172 B3060000 		.4byte	.LASF42
+ 692 0176 13       		.byte	0x13
+ 693 0177 07       		.uleb128 0x7
+ 694 0178 85040000 		.4byte	.LASF43
+ 695 017c 14       		.byte	0x14
+ 696 017d 07       		.uleb128 0x7
+ 697 017e B9010000 		.4byte	.LASF44
+ 698 0182 15       		.byte	0x15
+ 699 0183 07       		.uleb128 0x7
+ 700 0184 D3040000 		.4byte	.LASF45
+ 701 0188 16       		.byte	0x16
+ 702 0189 07       		.uleb128 0x7
+ 703 018a DE030000 		.4byte	.LASF46
+ 704 018e 17       		.byte	0x17
+ 705 018f 07       		.uleb128 0x7
+ 706 0190 96040000 		.4byte	.LASF47
+ 707 0194 18       		.byte	0x18
+ 708 0195 07       		.uleb128 0x7
+ 709 0196 24040000 		.4byte	.LASF48
+ 710 019a 19       		.byte	0x19
+ 711 019b 07       		.uleb128 0x7
+ 712 019c F7030000 		.4byte	.LASF49
+ 713 01a0 1A       		.byte	0x1a
+ 714 01a1 07       		.uleb128 0x7
+ 715 01a2 84030000 		.4byte	.LASF50
+ 716 01a6 1B       		.byte	0x1b
+ 717 01a7 07       		.uleb128 0x7
+ 718 01a8 A7040000 		.4byte	.LASF51
+ 719 01ac 1C       		.byte	0x1c
+ 720 01ad 07       		.uleb128 0x7
+ 721 01ae A7000000 		.4byte	.LASF52
+ 722 01b2 1D       		.byte	0x1d
+ 723 01b3 07       		.uleb128 0x7
+ 724 01b4 4E030000 		.4byte	.LASF53
+ 725 01b8 1E       		.byte	0x1e
+ 726 01b9 07       		.uleb128 0x7
+ 727 01ba 9E020000 		.4byte	.LASF54
+ 728 01be 1F       		.byte	0x1f
+ 729 01bf 07       		.uleb128 0x7
+ 730 01c0 27000000 		.4byte	.LASF55
+ 731 01c4 20       		.byte	0x20
+ 732 01c5 00       		.byte	0
+ 733 01c6 03       		.uleb128 0x3
+ 734 01c7 4B020000 		.4byte	.LASF56
+ 735 01cb 06       		.byte	0x6
+ 736 01cc 8E       		.byte	0x8e
+ 737 01cd F3000000 		.4byte	0xf3
+ 738 01d1 06       		.uleb128 0x6
+ 739 01d2 01       		.byte	0x1
+ 740 01d3 37000000 		.4byte	0x37
+ 741 01d7 06       		.byte	0x6
+ 742 01d8 90       		.byte	0x90
+ 743 01d9 F0010000 		.4byte	0x1f0
+ 744 01dd 07       		.uleb128 0x7
+ 745 01de 3E010000 		.4byte	.LASF57
+ 746 01e2 00       		.byte	0
+ 747 01e3 07       		.uleb128 0x7
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 18
+
+
+ 748 01e4 21050000 		.4byte	.LASF58
+ 749 01e8 01       		.byte	0x1
+ 750 01e9 07       		.uleb128 0x7
+ 751 01ea 4F010000 		.4byte	.LASF59
+ 752 01ee 02       		.byte	0x2
+ 753 01ef 00       		.byte	0
+ 754 01f0 03       		.uleb128 0x3
+ 755 01f1 6A010000 		.4byte	.LASF60
+ 756 01f5 06       		.byte	0x6
+ 757 01f6 94       		.byte	0x94
+ 758 01f7 D1010000 		.4byte	0x1d1
+ 759 01fb 06       		.uleb128 0x6
+ 760 01fc 01       		.byte	0x1
+ 761 01fd 37000000 		.4byte	0x37
+ 762 0201 06       		.byte	0x6
+ 763 0202 96       		.byte	0x96
+ 764 0203 26020000 		.4byte	0x226
+ 765 0207 07       		.uleb128 0x7
+ 766 0208 9C060000 		.4byte	.LASF61
+ 767 020c 00       		.byte	0
+ 768 020d 07       		.uleb128 0x7
+ 769 020e F0020000 		.4byte	.LASF62
+ 770 0212 01       		.byte	0x1
+ 771 0213 07       		.uleb128 0x7
+ 772 0214 BF000000 		.4byte	.LASF63
+ 773 0218 02       		.byte	0x2
+ 774 0219 07       		.uleb128 0x7
+ 775 021a 67030000 		.4byte	.LASF64
+ 776 021e 03       		.byte	0x3
+ 777 021f 07       		.uleb128 0x7
+ 778 0220 B8040000 		.4byte	.LASF65
+ 779 0224 04       		.byte	0x4
+ 780 0225 00       		.byte	0
+ 781 0226 03       		.uleb128 0x3
+ 782 0227 0E050000 		.4byte	.LASF66
+ 783 022b 06       		.byte	0x6
+ 784 022c 9C       		.byte	0x9c
+ 785 022d FB010000 		.4byte	0x1fb
+ 786 0231 06       		.uleb128 0x6
+ 787 0232 01       		.byte	0x1
+ 788 0233 37000000 		.4byte	0x37
+ 789 0237 01       		.byte	0x1
+ 790 0238 06       		.byte	0x6
+ 791 0239 50020000 		.4byte	0x250
+ 792 023d 07       		.uleb128 0x7
+ 793 023e F5000000 		.4byte	.LASF67
+ 794 0242 00       		.byte	0
+ 795 0243 07       		.uleb128 0x7
+ 796 0244 FD040000 		.4byte	.LASF68
+ 797 0248 02       		.byte	0x2
+ 798 0249 07       		.uleb128 0x7
+ 799 024a 6E050000 		.4byte	.LASF69
+ 800 024e 03       		.byte	0x3
+ 801 024f 00       		.byte	0
+ 802 0250 08       		.uleb128 0x8
+ 803 0251 64050000 		.4byte	.LASF89
+ 804 0255 01       		.byte	0x1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 19
+
+
+ 805 0256 0C       		.byte	0xc
+ 806 0257 00000000 		.4byte	.LFB63
+ 807 025b 96000000 		.4byte	.LFE63-.LFB63
+ 808 025f 01       		.uleb128 0x1
+ 809 0260 9C       		.byte	0x9c
+ 810 0261 B8030000 		.4byte	0x3b8
+ 811 0265 09       		.uleb128 0x9
+ 812 0266 4B020000 		.4byte	.LASF56
+ 813 026a 01       		.byte	0x1
+ 814 026b 0C       		.byte	0xc
+ 815 026c B8030000 		.4byte	0x3b8
+ 816 0270 00000000 		.4byte	.LLST0
+ 817 0274 09       		.uleb128 0x9
+ 818 0275 20020000 		.4byte	.LASF70
+ 819 0279 01       		.byte	0x1
+ 820 027a 0C       		.byte	0xc
+ 821 027b BD030000 		.4byte	0x3bd
+ 822 027f 21000000 		.4byte	.LLST1
+ 823 0283 09       		.uleb128 0x9
+ 824 0284 6A010000 		.4byte	.LASF60
+ 825 0288 01       		.byte	0x1
+ 826 0289 0D       		.byte	0xd
+ 827 028a C2030000 		.4byte	0x3c2
+ 828 028e 42000000 		.4byte	.LLST2
+ 829 0292 09       		.uleb128 0x9
+ 830 0293 35000000 		.4byte	.LASF71
+ 831 0297 01       		.byte	0x1
+ 832 0298 0D       		.byte	0xd
+ 833 0299 C7030000 		.4byte	0x3c7
+ 834 029d 63000000 		.4byte	.LLST3
+ 835 02a1 0A       		.uleb128 0xa
+ 836 02a2 3C040000 		.4byte	.LASF72
+ 837 02a6 01       		.byte	0x1
+ 838 02a7 0E       		.byte	0xe
+ 839 02a8 CC030000 		.4byte	0x3cc
+ 840 02ac 02       		.uleb128 0x2
+ 841 02ad 91       		.byte	0x91
+ 842 02ae 00       		.sleb128 0
+ 843 02af 0A       		.uleb128 0xa
+ 844 02b0 51020000 		.4byte	.LASF73
+ 845 02b4 01       		.byte	0x1
+ 846 02b5 0E       		.byte	0xe
+ 847 02b6 D2030000 		.4byte	0x3d2
+ 848 02ba 02       		.uleb128 0x2
+ 849 02bb 91       		.byte	0x91
+ 850 02bc 04       		.sleb128 4
+ 851 02bd 0B       		.uleb128 0xb
+ 852 02be 76000000 		.4byte	.LASF74
+ 853 02c2 01       		.byte	0x1
+ 854 02c3 10       		.byte	0x10
+ 855 02c4 D7030000 		.4byte	0x3d7
+ 856 02c8 84000000 		.4byte	.LLST4
+ 857 02cc 0C       		.uleb128 0xc
+ 858 02cd B7020000 		.4byte	.LASF75
+ 859 02d1 01       		.byte	0x1
+ 860 02d2 14       		.byte	0x14
+ 861 02d3 EC030000 		.4byte	0x3ec
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 20
+
+
+ 862 02d7 02       		.uleb128 0x2
+ 863 02d8 91       		.byte	0x91
+ 864 02d9 64       		.sleb128 -28
+ 865 02da 0D       		.uleb128 0xd
+ 866 02db 2A000000 		.4byte	.LBB2
+ 867 02df 20000000 		.4byte	.LBE2-.LBB2
+ 868 02e3 19030000 		.4byte	0x319
+ 869 02e7 0E       		.uleb128 0xe
+ 870 02e8 6900     		.ascii	"i\000"
+ 871 02ea 01       		.byte	0x1
+ 872 02eb 1C       		.byte	0x1c
+ 873 02ec DA000000 		.4byte	0xda
+ 874 02f0 A3000000 		.4byte	.LLST5
+ 875 02f4 0F       		.uleb128 0xf
+ 876 02f5 3A000000 		.4byte	.LVL7
+ 877 02f9 4F070000 		.4byte	0x74f
+ 878 02fd 0F030000 		.4byte	0x30f
+ 879 0301 10       		.uleb128 0x10
+ 880 0302 01       		.uleb128 0x1
+ 881 0303 50       		.byte	0x50
+ 882 0304 09       		.uleb128 0x9
+ 883 0305 91       		.byte	0x91
+ 884 0306 00       		.sleb128 0
+ 885 0307 74       		.byte	0x74
+ 886 0308 00       		.sleb128 0
+ 887 0309 22       		.byte	0x22
+ 888 030a 4C       		.byte	0x4c
+ 889 030b 1C       		.byte	0x1c
+ 890 030c 94       		.byte	0x94
+ 891 030d 01       		.byte	0x1
+ 892 030e 00       		.byte	0
+ 893 030f 11       		.uleb128 0x11
+ 894 0310 3E000000 		.4byte	.LVL8
+ 895 0314 5A070000 		.4byte	0x75a
+ 896 0318 00       		.byte	0
+ 897 0319 12       		.uleb128 0x12
+ 898 031a 00000000 		.4byte	.Ldebug_ranges0+0
+ 899 031e 56030000 		.4byte	0x356
+ 900 0322 0E       		.uleb128 0xe
+ 901 0323 6900     		.ascii	"i\000"
+ 902 0325 01       		.byte	0x1
+ 903 0326 24       		.byte	0x24
+ 904 0327 DA000000 		.4byte	0xda
+ 905 032b CD000000 		.4byte	.LLST6
+ 906 032f 0F       		.uleb128 0xf
+ 907 0330 5A000000 		.4byte	.LVL13
+ 908 0334 4F070000 		.4byte	0x74f
+ 909 0338 43030000 		.4byte	0x343
+ 910 033c 10       		.uleb128 0x10
+ 911 033d 01       		.uleb128 0x1
+ 912 033e 50       		.byte	0x50
+ 913 033f 02       		.uleb128 0x2
+ 914 0340 09       		.byte	0x9
+ 915 0341 FF       		.byte	0xff
+ 916 0342 00       		.byte	0
+ 917 0343 11       		.uleb128 0x11
+ 918 0344 5E000000 		.4byte	.LVL14
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 21
+
+
+ 919 0348 5A070000 		.4byte	0x75a
+ 920 034c 11       		.uleb128 0x11
+ 921 034d 68000000 		.4byte	.LVL15
+ 922 0351 65070000 		.4byte	0x765
+ 923 0355 00       		.byte	0
+ 924 0356 0D       		.uleb128 0xd
+ 925 0357 76000000 		.4byte	.LBB5
+ 926 035b 16000000 		.4byte	.LBE5-.LBB5
+ 927 035f 83030000 		.4byte	0x383
+ 928 0363 0E       		.uleb128 0xe
+ 929 0364 6900     		.ascii	"i\000"
+ 930 0366 01       		.byte	0x1
+ 931 0367 2B       		.byte	0x2b
+ 932 0368 DA000000 		.4byte	0xda
+ 933 036c EB000000 		.4byte	.LLST7
+ 934 0370 11       		.uleb128 0x11
+ 935 0371 7C000000 		.4byte	.LVL20
+ 936 0375 4F070000 		.4byte	0x74f
+ 937 0379 11       		.uleb128 0x11
+ 938 037a 80000000 		.4byte	.LVL21
+ 939 037e 5A070000 		.4byte	0x75a
+ 940 0382 00       		.byte	0
+ 941 0383 11       		.uleb128 0x11
+ 942 0384 24000000 		.4byte	.LVL4
+ 943 0388 70070000 		.4byte	0x770
+ 944 038c 0F       		.uleb128 0xf
+ 945 038d 2A000000 		.4byte	.LVL5
+ 946 0391 7B070000 		.4byte	0x77b
+ 947 0395 9F030000 		.4byte	0x39f
+ 948 0399 10       		.uleb128 0x10
+ 949 039a 01       		.uleb128 0x1
+ 950 039b 50       		.byte	0x50
+ 951 039c 01       		.uleb128 0x1
+ 952 039d 30       		.byte	0x30
+ 953 039e 00       		.byte	0
+ 954 039f 11       		.uleb128 0x11
+ 955 03a0 4E000000 		.4byte	.LVL10
+ 956 03a4 70070000 		.4byte	0x770
+ 957 03a8 13       		.uleb128 0x13
+ 958 03a9 92000000 		.4byte	.LVL24
+ 959 03ad 7B070000 		.4byte	0x77b
+ 960 03b1 10       		.uleb128 0x10
+ 961 03b2 01       		.uleb128 0x1
+ 962 03b3 50       		.byte	0x50
+ 963 03b4 01       		.uleb128 0x1
+ 964 03b5 31       		.byte	0x31
+ 965 03b6 00       		.byte	0
+ 966 03b7 00       		.byte	0
+ 967 03b8 14       		.uleb128 0x14
+ 968 03b9 C6010000 		.4byte	0x1c6
+ 969 03bd 14       		.uleb128 0x14
+ 970 03be 97000000 		.4byte	0x97
+ 971 03c2 14       		.uleb128 0x14
+ 972 03c3 F0010000 		.4byte	0x1f0
+ 973 03c7 14       		.uleb128 0x14
+ 974 03c8 26020000 		.4byte	0x226
+ 975 03cc 15       		.uleb128 0x15
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 22
+
+
+ 976 03cd 04       		.byte	0x4
+ 977 03ce 8C000000 		.4byte	0x8c
+ 978 03d2 14       		.uleb128 0x14
+ 979 03d3 DA000000 		.4byte	0xda
+ 980 03d7 14       		.uleb128 0x14
+ 981 03d8 8C000000 		.4byte	0x8c
+ 982 03dc 16       		.uleb128 0x16
+ 983 03dd D7030000 		.4byte	0x3d7
+ 984 03e1 EC030000 		.4byte	0x3ec
+ 985 03e5 17       		.uleb128 0x17
+ 986 03e6 EC000000 		.4byte	0xec
+ 987 03ea 02       		.byte	0x2
+ 988 03eb 00       		.byte	0
+ 989 03ec 14       		.uleb128 0x14
+ 990 03ed DC030000 		.4byte	0x3dc
+ 991 03f1 18       		.uleb128 0x18
+ 992 03f2 55050000 		.4byte	.LASF76
+ 993 03f6 01       		.byte	0x1
+ 994 03f7 35       		.byte	0x35
+ 995 03f8 00000000 		.4byte	.LFB64
+ 996 03fc 2C000000 		.4byte	.LFE64-.LFB64
+ 997 0400 01       		.uleb128 0x1
+ 998 0401 9C       		.byte	0x9c
+ 999 0402 85040000 		.4byte	0x485
+ 1000 0406 09       		.uleb128 0x9
+ 1001 0407 4B020000 		.4byte	.LASF56
+ 1002 040b 01       		.byte	0x1
+ 1003 040c 35       		.byte	0x35
+ 1004 040d B8030000 		.4byte	0x3b8
+ 1005 0411 FE000000 		.4byte	.LLST8
+ 1006 0415 09       		.uleb128 0x9
+ 1007 0416 20020000 		.4byte	.LASF70
+ 1008 041a 01       		.byte	0x1
+ 1009 041b 35       		.byte	0x35
+ 1010 041c BD030000 		.4byte	0x3bd
+ 1011 0420 2A010000 		.4byte	.LLST9
+ 1012 0424 09       		.uleb128 0x9
+ 1013 0425 3C040000 		.4byte	.LASF72
+ 1014 0429 01       		.byte	0x1
+ 1015 042a 36       		.byte	0x36
+ 1016 042b CC030000 		.4byte	0x3cc
+ 1017 042f 56010000 		.4byte	.LLST10
+ 1018 0433 09       		.uleb128 0x9
+ 1019 0434 51020000 		.4byte	.LASF73
+ 1020 0438 01       		.byte	0x1
+ 1021 0439 36       		.byte	0x36
+ 1022 043a D2030000 		.4byte	0x3d2
+ 1023 043e 8D010000 		.4byte	.LLST11
+ 1024 0442 0F       		.uleb128 0xf
+ 1025 0443 14000000 		.4byte	.LVL26
+ 1026 0447 86070000 		.4byte	0x786
+ 1027 044b 56040000 		.4byte	0x456
+ 1028 044f 10       		.uleb128 0x10
+ 1029 0450 01       		.uleb128 0x1
+ 1030 0451 50       		.byte	0x50
+ 1031 0452 02       		.uleb128 0x2
+ 1032 0453 75       		.byte	0x75
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 23
+
+
+ 1033 0454 00       		.sleb128 0
+ 1034 0455 00       		.byte	0
+ 1035 0456 13       		.uleb128 0x13
+ 1036 0457 26000000 		.4byte	.LVL27
+ 1037 045b 50020000 		.4byte	0x250
+ 1038 045f 10       		.uleb128 0x10
+ 1039 0460 01       		.uleb128 0x1
+ 1040 0461 50       		.byte	0x50
+ 1041 0462 02       		.uleb128 0x2
+ 1042 0463 75       		.byte	0x75
+ 1043 0464 00       		.sleb128 0
+ 1044 0465 10       		.uleb128 0x10
+ 1045 0466 01       		.uleb128 0x1
+ 1046 0467 51       		.byte	0x51
+ 1047 0468 02       		.uleb128 0x2
+ 1048 0469 76       		.byte	0x76
+ 1049 046a 00       		.sleb128 0
+ 1050 046b 10       		.uleb128 0x10
+ 1051 046c 01       		.uleb128 0x1
+ 1052 046d 52       		.byte	0x52
+ 1053 046e 01       		.uleb128 0x1
+ 1054 046f 30       		.byte	0x30
+ 1055 0470 10       		.uleb128 0x10
+ 1056 0471 01       		.uleb128 0x1
+ 1057 0472 53       		.byte	0x53
+ 1058 0473 01       		.uleb128 0x1
+ 1059 0474 30       		.byte	0x30
+ 1060 0475 10       		.uleb128 0x10
+ 1061 0476 02       		.uleb128 0x2
+ 1062 0477 7D       		.byte	0x7d
+ 1063 0478 00       		.sleb128 0
+ 1064 0479 02       		.uleb128 0x2
+ 1065 047a 77       		.byte	0x77
+ 1066 047b 00       		.sleb128 0
+ 1067 047c 10       		.uleb128 0x10
+ 1068 047d 02       		.uleb128 0x2
+ 1069 047e 7D       		.byte	0x7d
+ 1070 047f 04       		.sleb128 4
+ 1071 0480 02       		.uleb128 0x2
+ 1072 0481 74       		.byte	0x74
+ 1073 0482 00       		.sleb128 0
+ 1074 0483 00       		.byte	0
+ 1075 0484 00       		.byte	0
+ 1076 0485 18       		.uleb128 0x18
+ 1077 0486 8E020000 		.4byte	.LASF77
+ 1078 048a 01       		.byte	0x1
+ 1079 048b 60       		.byte	0x60
+ 1080 048c 00000000 		.4byte	.LFB65
+ 1081 0490 2C000000 		.4byte	.LFE65-.LFB65
+ 1082 0494 01       		.uleb128 0x1
+ 1083 0495 9C       		.byte	0x9c
+ 1084 0496 19050000 		.4byte	0x519
+ 1085 049a 09       		.uleb128 0x9
+ 1086 049b 4B020000 		.4byte	.LASF56
+ 1087 049f 01       		.byte	0x1
+ 1088 04a0 60       		.byte	0x60
+ 1089 04a1 B8030000 		.4byte	0x3b8
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 24
+
+
+ 1090 04a5 C4010000 		.4byte	.LLST12
+ 1091 04a9 09       		.uleb128 0x9
+ 1092 04aa 20020000 		.4byte	.LASF70
+ 1093 04ae 01       		.byte	0x1
+ 1094 04af 60       		.byte	0x60
+ 1095 04b0 BD030000 		.4byte	0x3bd
+ 1096 04b4 F0010000 		.4byte	.LLST13
+ 1097 04b8 09       		.uleb128 0x9
+ 1098 04b9 3C040000 		.4byte	.LASF72
+ 1099 04bd 01       		.byte	0x1
+ 1100 04be 61       		.byte	0x61
+ 1101 04bf 19050000 		.4byte	0x519
+ 1102 04c3 1C020000 		.4byte	.LLST14
+ 1103 04c7 09       		.uleb128 0x9
+ 1104 04c8 51020000 		.4byte	.LASF73
+ 1105 04cc 01       		.byte	0x1
+ 1106 04cd 61       		.byte	0x61
+ 1107 04ce D2030000 		.4byte	0x3d2
+ 1108 04d2 53020000 		.4byte	.LLST15
+ 1109 04d6 0F       		.uleb128 0xf
+ 1110 04d7 14000000 		.4byte	.LVL30
+ 1111 04db 86070000 		.4byte	0x786
+ 1112 04df EA040000 		.4byte	0x4ea
+ 1113 04e3 10       		.uleb128 0x10
+ 1114 04e4 01       		.uleb128 0x1
+ 1115 04e5 50       		.byte	0x50
+ 1116 04e6 02       		.uleb128 0x2
+ 1117 04e7 75       		.byte	0x75
+ 1118 04e8 00       		.sleb128 0
+ 1119 04e9 00       		.byte	0
+ 1120 04ea 13       		.uleb128 0x13
+ 1121 04eb 26000000 		.4byte	.LVL31
+ 1122 04ef 50020000 		.4byte	0x250
+ 1123 04f3 10       		.uleb128 0x10
+ 1124 04f4 01       		.uleb128 0x1
+ 1125 04f5 50       		.byte	0x50
+ 1126 04f6 02       		.uleb128 0x2
+ 1127 04f7 75       		.byte	0x75
+ 1128 04f8 00       		.sleb128 0
+ 1129 04f9 10       		.uleb128 0x10
+ 1130 04fa 01       		.uleb128 0x1
+ 1131 04fb 51       		.byte	0x51
+ 1132 04fc 02       		.uleb128 0x2
+ 1133 04fd 76       		.byte	0x76
+ 1134 04fe 00       		.sleb128 0
+ 1135 04ff 10       		.uleb128 0x10
+ 1136 0500 01       		.uleb128 0x1
+ 1137 0501 52       		.byte	0x52
+ 1138 0502 01       		.uleb128 0x1
+ 1139 0503 31       		.byte	0x31
+ 1140 0504 10       		.uleb128 0x10
+ 1141 0505 01       		.uleb128 0x1
+ 1142 0506 53       		.byte	0x53
+ 1143 0507 01       		.uleb128 0x1
+ 1144 0508 30       		.byte	0x30
+ 1145 0509 10       		.uleb128 0x10
+ 1146 050a 02       		.uleb128 0x2
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 25
+
+
+ 1147 050b 7D       		.byte	0x7d
+ 1148 050c 00       		.sleb128 0
+ 1149 050d 02       		.uleb128 0x2
+ 1150 050e 77       		.byte	0x77
+ 1151 050f 00       		.sleb128 0
+ 1152 0510 10       		.uleb128 0x10
+ 1153 0511 02       		.uleb128 0x2
+ 1154 0512 7D       		.byte	0x7d
+ 1155 0513 04       		.sleb128 4
+ 1156 0514 02       		.uleb128 0x2
+ 1157 0515 74       		.byte	0x74
+ 1158 0516 00       		.sleb128 0
+ 1159 0517 00       		.byte	0
+ 1160 0518 00       		.byte	0
+ 1161 0519 15       		.uleb128 0x15
+ 1162 051a 04       		.byte	0x4
+ 1163 051b D7030000 		.4byte	0x3d7
+ 1164 051f 19       		.uleb128 0x19
+ 1165 0520 10040000 		.4byte	.LASF90
+ 1166 0524 01       		.byte	0x1
+ 1167 0525 8A       		.byte	0x8a
+ 1168 0526 8C000000 		.4byte	0x8c
+ 1169 052a 00000000 		.4byte	.LFB66
+ 1170 052e 72000000 		.4byte	.LFE66-.LFB66
+ 1171 0532 01       		.uleb128 0x1
+ 1172 0533 9C       		.byte	0x9c
+ 1173 0534 30060000 		.4byte	0x630
+ 1174 0538 09       		.uleb128 0x9
+ 1175 0539 4B020000 		.4byte	.LASF56
+ 1176 053d 01       		.byte	0x1
+ 1177 053e 8A       		.byte	0x8a
+ 1178 053f B8030000 		.4byte	0x3b8
+ 1179 0543 8A020000 		.4byte	.LLST16
+ 1180 0547 09       		.uleb128 0x9
+ 1181 0548 20020000 		.4byte	.LASF70
+ 1182 054c 01       		.byte	0x1
+ 1183 054d 8A       		.byte	0x8a
+ 1184 054e BD030000 		.4byte	0x3bd
+ 1185 0552 AB020000 		.4byte	.LLST17
+ 1186 0556 0B       		.uleb128 0xb
+ 1187 0557 20000000 		.4byte	.LASF78
+ 1188 055b 01       		.byte	0x1
+ 1189 055c 8C       		.byte	0x8c
+ 1190 055d 8C000000 		.4byte	0x8c
+ 1191 0561 CC020000 		.4byte	.LLST18
+ 1192 0565 0B       		.uleb128 0xb
+ 1193 0566 76000000 		.4byte	.LASF74
+ 1194 056a 01       		.byte	0x1
+ 1195 056b 92       		.byte	0x92
+ 1196 056c D7030000 		.4byte	0x3d7
+ 1197 0570 F7020000 		.4byte	.LLST19
+ 1198 0574 0C       		.uleb128 0xc
+ 1199 0575 B7020000 		.4byte	.LASF75
+ 1200 0579 01       		.byte	0x1
+ 1201 057a 96       		.byte	0x96
+ 1202 057b 30060000 		.4byte	0x630
+ 1203 057f 02       		.uleb128 0x2
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 26
+
+
+ 1204 0580 91       		.byte	0x91
+ 1205 0581 6C       		.sleb128 -20
+ 1206 0582 0D       		.uleb128 0xd
+ 1207 0583 28000000 		.4byte	.LBB6
+ 1208 0587 20000000 		.4byte	.LBE6-.LBB6
+ 1209 058b C1050000 		.4byte	0x5c1
+ 1210 058f 0E       		.uleb128 0xe
+ 1211 0590 6900     		.ascii	"i\000"
+ 1212 0592 01       		.byte	0x1
+ 1213 0593 9E       		.byte	0x9e
+ 1214 0594 DA000000 		.4byte	0xda
+ 1215 0598 16030000 		.4byte	.LLST20
+ 1216 059c 0F       		.uleb128 0xf
+ 1217 059d 38000000 		.4byte	.LVL41
+ 1218 05a1 4F070000 		.4byte	0x74f
+ 1219 05a5 B7050000 		.4byte	0x5b7
+ 1220 05a9 10       		.uleb128 0x10
+ 1221 05aa 01       		.uleb128 0x1
+ 1222 05ab 50       		.byte	0x50
+ 1223 05ac 09       		.uleb128 0x9
+ 1224 05ad 91       		.byte	0x91
+ 1225 05ae 00       		.sleb128 0
+ 1226 05af 74       		.byte	0x74
+ 1227 05b0 00       		.sleb128 0
+ 1228 05b1 22       		.byte	0x22
+ 1229 05b2 44       		.byte	0x44
+ 1230 05b3 1C       		.byte	0x1c
+ 1231 05b4 94       		.byte	0x94
+ 1232 05b5 01       		.byte	0x1
+ 1233 05b6 00       		.byte	0
+ 1234 05b7 11       		.uleb128 0x11
+ 1235 05b8 3C000000 		.4byte	.LVL42
+ 1236 05bc 5A070000 		.4byte	0x75a
+ 1237 05c0 00       		.byte	0
+ 1238 05c1 0F       		.uleb128 0xf
+ 1239 05c2 0C000000 		.4byte	.LVL35
+ 1240 05c6 86070000 		.4byte	0x786
+ 1241 05ca D5050000 		.4byte	0x5d5
+ 1242 05ce 10       		.uleb128 0x10
+ 1243 05cf 01       		.uleb128 0x1
+ 1244 05d0 50       		.byte	0x50
+ 1245 05d1 02       		.uleb128 0x2
+ 1246 05d2 74       		.byte	0x74
+ 1247 05d3 00       		.sleb128 0
+ 1248 05d4 00       		.byte	0
+ 1249 05d5 11       		.uleb128 0x11
+ 1250 05d6 22000000 		.4byte	.LVL37
+ 1251 05da 70070000 		.4byte	0x770
+ 1252 05de 0F       		.uleb128 0xf
+ 1253 05df 28000000 		.4byte	.LVL38
+ 1254 05e3 7B070000 		.4byte	0x77b
+ 1255 05e7 F1050000 		.4byte	0x5f1
+ 1256 05eb 10       		.uleb128 0x10
+ 1257 05ec 01       		.uleb128 0x1
+ 1258 05ed 50       		.byte	0x50
+ 1259 05ee 01       		.uleb128 0x1
+ 1260 05ef 30       		.byte	0x30
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 27
+
+
+ 1261 05f0 00       		.byte	0
+ 1262 05f1 11       		.uleb128 0x11
+ 1263 05f2 4C000000 		.4byte	.LVL44
+ 1264 05f6 70070000 		.4byte	0x770
+ 1265 05fa 0F       		.uleb128 0xf
+ 1266 05fb 52000000 		.4byte	.LVL45
+ 1267 05ff 4F070000 		.4byte	0x74f
+ 1268 0603 0E060000 		.4byte	0x60e
+ 1269 0607 10       		.uleb128 0x10
+ 1270 0608 01       		.uleb128 0x1
+ 1271 0609 50       		.byte	0x50
+ 1272 060a 02       		.uleb128 0x2
+ 1273 060b 09       		.byte	0x9
+ 1274 060c FF       		.byte	0xff
+ 1275 060d 00       		.byte	0
+ 1276 060e 11       		.uleb128 0x11
+ 1277 060f 56000000 		.4byte	.LVL46
+ 1278 0613 5A070000 		.4byte	0x75a
+ 1279 0617 11       		.uleb128 0x11
+ 1280 0618 60000000 		.4byte	.LVL47
+ 1281 061c 65070000 		.4byte	0x765
+ 1282 0620 13       		.uleb128 0x13
+ 1283 0621 68000000 		.4byte	.LVL49
+ 1284 0625 7B070000 		.4byte	0x77b
+ 1285 0629 10       		.uleb128 0x10
+ 1286 062a 01       		.uleb128 0x1
+ 1287 062b 50       		.byte	0x50
+ 1288 062c 01       		.uleb128 0x1
+ 1289 062d 31       		.byte	0x31
+ 1290 062e 00       		.byte	0
+ 1291 062f 00       		.byte	0
+ 1292 0630 14       		.uleb128 0x14
+ 1293 0631 DC030000 		.4byte	0x3dc
+ 1294 0635 18       		.uleb128 0x18
+ 1295 0636 79060000 		.4byte	.LASF79
+ 1296 063a 01       		.byte	0x1
+ 1297 063b AF       		.byte	0xaf
+ 1298 063c 00000000 		.4byte	.LFB67
+ 1299 0640 6C000000 		.4byte	.LFE67-.LFB67
+ 1300 0644 01       		.uleb128 0x1
+ 1301 0645 9C       		.byte	0x9c
+ 1302 0646 39070000 		.4byte	0x739
+ 1303 064a 09       		.uleb128 0x9
+ 1304 064b 4B020000 		.4byte	.LASF56
+ 1305 064f 01       		.byte	0x1
+ 1306 0650 AF       		.byte	0xaf
+ 1307 0651 B8030000 		.4byte	0x3b8
+ 1308 0655 35030000 		.4byte	.LLST21
+ 1309 0659 09       		.uleb128 0x9
+ 1310 065a 20020000 		.4byte	.LASF70
+ 1311 065e 01       		.byte	0x1
+ 1312 065f AF       		.byte	0xaf
+ 1313 0660 BD030000 		.4byte	0x3bd
+ 1314 0664 56030000 		.4byte	.LLST22
+ 1315 0668 09       		.uleb128 0x9
+ 1316 0669 3C040000 		.4byte	.LASF72
+ 1317 066d 01       		.byte	0x1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 28
+
+
+ 1318 066e AF       		.byte	0xaf
+ 1319 066f 8C000000 		.4byte	0x8c
+ 1320 0673 77030000 		.4byte	.LLST23
+ 1321 0677 0B       		.uleb128 0xb
+ 1322 0678 76000000 		.4byte	.LASF74
+ 1323 067c 01       		.byte	0x1
+ 1324 067d B5       		.byte	0xb5
+ 1325 067e D7030000 		.4byte	0x3d7
+ 1326 0682 98030000 		.4byte	.LLST24
+ 1327 0686 0C       		.uleb128 0xc
+ 1328 0687 B7020000 		.4byte	.LASF75
+ 1329 068b 01       		.byte	0x1
+ 1330 068c B9       		.byte	0xb9
+ 1331 068d 39070000 		.4byte	0x739
+ 1332 0691 02       		.uleb128 0x2
+ 1333 0692 91       		.byte	0x91
+ 1334 0693 6C       		.sleb128 -20
+ 1335 0694 0D       		.uleb128 0xd
+ 1336 0695 2E000000 		.4byte	.LBB7
+ 1337 0699 20000000 		.4byte	.LBE7-.LBB7
+ 1338 069d D3060000 		.4byte	0x6d3
+ 1339 06a1 0E       		.uleb128 0xe
+ 1340 06a2 6900     		.ascii	"i\000"
+ 1341 06a4 01       		.byte	0x1
+ 1342 06a5 C1       		.byte	0xc1
+ 1343 06a6 DA000000 		.4byte	0xda
+ 1344 06aa B7030000 		.4byte	.LLST25
+ 1345 06ae 0F       		.uleb128 0xf
+ 1346 06af 3E000000 		.4byte	.LVL59
+ 1347 06b3 4F070000 		.4byte	0x74f
+ 1348 06b7 C9060000 		.4byte	0x6c9
+ 1349 06bb 10       		.uleb128 0x10
+ 1350 06bc 01       		.uleb128 0x1
+ 1351 06bd 50       		.byte	0x50
+ 1352 06be 09       		.uleb128 0x9
+ 1353 06bf 91       		.byte	0x91
+ 1354 06c0 00       		.sleb128 0
+ 1355 06c1 74       		.byte	0x74
+ 1356 06c2 00       		.sleb128 0
+ 1357 06c3 22       		.byte	0x22
+ 1358 06c4 44       		.byte	0x44
+ 1359 06c5 1C       		.byte	0x1c
+ 1360 06c6 94       		.byte	0x94
+ 1361 06c7 01       		.byte	0x1
+ 1362 06c8 00       		.byte	0
+ 1363 06c9 11       		.uleb128 0x11
+ 1364 06ca 42000000 		.4byte	.LVL60
+ 1365 06ce 5A070000 		.4byte	0x75a
+ 1366 06d2 00       		.byte	0
+ 1367 06d3 0F       		.uleb128 0xf
+ 1368 06d4 0E000000 		.4byte	.LVL53
+ 1369 06d8 86070000 		.4byte	0x786
+ 1370 06dc E7060000 		.4byte	0x6e7
+ 1371 06e0 10       		.uleb128 0x10
+ 1372 06e1 01       		.uleb128 0x1
+ 1373 06e2 50       		.byte	0x50
+ 1374 06e3 02       		.uleb128 0x2
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 29
+
+
+ 1375 06e4 74       		.byte	0x74
+ 1376 06e5 00       		.sleb128 0
+ 1377 06e6 00       		.byte	0
+ 1378 06e7 11       		.uleb128 0x11
+ 1379 06e8 28000000 		.4byte	.LVL55
+ 1380 06ec 70070000 		.4byte	0x770
+ 1381 06f0 0F       		.uleb128 0xf
+ 1382 06f1 2E000000 		.4byte	.LVL56
+ 1383 06f5 7B070000 		.4byte	0x77b
+ 1384 06f9 03070000 		.4byte	0x703
+ 1385 06fd 10       		.uleb128 0x10
+ 1386 06fe 01       		.uleb128 0x1
+ 1387 06ff 50       		.byte	0x50
+ 1388 0700 01       		.uleb128 0x1
+ 1389 0701 30       		.byte	0x30
+ 1390 0702 00       		.byte	0
+ 1391 0703 11       		.uleb128 0x11
+ 1392 0704 52000000 		.4byte	.LVL62
+ 1393 0708 70070000 		.4byte	0x770
+ 1394 070c 0F       		.uleb128 0xf
+ 1395 070d 58000000 		.4byte	.LVL63
+ 1396 0711 4F070000 		.4byte	0x74f
+ 1397 0715 20070000 		.4byte	0x720
+ 1398 0719 10       		.uleb128 0x10
+ 1399 071a 01       		.uleb128 0x1
+ 1400 071b 50       		.byte	0x50
+ 1401 071c 02       		.uleb128 0x2
+ 1402 071d 76       		.byte	0x76
+ 1403 071e 00       		.sleb128 0
+ 1404 071f 00       		.byte	0
+ 1405 0720 11       		.uleb128 0x11
+ 1406 0721 5C000000 		.4byte	.LVL64
+ 1407 0725 5A070000 		.4byte	0x75a
+ 1408 0729 13       		.uleb128 0x13
+ 1409 072a 68000000 		.4byte	.LVL65
+ 1410 072e 7B070000 		.4byte	0x77b
+ 1411 0732 10       		.uleb128 0x10
+ 1412 0733 01       		.uleb128 0x1
+ 1413 0734 50       		.byte	0x50
+ 1414 0735 01       		.uleb128 0x1
+ 1415 0736 31       		.byte	0x31
+ 1416 0737 00       		.byte	0
+ 1417 0738 00       		.byte	0
+ 1418 0739 14       		.uleb128 0x14
+ 1419 073a DC030000 		.4byte	0x3dc
+ 1420 073e 1A       		.uleb128 0x1a
+ 1421 073f DE050000 		.4byte	.LASF91
+ 1422 0743 09       		.byte	0x9
+ 1423 0744 1207     		.2byte	0x712
+ 1424 0746 4A070000 		.4byte	0x74a
+ 1425 074a 1B       		.uleb128 0x1b
+ 1426 074b A2000000 		.4byte	0xa2
+ 1427 074f 1C       		.uleb128 0x1c
+ 1428 0750 7E010000 		.4byte	.LASF80
+ 1429 0754 7E010000 		.4byte	.LASF80
+ 1430 0758 07       		.byte	0x7
+ 1431 0759 5E       		.byte	0x5e
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 30
+
+
+ 1432 075a 1C       		.uleb128 0x1c
+ 1433 075b EC040000 		.4byte	.LASF81
+ 1434 075f EC040000 		.4byte	.LASF81
+ 1435 0763 07       		.byte	0x7
+ 1436 0764 5C       		.byte	0x5c
+ 1437 0765 1C       		.uleb128 0x1c
+ 1438 0766 8D000000 		.4byte	.LASF82
+ 1439 076a 8D000000 		.4byte	.LASF82
+ 1440 076e 07       		.byte	0x7
+ 1441 076f 60       		.byte	0x60
+ 1442 0770 1C       		.uleb128 0x1c
+ 1443 0771 8E060000 		.4byte	.LASF83
+ 1444 0775 8E060000 		.4byte	.LASF83
+ 1445 0779 07       		.byte	0x7
+ 1446 077a 66       		.byte	0x66
+ 1447 077b 1C       		.uleb128 0x1c
+ 1448 077c FE010000 		.4byte	.LASF84
+ 1449 0780 FE010000 		.4byte	.LASF84
+ 1450 0784 08       		.byte	0x8
+ 1451 0785 26       		.byte	0x26
+ 1452 0786 1C       		.uleb128 0x1c
+ 1453 0787 C7020000 		.4byte	.LASF85
+ 1454 078b C7020000 		.4byte	.LASF85
+ 1455 078f 06       		.byte	0x6
+ 1456 0790 B5       		.byte	0xb5
+ 1457 0791 00       		.byte	0
+ 1458              		.section	.debug_abbrev,"",%progbits
+ 1459              	.Ldebug_abbrev0:
+ 1460 0000 01       		.uleb128 0x1
+ 1461 0001 11       		.uleb128 0x11
+ 1462 0002 01       		.byte	0x1
+ 1463 0003 25       		.uleb128 0x25
+ 1464 0004 0E       		.uleb128 0xe
+ 1465 0005 13       		.uleb128 0x13
+ 1466 0006 0B       		.uleb128 0xb
+ 1467 0007 03       		.uleb128 0x3
+ 1468 0008 0E       		.uleb128 0xe
+ 1469 0009 1B       		.uleb128 0x1b
+ 1470 000a 0E       		.uleb128 0xe
+ 1471 000b 55       		.uleb128 0x55
+ 1472 000c 17       		.uleb128 0x17
+ 1473 000d 11       		.uleb128 0x11
+ 1474 000e 01       		.uleb128 0x1
+ 1475 000f 10       		.uleb128 0x10
+ 1476 0010 17       		.uleb128 0x17
+ 1477 0011 00       		.byte	0
+ 1478 0012 00       		.byte	0
+ 1479 0013 02       		.uleb128 0x2
+ 1480 0014 24       		.uleb128 0x24
+ 1481 0015 00       		.byte	0
+ 1482 0016 0B       		.uleb128 0xb
+ 1483 0017 0B       		.uleb128 0xb
+ 1484 0018 3E       		.uleb128 0x3e
+ 1485 0019 0B       		.uleb128 0xb
+ 1486 001a 03       		.uleb128 0x3
+ 1487 001b 0E       		.uleb128 0xe
+ 1488 001c 00       		.byte	0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 31
+
+
+ 1489 001d 00       		.byte	0
+ 1490 001e 03       		.uleb128 0x3
+ 1491 001f 16       		.uleb128 0x16
+ 1492 0020 00       		.byte	0
+ 1493 0021 03       		.uleb128 0x3
+ 1494 0022 0E       		.uleb128 0xe
+ 1495 0023 3A       		.uleb128 0x3a
+ 1496 0024 0B       		.uleb128 0xb
+ 1497 0025 3B       		.uleb128 0x3b
+ 1498 0026 0B       		.uleb128 0xb
+ 1499 0027 49       		.uleb128 0x49
+ 1500 0028 13       		.uleb128 0x13
+ 1501 0029 00       		.byte	0
+ 1502 002a 00       		.byte	0
+ 1503 002b 04       		.uleb128 0x4
+ 1504 002c 24       		.uleb128 0x24
+ 1505 002d 00       		.byte	0
+ 1506 002e 0B       		.uleb128 0xb
+ 1507 002f 0B       		.uleb128 0xb
+ 1508 0030 3E       		.uleb128 0x3e
+ 1509 0031 0B       		.uleb128 0xb
+ 1510 0032 03       		.uleb128 0x3
+ 1511 0033 08       		.uleb128 0x8
+ 1512 0034 00       		.byte	0
+ 1513 0035 00       		.byte	0
+ 1514 0036 05       		.uleb128 0x5
+ 1515 0037 16       		.uleb128 0x16
+ 1516 0038 00       		.byte	0
+ 1517 0039 03       		.uleb128 0x3
+ 1518 003a 0E       		.uleb128 0xe
+ 1519 003b 3A       		.uleb128 0x3a
+ 1520 003c 0B       		.uleb128 0xb
+ 1521 003d 3B       		.uleb128 0x3b
+ 1522 003e 05       		.uleb128 0x5
+ 1523 003f 49       		.uleb128 0x49
+ 1524 0040 13       		.uleb128 0x13
+ 1525 0041 00       		.byte	0
+ 1526 0042 00       		.byte	0
+ 1527 0043 06       		.uleb128 0x6
+ 1528 0044 04       		.uleb128 0x4
+ 1529 0045 01       		.byte	0x1
+ 1530 0046 0B       		.uleb128 0xb
+ 1531 0047 0B       		.uleb128 0xb
+ 1532 0048 49       		.uleb128 0x49
+ 1533 0049 13       		.uleb128 0x13
+ 1534 004a 3A       		.uleb128 0x3a
+ 1535 004b 0B       		.uleb128 0xb
+ 1536 004c 3B       		.uleb128 0x3b
+ 1537 004d 0B       		.uleb128 0xb
+ 1538 004e 01       		.uleb128 0x1
+ 1539 004f 13       		.uleb128 0x13
+ 1540 0050 00       		.byte	0
+ 1541 0051 00       		.byte	0
+ 1542 0052 07       		.uleb128 0x7
+ 1543 0053 28       		.uleb128 0x28
+ 1544 0054 00       		.byte	0
+ 1545 0055 03       		.uleb128 0x3
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 32
+
+
+ 1546 0056 0E       		.uleb128 0xe
+ 1547 0057 1C       		.uleb128 0x1c
+ 1548 0058 0B       		.uleb128 0xb
+ 1549 0059 00       		.byte	0
+ 1550 005a 00       		.byte	0
+ 1551 005b 08       		.uleb128 0x8
+ 1552 005c 2E       		.uleb128 0x2e
+ 1553 005d 01       		.byte	0x1
+ 1554 005e 03       		.uleb128 0x3
+ 1555 005f 0E       		.uleb128 0xe
+ 1556 0060 3A       		.uleb128 0x3a
+ 1557 0061 0B       		.uleb128 0xb
+ 1558 0062 3B       		.uleb128 0x3b
+ 1559 0063 0B       		.uleb128 0xb
+ 1560 0064 27       		.uleb128 0x27
+ 1561 0065 19       		.uleb128 0x19
+ 1562 0066 11       		.uleb128 0x11
+ 1563 0067 01       		.uleb128 0x1
+ 1564 0068 12       		.uleb128 0x12
+ 1565 0069 06       		.uleb128 0x6
+ 1566 006a 40       		.uleb128 0x40
+ 1567 006b 18       		.uleb128 0x18
+ 1568 006c 9742     		.uleb128 0x2117
+ 1569 006e 19       		.uleb128 0x19
+ 1570 006f 01       		.uleb128 0x1
+ 1571 0070 13       		.uleb128 0x13
+ 1572 0071 00       		.byte	0
+ 1573 0072 00       		.byte	0
+ 1574 0073 09       		.uleb128 0x9
+ 1575 0074 05       		.uleb128 0x5
+ 1576 0075 00       		.byte	0
+ 1577 0076 03       		.uleb128 0x3
+ 1578 0077 0E       		.uleb128 0xe
+ 1579 0078 3A       		.uleb128 0x3a
+ 1580 0079 0B       		.uleb128 0xb
+ 1581 007a 3B       		.uleb128 0x3b
+ 1582 007b 0B       		.uleb128 0xb
+ 1583 007c 49       		.uleb128 0x49
+ 1584 007d 13       		.uleb128 0x13
+ 1585 007e 02       		.uleb128 0x2
+ 1586 007f 17       		.uleb128 0x17
+ 1587 0080 00       		.byte	0
+ 1588 0081 00       		.byte	0
+ 1589 0082 0A       		.uleb128 0xa
+ 1590 0083 05       		.uleb128 0x5
+ 1591 0084 00       		.byte	0
+ 1592 0085 03       		.uleb128 0x3
+ 1593 0086 0E       		.uleb128 0xe
+ 1594 0087 3A       		.uleb128 0x3a
+ 1595 0088 0B       		.uleb128 0xb
+ 1596 0089 3B       		.uleb128 0x3b
+ 1597 008a 0B       		.uleb128 0xb
+ 1598 008b 49       		.uleb128 0x49
+ 1599 008c 13       		.uleb128 0x13
+ 1600 008d 02       		.uleb128 0x2
+ 1601 008e 18       		.uleb128 0x18
+ 1602 008f 00       		.byte	0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 33
+
+
+ 1603 0090 00       		.byte	0
+ 1604 0091 0B       		.uleb128 0xb
+ 1605 0092 34       		.uleb128 0x34
+ 1606 0093 00       		.byte	0
+ 1607 0094 03       		.uleb128 0x3
+ 1608 0095 0E       		.uleb128 0xe
+ 1609 0096 3A       		.uleb128 0x3a
+ 1610 0097 0B       		.uleb128 0xb
+ 1611 0098 3B       		.uleb128 0x3b
+ 1612 0099 0B       		.uleb128 0xb
+ 1613 009a 49       		.uleb128 0x49
+ 1614 009b 13       		.uleb128 0x13
+ 1615 009c 02       		.uleb128 0x2
+ 1616 009d 17       		.uleb128 0x17
+ 1617 009e 00       		.byte	0
+ 1618 009f 00       		.byte	0
+ 1619 00a0 0C       		.uleb128 0xc
+ 1620 00a1 34       		.uleb128 0x34
+ 1621 00a2 00       		.byte	0
+ 1622 00a3 03       		.uleb128 0x3
+ 1623 00a4 0E       		.uleb128 0xe
+ 1624 00a5 3A       		.uleb128 0x3a
+ 1625 00a6 0B       		.uleb128 0xb
+ 1626 00a7 3B       		.uleb128 0x3b
+ 1627 00a8 0B       		.uleb128 0xb
+ 1628 00a9 49       		.uleb128 0x49
+ 1629 00aa 13       		.uleb128 0x13
+ 1630 00ab 02       		.uleb128 0x2
+ 1631 00ac 18       		.uleb128 0x18
+ 1632 00ad 00       		.byte	0
+ 1633 00ae 00       		.byte	0
+ 1634 00af 0D       		.uleb128 0xd
+ 1635 00b0 0B       		.uleb128 0xb
+ 1636 00b1 01       		.byte	0x1
+ 1637 00b2 11       		.uleb128 0x11
+ 1638 00b3 01       		.uleb128 0x1
+ 1639 00b4 12       		.uleb128 0x12
+ 1640 00b5 06       		.uleb128 0x6
+ 1641 00b6 01       		.uleb128 0x1
+ 1642 00b7 13       		.uleb128 0x13
+ 1643 00b8 00       		.byte	0
+ 1644 00b9 00       		.byte	0
+ 1645 00ba 0E       		.uleb128 0xe
+ 1646 00bb 34       		.uleb128 0x34
+ 1647 00bc 00       		.byte	0
+ 1648 00bd 03       		.uleb128 0x3
+ 1649 00be 08       		.uleb128 0x8
+ 1650 00bf 3A       		.uleb128 0x3a
+ 1651 00c0 0B       		.uleb128 0xb
+ 1652 00c1 3B       		.uleb128 0x3b
+ 1653 00c2 0B       		.uleb128 0xb
+ 1654 00c3 49       		.uleb128 0x49
+ 1655 00c4 13       		.uleb128 0x13
+ 1656 00c5 02       		.uleb128 0x2
+ 1657 00c6 17       		.uleb128 0x17
+ 1658 00c7 00       		.byte	0
+ 1659 00c8 00       		.byte	0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 34
+
+
+ 1660 00c9 0F       		.uleb128 0xf
+ 1661 00ca 898201   		.uleb128 0x4109
+ 1662 00cd 01       		.byte	0x1
+ 1663 00ce 11       		.uleb128 0x11
+ 1664 00cf 01       		.uleb128 0x1
+ 1665 00d0 31       		.uleb128 0x31
+ 1666 00d1 13       		.uleb128 0x13
+ 1667 00d2 01       		.uleb128 0x1
+ 1668 00d3 13       		.uleb128 0x13
+ 1669 00d4 00       		.byte	0
+ 1670 00d5 00       		.byte	0
+ 1671 00d6 10       		.uleb128 0x10
+ 1672 00d7 8A8201   		.uleb128 0x410a
+ 1673 00da 00       		.byte	0
+ 1674 00db 02       		.uleb128 0x2
+ 1675 00dc 18       		.uleb128 0x18
+ 1676 00dd 9142     		.uleb128 0x2111
+ 1677 00df 18       		.uleb128 0x18
+ 1678 00e0 00       		.byte	0
+ 1679 00e1 00       		.byte	0
+ 1680 00e2 11       		.uleb128 0x11
+ 1681 00e3 898201   		.uleb128 0x4109
+ 1682 00e6 00       		.byte	0
+ 1683 00e7 11       		.uleb128 0x11
+ 1684 00e8 01       		.uleb128 0x1
+ 1685 00e9 31       		.uleb128 0x31
+ 1686 00ea 13       		.uleb128 0x13
+ 1687 00eb 00       		.byte	0
+ 1688 00ec 00       		.byte	0
+ 1689 00ed 12       		.uleb128 0x12
+ 1690 00ee 0B       		.uleb128 0xb
+ 1691 00ef 01       		.byte	0x1
+ 1692 00f0 55       		.uleb128 0x55
+ 1693 00f1 17       		.uleb128 0x17
+ 1694 00f2 01       		.uleb128 0x1
+ 1695 00f3 13       		.uleb128 0x13
+ 1696 00f4 00       		.byte	0
+ 1697 00f5 00       		.byte	0
+ 1698 00f6 13       		.uleb128 0x13
+ 1699 00f7 898201   		.uleb128 0x4109
+ 1700 00fa 01       		.byte	0x1
+ 1701 00fb 11       		.uleb128 0x11
+ 1702 00fc 01       		.uleb128 0x1
+ 1703 00fd 31       		.uleb128 0x31
+ 1704 00fe 13       		.uleb128 0x13
+ 1705 00ff 00       		.byte	0
+ 1706 0100 00       		.byte	0
+ 1707 0101 14       		.uleb128 0x14
+ 1708 0102 26       		.uleb128 0x26
+ 1709 0103 00       		.byte	0
+ 1710 0104 49       		.uleb128 0x49
+ 1711 0105 13       		.uleb128 0x13
+ 1712 0106 00       		.byte	0
+ 1713 0107 00       		.byte	0
+ 1714 0108 15       		.uleb128 0x15
+ 1715 0109 0F       		.uleb128 0xf
+ 1716 010a 00       		.byte	0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 35
+
+
+ 1717 010b 0B       		.uleb128 0xb
+ 1718 010c 0B       		.uleb128 0xb
+ 1719 010d 49       		.uleb128 0x49
+ 1720 010e 13       		.uleb128 0x13
+ 1721 010f 00       		.byte	0
+ 1722 0110 00       		.byte	0
+ 1723 0111 16       		.uleb128 0x16
+ 1724 0112 01       		.uleb128 0x1
+ 1725 0113 01       		.byte	0x1
+ 1726 0114 49       		.uleb128 0x49
+ 1727 0115 13       		.uleb128 0x13
+ 1728 0116 01       		.uleb128 0x1
+ 1729 0117 13       		.uleb128 0x13
+ 1730 0118 00       		.byte	0
+ 1731 0119 00       		.byte	0
+ 1732 011a 17       		.uleb128 0x17
+ 1733 011b 21       		.uleb128 0x21
+ 1734 011c 00       		.byte	0
+ 1735 011d 49       		.uleb128 0x49
+ 1736 011e 13       		.uleb128 0x13
+ 1737 011f 2F       		.uleb128 0x2f
+ 1738 0120 0B       		.uleb128 0xb
+ 1739 0121 00       		.byte	0
+ 1740 0122 00       		.byte	0
+ 1741 0123 18       		.uleb128 0x18
+ 1742 0124 2E       		.uleb128 0x2e
+ 1743 0125 01       		.byte	0x1
+ 1744 0126 3F       		.uleb128 0x3f
+ 1745 0127 19       		.uleb128 0x19
+ 1746 0128 03       		.uleb128 0x3
+ 1747 0129 0E       		.uleb128 0xe
+ 1748 012a 3A       		.uleb128 0x3a
+ 1749 012b 0B       		.uleb128 0xb
+ 1750 012c 3B       		.uleb128 0x3b
+ 1751 012d 0B       		.uleb128 0xb
+ 1752 012e 27       		.uleb128 0x27
+ 1753 012f 19       		.uleb128 0x19
+ 1754 0130 11       		.uleb128 0x11
+ 1755 0131 01       		.uleb128 0x1
+ 1756 0132 12       		.uleb128 0x12
+ 1757 0133 06       		.uleb128 0x6
+ 1758 0134 40       		.uleb128 0x40
+ 1759 0135 18       		.uleb128 0x18
+ 1760 0136 9742     		.uleb128 0x2117
+ 1761 0138 19       		.uleb128 0x19
+ 1762 0139 01       		.uleb128 0x1
+ 1763 013a 13       		.uleb128 0x13
+ 1764 013b 00       		.byte	0
+ 1765 013c 00       		.byte	0
+ 1766 013d 19       		.uleb128 0x19
+ 1767 013e 2E       		.uleb128 0x2e
+ 1768 013f 01       		.byte	0x1
+ 1769 0140 3F       		.uleb128 0x3f
+ 1770 0141 19       		.uleb128 0x19
+ 1771 0142 03       		.uleb128 0x3
+ 1772 0143 0E       		.uleb128 0xe
+ 1773 0144 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 36
+
+
+ 1774 0145 0B       		.uleb128 0xb
+ 1775 0146 3B       		.uleb128 0x3b
+ 1776 0147 0B       		.uleb128 0xb
+ 1777 0148 27       		.uleb128 0x27
+ 1778 0149 19       		.uleb128 0x19
+ 1779 014a 49       		.uleb128 0x49
+ 1780 014b 13       		.uleb128 0x13
+ 1781 014c 11       		.uleb128 0x11
+ 1782 014d 01       		.uleb128 0x1
+ 1783 014e 12       		.uleb128 0x12
+ 1784 014f 06       		.uleb128 0x6
+ 1785 0150 40       		.uleb128 0x40
+ 1786 0151 18       		.uleb128 0x18
+ 1787 0152 9742     		.uleb128 0x2117
+ 1788 0154 19       		.uleb128 0x19
+ 1789 0155 01       		.uleb128 0x1
+ 1790 0156 13       		.uleb128 0x13
+ 1791 0157 00       		.byte	0
+ 1792 0158 00       		.byte	0
+ 1793 0159 1A       		.uleb128 0x1a
+ 1794 015a 34       		.uleb128 0x34
+ 1795 015b 00       		.byte	0
+ 1796 015c 03       		.uleb128 0x3
+ 1797 015d 0E       		.uleb128 0xe
+ 1798 015e 3A       		.uleb128 0x3a
+ 1799 015f 0B       		.uleb128 0xb
+ 1800 0160 3B       		.uleb128 0x3b
+ 1801 0161 05       		.uleb128 0x5
+ 1802 0162 49       		.uleb128 0x49
+ 1803 0163 13       		.uleb128 0x13
+ 1804 0164 3F       		.uleb128 0x3f
+ 1805 0165 19       		.uleb128 0x19
+ 1806 0166 3C       		.uleb128 0x3c
+ 1807 0167 19       		.uleb128 0x19
+ 1808 0168 00       		.byte	0
+ 1809 0169 00       		.byte	0
+ 1810 016a 1B       		.uleb128 0x1b
+ 1811 016b 35       		.uleb128 0x35
+ 1812 016c 00       		.byte	0
+ 1813 016d 49       		.uleb128 0x49
+ 1814 016e 13       		.uleb128 0x13
+ 1815 016f 00       		.byte	0
+ 1816 0170 00       		.byte	0
+ 1817 0171 1C       		.uleb128 0x1c
+ 1818 0172 2E       		.uleb128 0x2e
+ 1819 0173 00       		.byte	0
+ 1820 0174 3F       		.uleb128 0x3f
+ 1821 0175 19       		.uleb128 0x19
+ 1822 0176 3C       		.uleb128 0x3c
+ 1823 0177 19       		.uleb128 0x19
+ 1824 0178 6E       		.uleb128 0x6e
+ 1825 0179 0E       		.uleb128 0xe
+ 1826 017a 03       		.uleb128 0x3
+ 1827 017b 0E       		.uleb128 0xe
+ 1828 017c 3A       		.uleb128 0x3a
+ 1829 017d 0B       		.uleb128 0xb
+ 1830 017e 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 37
+
+
+ 1831 017f 0B       		.uleb128 0xb
+ 1832 0180 00       		.byte	0
+ 1833 0181 00       		.byte	0
+ 1834 0182 00       		.byte	0
+ 1835              		.section	.debug_loc,"",%progbits
+ 1836              	.Ldebug_loc0:
+ 1837              	.LLST0:
+ 1838 0000 00000000 		.4byte	.LVL0
+ 1839 0004 10000000 		.4byte	.LVL2
+ 1840 0008 0100     		.2byte	0x1
+ 1841 000a 50       		.byte	0x50
+ 1842 000b 10000000 		.4byte	.LVL2
+ 1843 000f 96000000 		.4byte	.LFE63
+ 1844 0013 0400     		.2byte	0x4
+ 1845 0015 F3       		.byte	0xf3
+ 1846 0016 01       		.uleb128 0x1
+ 1847 0017 50       		.byte	0x50
+ 1848 0018 9F       		.byte	0x9f
+ 1849 0019 00000000 		.4byte	0
+ 1850 001d 00000000 		.4byte	0
+ 1851              	.LLST1:
+ 1852 0021 00000000 		.4byte	.LVL0
+ 1853 0025 23000000 		.4byte	.LVL4-1
+ 1854 0029 0100     		.2byte	0x1
+ 1855 002b 51       		.byte	0x51
+ 1856 002c 23000000 		.4byte	.LVL4-1
+ 1857 0030 96000000 		.4byte	.LFE63
+ 1858 0034 0400     		.2byte	0x4
+ 1859 0036 F3       		.byte	0xf3
+ 1860 0037 01       		.uleb128 0x1
+ 1861 0038 51       		.byte	0x51
+ 1862 0039 9F       		.byte	0x9f
+ 1863 003a 00000000 		.4byte	0
+ 1864 003e 00000000 		.4byte	0
+ 1865              	.LLST2:
+ 1866 0042 00000000 		.4byte	.LVL0
+ 1867 0046 0C000000 		.4byte	.LVL1
+ 1868 004a 0100     		.2byte	0x1
+ 1869 004c 52       		.byte	0x52
+ 1870 004d 0C000000 		.4byte	.LVL1
+ 1871 0051 96000000 		.4byte	.LFE63
+ 1872 0055 0400     		.2byte	0x4
+ 1873 0057 F3       		.byte	0xf3
+ 1874 0058 01       		.uleb128 0x1
+ 1875 0059 52       		.byte	0x52
+ 1876 005a 9F       		.byte	0x9f
+ 1877 005b 00000000 		.4byte	0
+ 1878 005f 00000000 		.4byte	0
+ 1879              	.LLST3:
+ 1880 0063 00000000 		.4byte	.LVL0
+ 1881 0067 12000000 		.4byte	.LVL3
+ 1882 006b 0100     		.2byte	0x1
+ 1883 006d 53       		.byte	0x53
+ 1884 006e 12000000 		.4byte	.LVL3
+ 1885 0072 96000000 		.4byte	.LFE63
+ 1886 0076 0400     		.2byte	0x4
+ 1887 0078 F3       		.byte	0xf3
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 38
+
+
+ 1888 0079 01       		.uleb128 0x1
+ 1889 007a 53       		.byte	0x53
+ 1890 007b 9F       		.byte	0x9f
+ 1891 007c 00000000 		.4byte	0
+ 1892 0080 00000000 		.4byte	0
+ 1893              	.LLST4:
+ 1894 0084 12000000 		.4byte	.LVL3
+ 1895 0088 23000000 		.4byte	.LVL4-1
+ 1896 008c 0100     		.2byte	0x1
+ 1897 008e 53       		.byte	0x53
+ 1898 008f 23000000 		.4byte	.LVL4-1
+ 1899 0093 96000000 		.4byte	.LFE63
+ 1900 0097 0200     		.2byte	0x2
+ 1901 0099 91       		.byte	0x91
+ 1902 009a 66       		.sleb128 -26
+ 1903 009b 00000000 		.4byte	0
+ 1904 009f 00000000 		.4byte	0
+ 1905              	.LLST5:
+ 1906 00a3 2A000000 		.4byte	.LVL5
+ 1907 00a7 2E000000 		.4byte	.LVL6
+ 1908 00ab 0200     		.2byte	0x2
+ 1909 00ad 30       		.byte	0x30
+ 1910 00ae 9F       		.byte	0x9f
+ 1911 00af 2E000000 		.4byte	.LVL6
+ 1912 00b3 52000000 		.4byte	.LVL11
+ 1913 00b7 0100     		.2byte	0x1
+ 1914 00b9 54       		.byte	0x54
+ 1915 00ba 6E000000 		.4byte	.LVL17
+ 1916 00be 70000000 		.4byte	.LVL18
+ 1917 00c2 0100     		.2byte	0x1
+ 1918 00c4 54       		.byte	0x54
+ 1919 00c5 00000000 		.4byte	0
+ 1920 00c9 00000000 		.4byte	0
+ 1921              	.LLST6:
+ 1922 00cd 54000000 		.4byte	.LVL12
+ 1923 00d1 6E000000 		.4byte	.LVL17
+ 1924 00d5 0100     		.2byte	0x1
+ 1925 00d7 54       		.byte	0x54
+ 1926 00d8 70000000 		.4byte	.LVL18
+ 1927 00dc 76000000 		.4byte	.LVL19
+ 1928 00e0 0100     		.2byte	0x1
+ 1929 00e2 54       		.byte	0x54
+ 1930 00e3 00000000 		.4byte	0
+ 1931 00e7 00000000 		.4byte	0
+ 1932              	.LLST7:
+ 1933 00eb 76000000 		.4byte	.LVL19
+ 1934 00ef 8C000000 		.4byte	.LVL23
+ 1935 00f3 0100     		.2byte	0x1
+ 1936 00f5 54       		.byte	0x54
+ 1937 00f6 00000000 		.4byte	0
+ 1938 00fa 00000000 		.4byte	0
+ 1939              	.LLST8:
+ 1940 00fe 00000000 		.4byte	.LVL25
+ 1941 0102 13000000 		.4byte	.LVL26-1
+ 1942 0106 0100     		.2byte	0x1
+ 1943 0108 50       		.byte	0x50
+ 1944 0109 13000000 		.4byte	.LVL26-1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 39
+
+
+ 1945 010d 2A000000 		.4byte	.LVL28
+ 1946 0111 0400     		.2byte	0x4
+ 1947 0113 F3       		.byte	0xf3
+ 1948 0114 01       		.uleb128 0x1
+ 1949 0115 50       		.byte	0x50
+ 1950 0116 9F       		.byte	0x9f
+ 1951 0117 2A000000 		.4byte	.LVL28
+ 1952 011b 2C000000 		.4byte	.LFE64
+ 1953 011f 0100     		.2byte	0x1
+ 1954 0121 50       		.byte	0x50
+ 1955 0122 00000000 		.4byte	0
+ 1956 0126 00000000 		.4byte	0
+ 1957              	.LLST9:
+ 1958 012a 00000000 		.4byte	.LVL25
+ 1959 012e 13000000 		.4byte	.LVL26-1
+ 1960 0132 0100     		.2byte	0x1
+ 1961 0134 51       		.byte	0x51
+ 1962 0135 13000000 		.4byte	.LVL26-1
+ 1963 0139 2A000000 		.4byte	.LVL28
+ 1964 013d 0400     		.2byte	0x4
+ 1965 013f F3       		.byte	0xf3
+ 1966 0140 01       		.uleb128 0x1
+ 1967 0141 51       		.byte	0x51
+ 1968 0142 9F       		.byte	0x9f
+ 1969 0143 2A000000 		.4byte	.LVL28
+ 1970 0147 2C000000 		.4byte	.LFE64
+ 1971 014b 0100     		.2byte	0x1
+ 1972 014d 51       		.byte	0x51
+ 1973 014e 00000000 		.4byte	0
+ 1974 0152 00000000 		.4byte	0
+ 1975              	.LLST10:
+ 1976 0156 00000000 		.4byte	.LVL25
+ 1977 015a 13000000 		.4byte	.LVL26-1
+ 1978 015e 0100     		.2byte	0x1
+ 1979 0160 52       		.byte	0x52
+ 1980 0161 13000000 		.4byte	.LVL26-1
+ 1981 0165 26000000 		.4byte	.LVL27
+ 1982 0169 0100     		.2byte	0x1
+ 1983 016b 57       		.byte	0x57
+ 1984 016c 26000000 		.4byte	.LVL27
+ 1985 0170 2A000000 		.4byte	.LVL28
+ 1986 0174 0400     		.2byte	0x4
+ 1987 0176 F3       		.byte	0xf3
+ 1988 0177 01       		.uleb128 0x1
+ 1989 0178 52       		.byte	0x52
+ 1990 0179 9F       		.byte	0x9f
+ 1991 017a 2A000000 		.4byte	.LVL28
+ 1992 017e 2C000000 		.4byte	.LFE64
+ 1993 0182 0100     		.2byte	0x1
+ 1994 0184 52       		.byte	0x52
+ 1995 0185 00000000 		.4byte	0
+ 1996 0189 00000000 		.4byte	0
+ 1997              	.LLST11:
+ 1998 018d 00000000 		.4byte	.LVL25
+ 1999 0191 13000000 		.4byte	.LVL26-1
+ 2000 0195 0100     		.2byte	0x1
+ 2001 0197 53       		.byte	0x53
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 40
+
+
+ 2002 0198 13000000 		.4byte	.LVL26-1
+ 2003 019c 26000000 		.4byte	.LVL27
+ 2004 01a0 0100     		.2byte	0x1
+ 2005 01a2 54       		.byte	0x54
+ 2006 01a3 26000000 		.4byte	.LVL27
+ 2007 01a7 2A000000 		.4byte	.LVL28
+ 2008 01ab 0400     		.2byte	0x4
+ 2009 01ad F3       		.byte	0xf3
+ 2010 01ae 01       		.uleb128 0x1
+ 2011 01af 53       		.byte	0x53
+ 2012 01b0 9F       		.byte	0x9f
+ 2013 01b1 2A000000 		.4byte	.LVL28
+ 2014 01b5 2C000000 		.4byte	.LFE64
+ 2015 01b9 0100     		.2byte	0x1
+ 2016 01bb 53       		.byte	0x53
+ 2017 01bc 00000000 		.4byte	0
+ 2018 01c0 00000000 		.4byte	0
+ 2019              	.LLST12:
+ 2020 01c4 00000000 		.4byte	.LVL29
+ 2021 01c8 13000000 		.4byte	.LVL30-1
+ 2022 01cc 0100     		.2byte	0x1
+ 2023 01ce 50       		.byte	0x50
+ 2024 01cf 13000000 		.4byte	.LVL30-1
+ 2025 01d3 2A000000 		.4byte	.LVL32
+ 2026 01d7 0400     		.2byte	0x4
+ 2027 01d9 F3       		.byte	0xf3
+ 2028 01da 01       		.uleb128 0x1
+ 2029 01db 50       		.byte	0x50
+ 2030 01dc 9F       		.byte	0x9f
+ 2031 01dd 2A000000 		.4byte	.LVL32
+ 2032 01e1 2C000000 		.4byte	.LFE65
+ 2033 01e5 0100     		.2byte	0x1
+ 2034 01e7 50       		.byte	0x50
+ 2035 01e8 00000000 		.4byte	0
+ 2036 01ec 00000000 		.4byte	0
+ 2037              	.LLST13:
+ 2038 01f0 00000000 		.4byte	.LVL29
+ 2039 01f4 13000000 		.4byte	.LVL30-1
+ 2040 01f8 0100     		.2byte	0x1
+ 2041 01fa 51       		.byte	0x51
+ 2042 01fb 13000000 		.4byte	.LVL30-1
+ 2043 01ff 2A000000 		.4byte	.LVL32
+ 2044 0203 0400     		.2byte	0x4
+ 2045 0205 F3       		.byte	0xf3
+ 2046 0206 01       		.uleb128 0x1
+ 2047 0207 51       		.byte	0x51
+ 2048 0208 9F       		.byte	0x9f
+ 2049 0209 2A000000 		.4byte	.LVL32
+ 2050 020d 2C000000 		.4byte	.LFE65
+ 2051 0211 0100     		.2byte	0x1
+ 2052 0213 51       		.byte	0x51
+ 2053 0214 00000000 		.4byte	0
+ 2054 0218 00000000 		.4byte	0
+ 2055              	.LLST14:
+ 2056 021c 00000000 		.4byte	.LVL29
+ 2057 0220 13000000 		.4byte	.LVL30-1
+ 2058 0224 0100     		.2byte	0x1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 41
+
+
+ 2059 0226 52       		.byte	0x52
+ 2060 0227 13000000 		.4byte	.LVL30-1
+ 2061 022b 26000000 		.4byte	.LVL31
+ 2062 022f 0100     		.2byte	0x1
+ 2063 0231 57       		.byte	0x57
+ 2064 0232 26000000 		.4byte	.LVL31
+ 2065 0236 2A000000 		.4byte	.LVL32
+ 2066 023a 0400     		.2byte	0x4
+ 2067 023c F3       		.byte	0xf3
+ 2068 023d 01       		.uleb128 0x1
+ 2069 023e 52       		.byte	0x52
+ 2070 023f 9F       		.byte	0x9f
+ 2071 0240 2A000000 		.4byte	.LVL32
+ 2072 0244 2C000000 		.4byte	.LFE65
+ 2073 0248 0100     		.2byte	0x1
+ 2074 024a 52       		.byte	0x52
+ 2075 024b 00000000 		.4byte	0
+ 2076 024f 00000000 		.4byte	0
+ 2077              	.LLST15:
+ 2078 0253 00000000 		.4byte	.LVL29
+ 2079 0257 13000000 		.4byte	.LVL30-1
+ 2080 025b 0100     		.2byte	0x1
+ 2081 025d 53       		.byte	0x53
+ 2082 025e 13000000 		.4byte	.LVL30-1
+ 2083 0262 26000000 		.4byte	.LVL31
+ 2084 0266 0100     		.2byte	0x1
+ 2085 0268 54       		.byte	0x54
+ 2086 0269 26000000 		.4byte	.LVL31
+ 2087 026d 2A000000 		.4byte	.LVL32
+ 2088 0271 0400     		.2byte	0x4
+ 2089 0273 F3       		.byte	0xf3
+ 2090 0274 01       		.uleb128 0x1
+ 2091 0275 53       		.byte	0x53
+ 2092 0276 9F       		.byte	0x9f
+ 2093 0277 2A000000 		.4byte	.LVL32
+ 2094 027b 2C000000 		.4byte	.LFE65
+ 2095 027f 0100     		.2byte	0x1
+ 2096 0281 53       		.byte	0x53
+ 2097 0282 00000000 		.4byte	0
+ 2098 0286 00000000 		.4byte	0
+ 2099              	.LLST16:
+ 2100 028a 00000000 		.4byte	.LVL33
+ 2101 028e 0B000000 		.4byte	.LVL35-1
+ 2102 0292 0100     		.2byte	0x1
+ 2103 0294 50       		.byte	0x50
+ 2104 0295 0B000000 		.4byte	.LVL35-1
+ 2105 0299 72000000 		.4byte	.LFE66
+ 2106 029d 0400     		.2byte	0x4
+ 2107 029f F3       		.byte	0xf3
+ 2108 02a0 01       		.uleb128 0x1
+ 2109 02a1 50       		.byte	0x50
+ 2110 02a2 9F       		.byte	0x9f
+ 2111 02a3 00000000 		.4byte	0
+ 2112 02a7 00000000 		.4byte	0
+ 2113              	.LLST17:
+ 2114 02ab 00000000 		.4byte	.LVL33
+ 2115 02af 0B000000 		.4byte	.LVL35-1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 42
+
+
+ 2116 02b3 0100     		.2byte	0x1
+ 2117 02b5 51       		.byte	0x51
+ 2118 02b6 0B000000 		.4byte	.LVL35-1
+ 2119 02ba 72000000 		.4byte	.LFE66
+ 2120 02be 0400     		.2byte	0x4
+ 2121 02c0 F3       		.byte	0xf3
+ 2122 02c1 01       		.uleb128 0x1
+ 2123 02c2 51       		.byte	0x51
+ 2124 02c3 9F       		.byte	0x9f
+ 2125 02c4 00000000 		.4byte	0
+ 2126 02c8 00000000 		.4byte	0
+ 2127              	.LLST18:
+ 2128 02cc 08000000 		.4byte	.LVL34
+ 2129 02d0 62000000 		.4byte	.LVL48
+ 2130 02d4 0200     		.2byte	0x2
+ 2131 02d6 30       		.byte	0x30
+ 2132 02d7 9F       		.byte	0x9f
+ 2133 02d8 62000000 		.4byte	.LVL48
+ 2134 02dc 6C000000 		.4byte	.LVL50
+ 2135 02e0 0100     		.2byte	0x1
+ 2136 02e2 54       		.byte	0x54
+ 2137 02e3 6C000000 		.4byte	.LVL50
+ 2138 02e7 6E000000 		.4byte	.LVL51
+ 2139 02eb 0200     		.2byte	0x2
+ 2140 02ed 30       		.byte	0x30
+ 2141 02ee 9F       		.byte	0x9f
+ 2142 02ef 00000000 		.4byte	0
+ 2143 02f3 00000000 		.4byte	0
+ 2144              	.LLST19:
+ 2145 02f7 10000000 		.4byte	.LVL36
+ 2146 02fb 2A000000 		.4byte	.LVL39
+ 2147 02ff 0100     		.2byte	0x1
+ 2148 0301 54       		.byte	0x54
+ 2149 0302 2A000000 		.4byte	.LVL39
+ 2150 0306 6C000000 		.4byte	.LVL50
+ 2151 030a 0200     		.2byte	0x2
+ 2152 030c 91       		.byte	0x91
+ 2153 030d 6E       		.sleb128 -18
+ 2154 030e 00000000 		.4byte	0
+ 2155 0312 00000000 		.4byte	0
+ 2156              	.LLST20:
+ 2157 0316 28000000 		.4byte	.LVL38
+ 2158 031a 2C000000 		.4byte	.LVL40
+ 2159 031e 0200     		.2byte	0x2
+ 2160 0320 30       		.byte	0x30
+ 2161 0321 9F       		.byte	0x9f
+ 2162 0322 2C000000 		.4byte	.LVL40
+ 2163 0326 62000000 		.4byte	.LVL48
+ 2164 032a 0100     		.2byte	0x1
+ 2165 032c 54       		.byte	0x54
+ 2166 032d 00000000 		.4byte	0
+ 2167 0331 00000000 		.4byte	0
+ 2168              	.LLST21:
+ 2169 0335 00000000 		.4byte	.LVL52
+ 2170 0339 0D000000 		.4byte	.LVL53-1
+ 2171 033d 0100     		.2byte	0x1
+ 2172 033f 50       		.byte	0x50
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 43
+
+
+ 2173 0340 0D000000 		.4byte	.LVL53-1
+ 2174 0344 6C000000 		.4byte	.LFE67
+ 2175 0348 0400     		.2byte	0x4
+ 2176 034a F3       		.byte	0xf3
+ 2177 034b 01       		.uleb128 0x1
+ 2178 034c 50       		.byte	0x50
+ 2179 034d 9F       		.byte	0x9f
+ 2180 034e 00000000 		.4byte	0
+ 2181 0352 00000000 		.4byte	0
+ 2182              	.LLST22:
+ 2183 0356 00000000 		.4byte	.LVL52
+ 2184 035a 0D000000 		.4byte	.LVL53-1
+ 2185 035e 0100     		.2byte	0x1
+ 2186 0360 51       		.byte	0x51
+ 2187 0361 0D000000 		.4byte	.LVL53-1
+ 2188 0365 6C000000 		.4byte	.LFE67
+ 2189 0369 0400     		.2byte	0x4
+ 2190 036b F3       		.byte	0xf3
+ 2191 036c 01       		.uleb128 0x1
+ 2192 036d 51       		.byte	0x51
+ 2193 036e 9F       		.byte	0x9f
+ 2194 036f 00000000 		.4byte	0
+ 2195 0373 00000000 		.4byte	0
+ 2196              	.LLST23:
+ 2197 0377 00000000 		.4byte	.LVL52
+ 2198 037b 0D000000 		.4byte	.LVL53-1
+ 2199 037f 0100     		.2byte	0x1
+ 2200 0381 52       		.byte	0x52
+ 2201 0382 0D000000 		.4byte	.LVL53-1
+ 2202 0386 6C000000 		.4byte	.LFE67
+ 2203 038a 0400     		.2byte	0x4
+ 2204 038c F3       		.byte	0xf3
+ 2205 038d 01       		.uleb128 0x1
+ 2206 038e 52       		.byte	0x52
+ 2207 038f 9F       		.byte	0x9f
+ 2208 0390 00000000 		.4byte	0
+ 2209 0394 00000000 		.4byte	0
+ 2210              	.LLST24:
+ 2211 0398 16000000 		.4byte	.LVL54
+ 2212 039c 30000000 		.4byte	.LVL57
+ 2213 03a0 0100     		.2byte	0x1
+ 2214 03a2 54       		.byte	0x54
+ 2215 03a3 30000000 		.4byte	.LVL57
+ 2216 03a7 68000000 		.4byte	.LVL65
+ 2217 03ab 0200     		.2byte	0x2
+ 2218 03ad 91       		.byte	0x91
+ 2219 03ae 6E       		.sleb128 -18
+ 2220 03af 00000000 		.4byte	0
+ 2221 03b3 00000000 		.4byte	0
+ 2222              	.LLST25:
+ 2223 03b7 2E000000 		.4byte	.LVL56
+ 2224 03bb 32000000 		.4byte	.LVL58
+ 2225 03bf 0200     		.2byte	0x2
+ 2226 03c1 30       		.byte	0x30
+ 2227 03c2 9F       		.byte	0x9f
+ 2228 03c3 32000000 		.4byte	.LVL58
+ 2229 03c7 68000000 		.4byte	.LVL65
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 44
+
+
+ 2230 03cb 0100     		.2byte	0x1
+ 2231 03cd 54       		.byte	0x54
+ 2232 03ce 00000000 		.4byte	0
+ 2233 03d2 00000000 		.4byte	0
+ 2234              		.section	.debug_aranges,"",%progbits
+ 2235 0000 3C000000 		.4byte	0x3c
+ 2236 0004 0200     		.2byte	0x2
+ 2237 0006 00000000 		.4byte	.Ldebug_info0
+ 2238 000a 04       		.byte	0x4
+ 2239 000b 00       		.byte	0
+ 2240 000c 0000     		.2byte	0
+ 2241 000e 0000     		.2byte	0
+ 2242 0010 00000000 		.4byte	.LFB63
+ 2243 0014 96000000 		.4byte	.LFE63-.LFB63
+ 2244 0018 00000000 		.4byte	.LFB64
+ 2245 001c 2C000000 		.4byte	.LFE64-.LFB64
+ 2246 0020 00000000 		.4byte	.LFB65
+ 2247 0024 2C000000 		.4byte	.LFE65-.LFB65
+ 2248 0028 00000000 		.4byte	.LFB66
+ 2249 002c 72000000 		.4byte	.LFE66-.LFB66
+ 2250 0030 00000000 		.4byte	.LFB67
+ 2251 0034 6C000000 		.4byte	.LFE67-.LFB67
+ 2252 0038 00000000 		.4byte	0
+ 2253 003c 00000000 		.4byte	0
+ 2254              		.section	.debug_ranges,"",%progbits
+ 2255              	.Ldebug_ranges0:
+ 2256 0000 54000000 		.4byte	.LBB3
+ 2257 0004 6E000000 		.4byte	.LBE3
+ 2258 0008 70000000 		.4byte	.LBB4
+ 2259 000c 76000000 		.4byte	.LBE4
+ 2260 0010 00000000 		.4byte	0
+ 2261 0014 00000000 		.4byte	0
+ 2262 0018 00000000 		.4byte	.LFB63
+ 2263 001c 96000000 		.4byte	.LFE63
+ 2264 0020 00000000 		.4byte	.LFB64
+ 2265 0024 2C000000 		.4byte	.LFE64
+ 2266 0028 00000000 		.4byte	.LFB65
+ 2267 002c 2C000000 		.4byte	.LFE65
+ 2268 0030 00000000 		.4byte	.LFB66
+ 2269 0034 72000000 		.4byte	.LFE66
+ 2270 0038 00000000 		.4byte	.LFB67
+ 2271 003c 6C000000 		.4byte	.LFE67
+ 2272 0040 00000000 		.4byte	0
+ 2273 0044 00000000 		.4byte	0
+ 2274              		.section	.debug_line,"",%progbits
+ 2275              	.Ldebug_line0:
+ 2276 0000 F3020000 		.section	.debug_str,"MS",%progbits,1
+ 2276      0200EE01 
+ 2276      00000201 
+ 2276      FB0E0D00 
+ 2276      01010101 
+ 2277              	.LASF23:
+ 2278 0000 424C4F43 		.ascii	"BLOCK_COMMON_REGISTER\000"
+ 2278      4B5F434F 
+ 2278      4D4D4F4E 
+ 2278      5F524547 
+ 2278      49535445 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 45
+
+
+ 2279              	.LASF87:
+ 2280 0016 68616C5F 		.ascii	"hal_spi.c\000"
+ 2280      7370692E 
+ 2280      6300
+ 2281              	.LASF78:
+ 2282 0020 72657375 		.ascii	"result\000"
+ 2282      6C7400
+ 2283              	.LASF55:
+ 2284 0027 424C4F43 		.ascii	"BLOCK_INVALID\000"
+ 2284      4B5F494E 
+ 2284      56414C49 
+ 2284      4400
+ 2285              	.LASF71:
+ 2286 0035 7370695F 		.ascii	"spi_mode\000"
+ 2286      6D6F6465 
+ 2286      00
+ 2287              	.LASF30:
+ 2288 003e 424C4F43 		.ascii	"BLOCK_SOCKET_1_RX_BUFFER\000"
+ 2288      4B5F534F 
+ 2288      434B4554 
+ 2288      5F315F52 
+ 2288      585F4255 
+ 2289              	.LASF32:
+ 2290 0057 424C4F43 		.ascii	"BLOCK_SOCKET_2_REGISTER\000"
+ 2290      4B5F534F 
+ 2290      434B4554 
+ 2290      5F325F52 
+ 2290      45474953 
+ 2291              	.LASF20:
+ 2292 006f 73697A65 		.ascii	"size_t\000"
+ 2292      5F7400
+ 2293              	.LASF74:
+ 2294 0076 636F6E74 		.ascii	"control_phase\000"
+ 2294      726F6C5F 
+ 2294      70686173 
+ 2294      6500
+ 2295              	.LASF22:
+ 2296 0084 73697A65 		.ascii	"sizetype\000"
+ 2296      74797065 
+ 2296      00
+ 2297              	.LASF82:
+ 2298 008d 5350495F 		.ascii	"SPI_ReadRxData\000"
+ 2298      52656164 
+ 2298      52784461 
+ 2298      746100
+ 2299              	.LASF4:
+ 2300 009c 5F5F7569 		.ascii	"__uint16_t\000"
+ 2300      6E743136 
+ 2300      5F7400
+ 2301              	.LASF52:
+ 2302 00a7 424C4F43 		.ascii	"BLOCK_SOCKET_7_REGISTER\000"
+ 2302      4B5F534F 
+ 2302      434B4554 
+ 2302      5F375F52 
+ 2302      45474953 
+ 2303              	.LASF63:
+ 2304 00bf 5350495F 		.ascii	"SPI_OPERATION_MODE_FDM_2BYTE\000"
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 46
+
+
+ 2304      4F504552 
+ 2304      4154494F 
+ 2304      4E5F4D4F 
+ 2304      44455F46 
+ 2305              	.LASF29:
+ 2306 00dc 424C4F43 		.ascii	"BLOCK_SOCKET_1_TX_BUFFER\000"
+ 2306      4B5F534F 
+ 2306      434B4554 
+ 2306      5F315F54 
+ 2306      585F4255 
+ 2307              	.LASF67:
+ 2308 00f5 5F535049 		.ascii	"_SPI_MODE_POS\000"
+ 2308      5F4D4F44 
+ 2308      455F504F 
+ 2308      5300
+ 2309              	.LASF26:
+ 2310 0103 424C4F43 		.ascii	"BLOCK_SOCKET_0_RX_BUFFER\000"
+ 2310      4B5F534F 
+ 2310      434B4554 
+ 2310      5F305F52 
+ 2310      585F4255 
+ 2311              	.LASF2:
+ 2312 011c 73686F72 		.ascii	"short int\000"
+ 2312      7420696E 
+ 2312      7400
+ 2313              	.LASF28:
+ 2314 0126 424C4F43 		.ascii	"BLOCK_SOCKET_1_REGISTER\000"
+ 2314      4B5F534F 
+ 2314      434B4554 
+ 2314      5F315F52 
+ 2314      45474953 
+ 2315              	.LASF57:
+ 2316 013e 41434345 		.ascii	"ACCESS_MODE_READ\000"
+ 2316      53535F4D 
+ 2316      4F44455F 
+ 2316      52454144 
+ 2316      00
+ 2317              	.LASF59:
+ 2318 014f 41434345 		.ascii	"ACCESS_MODE_INVALID\000"
+ 2318      53535F4D 
+ 2318      4F44455F 
+ 2318      494E5641 
+ 2318      4C494400 
+ 2319              	.LASF16:
+ 2320 0163 75696E74 		.ascii	"uint16\000"
+ 2320      313600
+ 2321              	.LASF60:
+ 2322 016a 61636365 		.ascii	"access_mode\000"
+ 2322      73735F6D 
+ 2322      6F646500 
+ 2323              	.LASF12:
+ 2324 0176 75696E74 		.ascii	"uint8_t\000"
+ 2324      385F7400 
+ 2325              	.LASF80:
+ 2326 017e 5350495F 		.ascii	"SPI_WriteTxData\000"
+ 2326      57726974 
+ 2326      65547844 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 47
+
+
+ 2326      61746100 
+ 2327              	.LASF15:
+ 2328 018e 75696E74 		.ascii	"uint8\000"
+ 2328      3800
+ 2329              	.LASF25:
+ 2330 0194 424C4F43 		.ascii	"BLOCK_SOCKET_0_TX_BUFFER\000"
+ 2330      4B5F534F 
+ 2330      434B4554 
+ 2330      5F305F54 
+ 2330      585F4255 
+ 2331              	.LASF0:
+ 2332 01ad 7369676E 		.ascii	"signed char\000"
+ 2332      65642063 
+ 2332      68617200 
+ 2333              	.LASF44:
+ 2334 01b9 424C4F43 		.ascii	"BLOCK_SOCKET_5_REGISTER\000"
+ 2334      4B5F534F 
+ 2334      434B4554 
+ 2334      5F355F52 
+ 2334      45474953 
+ 2335              	.LASF17:
+ 2336 01d1 666C6F61 		.ascii	"float\000"
+ 2336      7400
+ 2337              	.LASF9:
+ 2338 01d7 6C6F6E67 		.ascii	"long long int\000"
+ 2338      206C6F6E 
+ 2338      6720696E 
+ 2338      7400
+ 2339              	.LASF37:
+ 2340 01e5 424C4F43 		.ascii	"BLOCK_SOCKET_3_TX_BUFFER\000"
+ 2340      4B5F534F 
+ 2340      434B4554 
+ 2340      5F335F54 
+ 2340      585F4255 
+ 2341              	.LASF84:
+ 2342 01fe 53535F57 		.ascii	"SS_Write\000"
+ 2342      72697465 
+ 2342      00
+ 2343              	.LASF41:
+ 2344 0207 424C4F43 		.ascii	"BLOCK_SOCKET_4_TX_BUFFER\000"
+ 2344      4B5F534F 
+ 2344      434B4554 
+ 2344      5F345F54 
+ 2344      585F4255 
+ 2345              	.LASF70:
+ 2346 0220 61646472 		.ascii	"address\000"
+ 2346      65737300 
+ 2347              	.LASF38:
+ 2348 0228 424C4F43 		.ascii	"BLOCK_SOCKET_3_RX_BUFFER\000"
+ 2348      4B5F534F 
+ 2348      434B4554 
+ 2348      5F335F52 
+ 2348      585F4255 
+ 2349              	.LASF3:
+ 2350 0241 5F5F7569 		.ascii	"__uint8_t\000"
+ 2350      6E74385F 
+ 2350      7400
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 48
+
+
+ 2351              	.LASF56:
+ 2352 024b 626C6F63 		.ascii	"block\000"
+ 2352      6B00
+ 2353              	.LASF73:
+ 2354 0251 64617461 		.ascii	"data_size\000"
+ 2354      5F73697A 
+ 2354      6500
+ 2355              	.LASF21:
+ 2356 025b 6C6F6E67 		.ascii	"long double\000"
+ 2356      20646F75 
+ 2356      626C6500 
+ 2357              	.LASF1:
+ 2358 0267 756E7369 		.ascii	"unsigned char\000"
+ 2358      676E6564 
+ 2358      20636861 
+ 2358      7200
+ 2359              	.LASF34:
+ 2360 0275 424C4F43 		.ascii	"BLOCK_SOCKET_2_RX_BUFFER\000"
+ 2360      4B5F534F 
+ 2360      434B4554 
+ 2360      5F325F52 
+ 2360      585F4255 
+ 2361              	.LASF77:
+ 2362 028e 57353530 		.ascii	"W5500_spi_write\000"
+ 2362      305F7370 
+ 2362      695F7772 
+ 2362      69746500 
+ 2363              	.LASF54:
+ 2364 029e 424C4F43 		.ascii	"BLOCK_SOCKET_7_RX_BUFFER\000"
+ 2364      4B5F534F 
+ 2364      434B4554 
+ 2364      5F375F52 
+ 2364      585F4255 
+ 2365              	.LASF75:
+ 2366 02b7 61646472 		.ascii	"addr_ctrl_phase\000"
+ 2366      5F637472 
+ 2366      6C5F7068 
+ 2366      61736500 
+ 2367              	.LASF85:
+ 2368 02c7 5F69735F 		.ascii	"_is_invalid_block\000"
+ 2368      696E7661 
+ 2368      6C69645F 
+ 2368      626C6F63 
+ 2368      6B00
+ 2369              	.LASF10:
+ 2370 02d9 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2370      206C6F6E 
+ 2370      6720756E 
+ 2370      7369676E 
+ 2370      65642069 
+ 2371              	.LASF62:
+ 2372 02f0 5350495F 		.ascii	"SPI_OPERATION_MODE_FDM_1BYTE\000"
+ 2372      4F504552 
+ 2372      4154494F 
+ 2372      4E5F4D4F 
+ 2372      44455F46 
+ 2373              	.LASF11:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 49
+
+
+ 2374 030d 756E7369 		.ascii	"unsigned int\000"
+ 2374      676E6564 
+ 2374      20696E74 
+ 2374      00
+ 2375              	.LASF13:
+ 2376 031a 75696E74 		.ascii	"uint16_t\000"
+ 2376      31365F74 
+ 2376      00
+ 2377              	.LASF33:
+ 2378 0323 424C4F43 		.ascii	"BLOCK_SOCKET_2_TX_BUFFER\000"
+ 2378      4B5F534F 
+ 2378      434B4554 
+ 2378      5F325F54 
+ 2378      585F4255 
+ 2379              	.LASF8:
+ 2380 033c 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2380      20756E73 
+ 2380      69676E65 
+ 2380      6420696E 
+ 2380      7400
+ 2381              	.LASF53:
+ 2382 034e 424C4F43 		.ascii	"BLOCK_SOCKET_7_TX_BUFFER\000"
+ 2382      4B5F534F 
+ 2382      434B4554 
+ 2382      5F375F54 
+ 2382      585F4255 
+ 2383              	.LASF64:
+ 2384 0367 5350495F 		.ascii	"SPI_OPERATION_MODE_FDM_4BYTE\000"
+ 2384      4F504552 
+ 2384      4154494F 
+ 2384      4E5F4D4F 
+ 2384      44455F46 
+ 2385              	.LASF50:
+ 2386 0384 424C4F43 		.ascii	"BLOCK_SOCKET_6_RX_BUFFER\000"
+ 2386      4B5F534F 
+ 2386      434B4554 
+ 2386      5F365F52 
+ 2386      585F4255 
+ 2387              	.LASF5:
+ 2388 039d 73686F72 		.ascii	"short unsigned int\000"
+ 2388      7420756E 
+ 2388      7369676E 
+ 2388      65642069 
+ 2388      6E7400
+ 2389              	.LASF19:
+ 2390 03b0 63686172 		.ascii	"char\000"
+ 2390      00
+ 2391              	.LASF7:
+ 2392 03b5 6C6F6E67 		.ascii	"long int\000"
+ 2392      20696E74 
+ 2392      00
+ 2393              	.LASF36:
+ 2394 03be 424C4F43 		.ascii	"BLOCK_SOCKET_3_REGISTER\000"
+ 2394      4B5F534F 
+ 2394      434B4554 
+ 2394      5F335F52 
+ 2394      45474953 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 50
+
+
+ 2395              	.LASF14:
+ 2396 03d6 696E7433 		.ascii	"int32_t\000"
+ 2396      325F7400 
+ 2397              	.LASF46:
+ 2398 03de 424C4F43 		.ascii	"BLOCK_SOCKET_5_RX_BUFFER\000"
+ 2398      4B5F534F 
+ 2398      434B4554 
+ 2398      5F355F52 
+ 2398      585F4255 
+ 2399              	.LASF49:
+ 2400 03f7 424C4F43 		.ascii	"BLOCK_SOCKET_6_TX_BUFFER\000"
+ 2400      4B5F534F 
+ 2400      434B4554 
+ 2400      5F365F54 
+ 2400      585F4255 
+ 2401              	.LASF90:
+ 2402 0410 57353530 		.ascii	"W5500_spi_read_byte\000"
+ 2402      305F7370 
+ 2402      695F7265 
+ 2402      61645F62 
+ 2402      79746500 
+ 2403              	.LASF48:
+ 2404 0424 424C4F43 		.ascii	"BLOCK_SOCKET_6_REGISTER\000"
+ 2404      4B5F534F 
+ 2404      434B4554 
+ 2404      5F365F52 
+ 2404      45474953 
+ 2405              	.LASF72:
+ 2406 043c 64617461 		.ascii	"data\000"
+ 2406      00
+ 2407              	.LASF27:
+ 2408 0441 424C4F43 		.ascii	"BLOCK_RESERVED_0\000"
+ 2408      4B5F5245 
+ 2408      53455256 
+ 2408      45445F30 
+ 2408      00
+ 2409              	.LASF31:
+ 2410 0452 424C4F43 		.ascii	"BLOCK_RESERVED_1\000"
+ 2410      4B5F5245 
+ 2410      53455256 
+ 2410      45445F31 
+ 2410      00
+ 2411              	.LASF35:
+ 2412 0463 424C4F43 		.ascii	"BLOCK_RESERVED_2\000"
+ 2412      4B5F5245 
+ 2412      53455256 
+ 2412      45445F32 
+ 2412      00
+ 2413              	.LASF39:
+ 2414 0474 424C4F43 		.ascii	"BLOCK_RESERVED_3\000"
+ 2414      4B5F5245 
+ 2414      53455256 
+ 2414      45445F33 
+ 2414      00
+ 2415              	.LASF43:
+ 2416 0485 424C4F43 		.ascii	"BLOCK_RESERVED_4\000"
+ 2416      4B5F5245 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 51
+
+
+ 2416      53455256 
+ 2416      45445F34 
+ 2416      00
+ 2417              	.LASF47:
+ 2418 0496 424C4F43 		.ascii	"BLOCK_RESERVED_5\000"
+ 2418      4B5F5245 
+ 2418      53455256 
+ 2418      45445F35 
+ 2418      00
+ 2419              	.LASF51:
+ 2420 04a7 424C4F43 		.ascii	"BLOCK_RESERVED_6\000"
+ 2420      4B5F5245 
+ 2420      53455256 
+ 2420      45445F36 
+ 2420      00
+ 2421              	.LASF65:
+ 2422 04b8 5350495F 		.ascii	"SPI_OPERATION_MODE_INVALID\000"
+ 2422      4F504552 
+ 2422      4154494F 
+ 2422      4E5F4D4F 
+ 2422      44455F49 
+ 2423              	.LASF45:
+ 2424 04d3 424C4F43 		.ascii	"BLOCK_SOCKET_5_TX_BUFFER\000"
+ 2424      4B5F534F 
+ 2424      434B4554 
+ 2424      5F355F54 
+ 2424      585F4255 
+ 2425              	.LASF81:
+ 2426 04ec 5350495F 		.ascii	"SPI_ReadTxStatus\000"
+ 2426      52656164 
+ 2426      54785374 
+ 2426      61747573 
+ 2426      00
+ 2427              	.LASF68:
+ 2428 04fd 5F414343 		.ascii	"_ACCESS_MODE_POS\000"
+ 2428      4553535F 
+ 2428      4D4F4445 
+ 2428      5F504F53 
+ 2428      00
+ 2429              	.LASF66:
+ 2430 050e 7370695F 		.ascii	"spi_operation_mode\000"
+ 2430      6F706572 
+ 2430      6174696F 
+ 2430      6E5F6D6F 
+ 2430      646500
+ 2431              	.LASF58:
+ 2432 0521 41434345 		.ascii	"ACCESS_MODE_WRITE\000"
+ 2432      53535F4D 
+ 2432      4F44455F 
+ 2432      57524954 
+ 2432      4500
+ 2433              	.LASF24:
+ 2434 0533 424C4F43 		.ascii	"BLOCK_SOCKET_0_REGISTER\000"
+ 2434      4B5F534F 
+ 2434      434B4554 
+ 2434      5F305F52 
+ 2434      45474953 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 52
+
+
+ 2435              	.LASF6:
+ 2436 054b 5F5F696E 		.ascii	"__int32_t\000"
+ 2436      7433325F 
+ 2436      7400
+ 2437              	.LASF76:
+ 2438 0555 57353530 		.ascii	"W5500_spi_read\000"
+ 2438      305F7370 
+ 2438      695F7265 
+ 2438      616400
+ 2439              	.LASF89:
+ 2440 0564 57353530 		.ascii	"W5500_spi\000"
+ 2440      305F7370 
+ 2440      6900
+ 2441              	.LASF69:
+ 2442 056e 5F424C4F 		.ascii	"_BLOCK_POS\000"
+ 2442      434B5F50 
+ 2442      4F5300
+ 2443              	.LASF88:
+ 2444 0579 433A5C55 		.ascii	"C:\\Users\\d3bug\\Documents\\Creator\\W5x00\\test_p"
+ 2444      73657273 
+ 2444      5C643362 
+ 2444      75675C44 
+ 2444      6F63756D 
+ 2445 05a6 72696E74 		.ascii	"rint_remote_mac_ip.cydsn\000"
+ 2445      5F72656D 
+ 2445      6F74655F 
+ 2445      6D61635F 
+ 2445      69702E63 
+ 2446              	.LASF40:
+ 2447 05bf 424C4F43 		.ascii	"BLOCK_SOCKET_4_REGISTER\000"
+ 2447      4B5F534F 
+ 2447      434B4554 
+ 2447      5F345F52 
+ 2447      45474953 
+ 2448              	.LASF18:
+ 2449 05d7 646F7562 		.ascii	"double\000"
+ 2449      6C6500
+ 2450              	.LASF91:
+ 2451 05de 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 2451      52784275 
+ 2451      66666572 
+ 2451      00
+ 2452              	.LASF86:
+ 2453 05eb 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 2453      43313120 
+ 2453      352E342E 
+ 2453      31203230 
+ 2453      31363036 
+ 2454 061e 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 2454      20726576 
+ 2454      6973696F 
+ 2454      6E203233 
+ 2454      37373135 
+ 2455 0651 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 2455      66756E63 
+ 2455      74696F6E 
+ 2455      2D736563 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccjIQ3di.s 			page 53
+
+
+ 2455      74696F6E 
+ 2456              	.LASF79:
+ 2457 0679 57353530 		.ascii	"W5500_spi_write_byte\000"
+ 2457      305F7370 
+ 2457      695F7772 
+ 2457      6974655F 
+ 2457      62797465 
+ 2458              	.LASF83:
+ 2459 068e 5350495F 		.ascii	"SPI_ClearFIFO\000"
+ 2459      436C6561 
+ 2459      72464946 
+ 2459      4F00
+ 2460              	.LASF61:
+ 2461 069c 5350495F 		.ascii	"SPI_OPERATION_MODE_VDM\000"
+ 2461      4F504552 
+ 2461      4154494F 
+ 2461      4E5F4D4F 
+ 2461      44455F56 
+ 2462              	.LASF42:
+ 2463 06b3 424C4F43 		.ascii	"BLOCK_SOCKET_4_RX_BUFFER\000"
+ 2463      4B5F534F 
+ 2463      434B4554 
+ 2463      5F345F52 
+ 2463      585F4255 
+ 2464              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

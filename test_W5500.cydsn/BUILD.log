@@ -1,0 +1,78 @@
+--------------- Build Started: 06/11/2018 23:11:45 Project: test_W5500, Configuration: ARM GCC 5.4-2016-q2-update Debug ---------------
+The code generation step is up to date.
+arm-none-eabi-gcc.exe -mcpu=cortex-m3 -mthumb -I. -IGenerated_Source\PSoC5 -Wa,-alh=.\CortexM3\ARM_GCC_541\Debug/main.lst -g -D DEBUG -D CY_CORE_ID=0 -Wall -ffunction-sections -ffat-lto-objects -Og -c main.c -o .\CortexM3\ARM_GCC_541\Debug\main.o
+main.c: In function 'main':
+main.c:37:20: warning: unused variable 'skt_1' [-Wunused-variable]
+     struct socket *skt_1 = W5500_socket(SOCKET_1, SOCKET_MODE_TCP);
+                    ^
+main.c:18:13: warning: unused variable 'old_socket_status' [-Wunused-variable]
+     uint8_t old_socket_status = 0;
+             ^
+main.c: In function 'wiz_init':
+main.c:113:52: warning: passing argument 3 of 'W5500_spi_write' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x0009, mac_addr, sizeof(mac_addr));
+                                                    ^
+In file included from main.c:4:0:
+hal_spi.h:10:6: note: expected 'uint8_t * {aka unsigned char *}' but argument is of type 'const uint8_t * {aka const unsigned char *}'
+ void W5500_spi_write(const block block, const uint16_t address, uint8_t *data, const size_t data_size);
+      ^
+main.c:115:52: warning: passing argument 3 of 'W5500_spi_write' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x0001, gtw_addr, sizeof(gtw_addr));
+                                                    ^
+In file included from main.c:4:0:
+hal_spi.h:10:6: note: expected 'uint8_t * {aka unsigned char *}' but argument is of type 'const uint8_t * {aka const unsigned char *}'
+ void W5500_spi_write(const block block, const uint16_t address, uint8_t *data, const size_t data_size);
+      ^
+main.c:117:52: warning: passing argument 3 of 'W5500_spi_write' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x0005, submask, sizeof(submask));
+                                                    ^
+In file included from main.c:4:0:
+hal_spi.h:10:6: note: expected 'uint8_t * {aka unsigned char *}' but argument is of type 'const uint8_t * {aka const unsigned char *}'
+ void W5500_spi_write(const block block, const uint16_t address, uint8_t *data, const size_t data_size);
+      ^
+main.c:100:13: warning: unused variable 'bsz2' [-Wunused-variable]
+     uint8_t bsz2 = 2;
+             ^
+arm-none-eabi-gcc.exe -mcpu=cortex-m3 -mthumb -I. -IGenerated_Source\PSoC5 -Wa,-alh=.\CortexM3\ARM_GCC_541\Debug/W5500.lst -g -D DEBUG -D CY_CORE_ID=0 -Wall -ffunction-sections -ffat-lto-objects -Og -c W5500.c -o .\CortexM3\ARM_GCC_541\Debug\W5500.o
+arm-none-eabi-gcc.exe -mcpu=cortex-m3 -mthumb -I. -IGenerated_Source\PSoC5 -Wa,-alh=.\CortexM3\ARM_GCC_541\Debug/udp.lst -g -D DEBUG -D CY_CORE_ID=0 -Wall -ffunction-sections -ffat-lto-objects -Og -c udp.c -o .\CortexM3\ARM_GCC_541\Debug\udp.o
+udp.c: In function 'w5500_udp_open':
+udp.c:25:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+udp.c: In function 'w5500_udp_send':
+udp.c:42:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+udp.c: In function 'w5500_udp_receive':
+udp.c:90:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+arm-none-eabi-gcc.exe -mcpu=cortex-m3 -mthumb -I. -IGenerated_Source\PSoC5 -Wa,-alh=.\CortexM3\ARM_GCC_541\Debug/socket.lst -g -D DEBUG -D CY_CORE_ID=0 -Wall -ffunction-sections -ffat-lto-objects -Og -c socket.c -o .\CortexM3\ARM_GCC_541\Debug\socket.o
+socket.c: In function 'W5500_socket_read_reg':
+socket.c:62:1: warning: no return statement in function returning non-void [-Wreturn-type]
+ }
+ ^
+socket.c: At top level:
+socket.c:54:13: warning: 'W5500_socket_write_reg' defined but not used [-Wunused-function]
+ static void W5500_socket_write_reg(socket_n socket, socket_reg reg, uint8_t data)
+             ^
+socket.c:59:16: warning: 'W5500_socket_read_reg' defined but not used [-Wunused-function]
+ static uint8_t W5500_socket_read_reg(socket_n socket, socket_reg reg)
+                ^
+socket.c: In function 'W5500_socket_status':
+socket.c:120:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+arm-none-eabi-gcc.exe -mcpu=cortex-m3 -mthumb -I. -IGenerated_Source\PSoC5 -Wa,-alh=.\CortexM3\ARM_GCC_541\Debug/hal_spi.lst -g -D DEBUG -D CY_CORE_ID=0 -Wall -ffunction-sections -ffat-lto-objects -Og -c hal_spi.c -o .\CortexM3\ARM_GCC_541\Debug\hal_spi.o
+arm-none-eabi-gcc.exe -mcpu=cortex-m3 -mthumb -I. -IGenerated_Source\PSoC5 -Wa,-alh=.\CortexM3\ARM_GCC_541\Debug/common.lst -g -D DEBUG -D CY_CORE_ID=0 -Wall -ffunction-sections -ffat-lto-objects -Og -c common.c -o .\CortexM3\ARM_GCC_541\Debug\common.o
+arm-none-eabi-ar.exe -rs .\CortexM3\ARM_GCC_541\Debug\test_W5500.a .\CortexM3\ARM_GCC_541\Debug\MISO.o .\CortexM3\ARM_GCC_541\Debug\MOSI.o .\CortexM3\ARM_GCC_541\Debug\SCLK.o .\CortexM3\ARM_GCC_541\Debug\SPI.o .\CortexM3\ARM_GCC_541\Debug\SPI_PM.o .\CortexM3\ARM_GCC_541\Debug\SPI_INT.o .\CortexM3\ARM_GCC_541\Debug\SS.o .\CortexM3\ARM_GCC_541\Debug\UART.o .\CortexM3\ARM_GCC_541\Debug\SPI_IntClock.o .\CortexM3\ARM_GCC_541\Debug\CyDmac.o .\CortexM3\ARM_GCC_541\Debug\CyFlash.o .\CortexM3\ARM_GCC_541\Debug\CyLib.o .\CortexM3\ARM_GCC_541\Debug\cyPm.o .\CortexM3\ARM_GCC_541\Debug\CySpc.o .\CortexM3\ARM_GCC_541\Debug\cyutils.o .\CortexM3\ARM_GCC_541\Debug\cy_em_eeprom.o .\CortexM3\ARM_GCC_541\Debug\LED.o .\CortexM3\ARM_GCC_541\Debug\RST.o .\CortexM3\ARM_GCC_541\Debug\UART_AsmGnu.o .\CortexM3\ARM_GCC_541\Debug\CyBootAsmGnu.o
+arm-none-eabi-ar.exe: creating .\CortexM3\ARM_GCC_541\Debug\test_W5500.a
+arm-none-eabi-gcc.exe -Wl,--start-group -o C:\Users\d3bug\Documents\Creator\W5x00\test_W5500.cydsn\CortexM3\ARM_GCC_541\Debug\test_W5500.elf .\CortexM3\ARM_GCC_541\Debug\main.o .\CortexM3\ARM_GCC_541\Debug\W5500.o .\CortexM3\ARM_GCC_541\Debug\udp.o .\CortexM3\ARM_GCC_541\Debug\tcp.o .\CortexM3\ARM_GCC_541\Debug\socket.o .\CortexM3\ARM_GCC_541\Debug\hal_spi.o .\CortexM3\ARM_GCC_541\Debug\common.o .\CortexM3\ARM_GCC_541\Debug\cyfitter_cfg.o .\CortexM3\ARM_GCC_541\Debug\cymetadata.o .\CortexM3\ARM_GCC_541\Debug\Cm3Start.o .\CortexM3\ARM_GCC_541\Debug\test_W5500.a "C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CortexM3\ARM_GCC_541\Debug\CyComponentLibrary.a" -mcpu=cortex-m3 -mthumb -L Generated_Source\PSoC5 -Wl,-Map,.\CortexM3\ARM_GCC_541\Debug/test_W5500.map -T Generated_Source\PSoC5\cm3gcc.ld -specs=nano.specs -Wl,--gc-sections -g -ffunction-sections -Og -ffat-lto-objects -Wl,--end-group
+cyelftool.exe -C C:\Users\d3bug\Documents\Creator\W5x00\test_W5500.cydsn\CortexM3\ARM_GCC_541\Debug\test_W5500.elf --flash_row_size 256 --flash_size 262144 --flash_offset 0x00000000
+No ELF section .cychecksum found, creating one
+Application checksum calculated and stored in ELF section .cychecksum
+Checksum calculated and stored in ELF section .cymeta
+cyelftool.exe -S C:\Users\d3bug\Documents\Creator\W5x00\test_W5500.cydsn\CortexM3\ARM_GCC_541\Debug\test_W5500.elf
+Flash used: 3206 of 262144 bytes (1.2 %).
+SRAM used: 2593 of 65536 bytes (4.0 %). Stack: 2048 bytes. Heap: 128 bytes.
+--------------- Build Succeeded: 06/11/2018 23:12:06 ---------------

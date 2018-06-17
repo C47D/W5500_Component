@@ -1,0 +1,4895 @@
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.w5500_isr,"ax",%progbits
+  20              		.align	2
+  21              		.global	w5500_isr
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	w5500_isr, %function
+  25              	w5500_isr:
+  26              	.LFB70:
+  27              		.file 1 "main.c"
+   1:main.c        **** #include "project.h"
+   2:main.c        **** #include <stdio.h>
+   3:main.c        **** #include <stdbool.h>
+   4:main.c        **** 
+   5:main.c        **** #include "W5500.h"
+   6:main.c        **** #include "hal_spi.h"
+   7:main.c        **** 
+   8:main.c        **** void wiz_init(const uint8_t *ip_addr);
+   9:main.c        **** void socket0_init(void);
+  10:main.c        **** void close_socket0(void);
+  11:main.c        **** 
+  12:main.c        **** /* Interrupt handlers */
+  13:main.c        **** void handle_connection(void);
+  14:main.c        **** void handle_data(void);
+  15:main.c        **** void handle_disconnection(void);
+  16:main.c        **** void w5500_isr(void);
+  17:main.c        **** 
+  18:main.c        **** volatile bool w5500_interrupt_flag = false;
+  19:main.c        **** volatile uint8_t sir_sts = 0;
+  20:main.c        **** 
+  21:main.c        **** int main(void)
+  22:main.c        **** {
+  23:main.c        ****     const uint8_t ip_addr[] = {192, 168, 137, 70};
+  24:main.c        ****     
+  25:main.c        ****     isr_W5500_StartEx(w5500_isr);
+  26:main.c        ****     
+  27:main.c        ****     CyGlobalIntEnable;
+  28:main.c        **** 
+  29:main.c        ****     SPI_Start();
+  30:main.c        ****     UART_Start();
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 2
+
+
+  31:main.c        ****     UART_PutChar(0x0C);
+  32:main.c        ****     
+  33:main.c        ****     CyDelay(100);
+  34:main.c        ****     
+  35:main.c        ****     W5500_spi_write_byte(BLOCK_COMMON_REGISTER, SOCKET_REG_MODE, 0x80);
+  36:main.c        ****     
+  37:main.c        ****     wiz_init(ip_addr);
+  38:main.c        ****     
+  39:main.c        ****     socket0_init();
+  40:main.c        ****     UART_PutString("Waiting for connection...\r\n");
+  41:main.c        ****     
+  42:main.c        ****     while (1) {
+  43:main.c        ****         
+  44:main.c        ****         if (true == w5500_interrupt_flag) {
+  45:main.c        ****             w5500_interrupt_flag = false;
+  46:main.c        ****             UART_PutString("Socket 0 interrupt\r\n");
+  47:main.c        ****             
+  48:main.c        ****             // clearing socket 0 interrupt
+  49:main.c        ****             W5500_spi_write_byte(BLOCK_COMMON_REGISTER, 0x0017, 0x01);
+  50:main.c        ****         
+  51:main.c        ****             sir_sts = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT);
+  52:main.c        ****             UART_PutString("Socket 0 Interrupt Register: 0x");
+  53:main.c        ****             UART_PutHexByte(sir_sts);
+  54:main.c        ****             UART_PutCRLF();
+  55:main.c        ****         
+  56:main.c        ****             W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, sir_sts);
+  57:main.c        ****             
+  58:main.c        ****             if (sir_sts & 0x01) { // CON interrupt flag
+  59:main.c        ****                 // Clear the interrupt flag
+  60:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, 0x01);
+  61:main.c        ****                 
+  62:main.c        ****                 handle_connection();
+  63:main.c        ****                 
+  64:main.c        ****                 // Enable the RECV and DISCON interrupts, but disable all others first
+  65:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x00);
+  66:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x04 | 0x0
+  67:main.c        ****             }
+  68:main.c        ****             
+  69:main.c        ****             if (sir_sts & 0x02) { // DISCON interrupt flag
+  70:main.c        ****                 // Clear the interrupt flag
+  71:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, 0x02);
+  72:main.c        ****                 
+  73:main.c        ****                 handle_disconnection();
+  74:main.c        ****                 
+  75:main.c        ****                 // Enable the CON interrupt, but disable all others first
+  76:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x00);
+  77:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x01);
+  78:main.c        ****             }
+  79:main.c        **** 
+  80:main.c        ****             if (sir_sts & 0x04) { // RECV interrupt flag
+  81:main.c        ****                 // Clear the interrupt flag
+  82:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, 0x04);
+  83:main.c        ****                 
+  84:main.c        ****                 handle_data();
+  85:main.c        ****                 
+  86:main.c        ****                 // Enable the RECV and DISCON interrupts, but disable all others first
+  87:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x00);
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 3
+
+
+  88:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x04 | 0x0
+  89:main.c        ****             }
+  90:main.c        ****         }
+  91:main.c        ****         
+  92:main.c        ****     }
+  93:main.c        **** }
+  94:main.c        **** 
+  95:main.c        **** void wiz_init(const uint8_t *ip_addr)
+  96:main.c        **** {
+  97:main.c        ****     const uint8_t mac_addr[] = {0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00};
+  98:main.c        ****     const uint8_t submask[] = {255, 255, 255, 0};
+  99:main.c        ****     const uint8_t gtw_addr[] = {192, 168, 1, 70}; // pc addr
+ 100:main.c        ****     
+ 101:main.c        ****     // set receive buffer for socket 0 to 1k
+ 102:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_BUFFER_SIZE, 1);
+ 103:main.c        ****     // set transmit buffer for socket 0 to 1k
+ 104:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_TX_BUFFER_SIZE, 2);
+ 105:main.c        ****     
+ 106:main.c        ****     // SHAR (Source Hardware Address Register)
+ 107:main.c        ****     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x0009, mac_addr, sizeof(mac_addr));
+ 108:main.c        ****     // gateway address register
+ 109:main.c        ****     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x0001, gtw_addr, sizeof(gtw_addr));
+ 110:main.c        ****     // submask address
+ 111:main.c        ****     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x0005, submask, sizeof(submask));
+ 112:main.c        ****     // ip address
+ 113:main.c        ****     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x000F, ip_addr, sizeof(ip_addr));
+ 114:main.c        ****     // enable socket 0 interrupts
+ 115:main.c        ****     W5500_spi_write_byte(BLOCK_COMMON_REGISTER, 0x0018, 0x01);
+ 116:main.c        **** }
+ 117:main.c        **** 
+ 118:main.c        **** void socket0_init(void)
+ 119:main.c        **** {
+ 120:main.c        ****     uint8_t tcp_port[] = {0, 80}; // 80d = 50h
+ 121:main.c        ****     
+ 122:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_MODE, SOCKET_MODE_TCP);
+ 123:main.c        ****     // set tcp port to 80
+ 124:main.c        ****     W5500_spi_write(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_SOURCE_PORT0, tcp_port, sizeof(tcp_port));
+ 125:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_OPEN);
+ 126:main.c        ****     
+ 127:main.c        ****     CyDelay(10);
+ 128:main.c        ****     
+ 129:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_LISTEN);
+ 130:main.c        ****     
+ 131:main.c        ****     // Enable only the CON interrupt, but disable all others first
+ 132:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x00);
+ 133:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x01);
+ 134:main.c        **** }
+ 135:main.c        **** 
+ 136:main.c        **** void handle_connection(void)
+ 137:main.c        **** {
+ 138:main.c        ****     uint8_t skt_remote_ip[4] = {0};
+ 139:main.c        ****     uint8_t skt_remote_mac[6] = {0};
+ 140:main.c        ****     char remote_mac[100];
+ 141:main.c        ****     char remote_ip[50];
+ 142:main.c        ****     
+ 143:main.c        ****     UART_PutString("Remote connection...\r\n");
+ 144:main.c        ****     
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 4
+
+
+ 145:main.c        ****     // Reading the remote MAC
+ 146:main.c        ****     W5500_spi_read(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_DESTINATION_HW_ADDR0,
+ 147:main.c        ****         skt_remote_mac, sizeof(skt_remote_mac));
+ 148:main.c        ****     // Reading the remote IP Address
+ 149:main.c        ****     W5500_spi_read(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_DESTINATION_IP_ADDR0,
+ 150:main.c        ****         skt_remote_ip, sizeof(skt_remote_ip));
+ 151:main.c        ****     
+ 152:main.c        ****     snprintf(remote_mac, sizeof(remote_mac), "Remote MAC: %X %X %X %X %X %X\r\n", skt_remote_mac[0]
+ 153:main.c        ****         skt_remote_mac[1], skt_remote_mac[2], skt_remote_mac[3], skt_remote_mac[4], skt_remote_mac[
+ 154:main.c        ****     
+ 155:main.c        ****     snprintf(remote_ip, sizeof(remote_ip), "Remote IP: %d %d %d %d\r\n", skt_remote_ip[0],
+ 156:main.c        ****         skt_remote_ip[1], skt_remote_ip[2], skt_remote_ip[3]);
+ 157:main.c        ****     
+ 158:main.c        ****     UART_PutString(remote_mac);
+ 159:main.c        ****     UART_PutString(remote_ip);
+ 160:main.c        **** }
+ 161:main.c        **** 
+ 162:main.c        **** void close_socket0(void)
+ 163:main.c        **** {
+ 164:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_DISCONNECT);
+ 165:main.c        ****     UART_PutString("Socket 0 closed\r\n");
+ 166:main.c        **** }
+ 167:main.c        **** 
+ 168:main.c        **** void handle_disconnection(void)
+ 169:main.c        **** {
+ 170:main.c        ****     UART_PutString("Closing the socket\r\n");
+ 171:main.c        ****     close_socket0();
+ 172:main.c        ****     UART_PutString("Socket open and listening\r\n");
+ 173:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_OPEN);
+ 174:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_LISTEN);
+ 175:main.c        **** }
+ 176:main.c        **** 
+ 177:main.c        **** /* Socket Status Register:
+ 178:main.c        ****  * El pin INTx se pone en 0 logico cuando ocurre una interrupcion que
+ 179:main.c        ****  * esta habilitada, al leer el registro de los flags de las interrupciones
+ 180:main.c        ****  * se puede ver el flag en 1 logico, pero además podemos tener mas bits
+ 181:main.c        ****  * en 1 logico, sin embargo si no estan habilitados en el mask interrupts
+ 182:main.c        ****  * estos flags no pueden causar que el INTx se vaya a 0 logico.
+ 183:main.c        ****  */
+ 184:main.c        **** void w5500_isr(void)
+ 185:main.c        **** {
+  28              		.loc 1 185 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 08B5     		push	{r3, lr}
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 3, -8
+  35              		.cfi_offset 14, -4
+ 186:main.c        ****     w5500_interrupt_flag = true;
+  36              		.loc 1 186 0
+  37 0002 0122     		movs	r2, #1
+  38 0004 024B     		ldr	r3, .L3
+  39 0006 1A70     		strb	r2, [r3]
+ 187:main.c        ****     W5500_ISR_ClearInterrupt();
+  40              		.loc 1 187 0
+  41 0008 FFF7FEFF 		bl	W5500_ISR_ClearInterrupt
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 5
+
+
+  42              	.LVL0:
+  43 000c 08BD     		pop	{r3, pc}
+  44              	.L4:
+  45 000e 00BF     		.align	2
+  46              	.L3:
+  47 0010 00000000 		.word	.LANCHOR0
+  48              		.cfi_endproc
+  49              	.LFE70:
+  50              		.size	w5500_isr, .-w5500_isr
+  51              		.section	.text.wiz_init,"ax",%progbits
+  52              		.align	2
+  53              		.global	wiz_init
+  54              		.thumb
+  55              		.thumb_func
+  56              		.type	wiz_init, %function
+  57              	wiz_init:
+  58              	.LFB65:
+  96:main.c        ****     const uint8_t mac_addr[] = {0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00};
+  59              		.loc 1 96 0
+  60              		.cfi_startproc
+  61              		@ args = 0, pretend = 0, frame = 16
+  62              		@ frame_needed = 0, uses_anonymous_args = 0
+  63              	.LVL1:
+  64 0000 10B5     		push	{r4, lr}
+  65              		.cfi_def_cfa_offset 8
+  66              		.cfi_offset 4, -8
+  67              		.cfi_offset 14, -4
+  68 0002 84B0     		sub	sp, sp, #16
+  69              		.cfi_def_cfa_offset 24
+  70 0004 0446     		mov	r4, r0
+  97:main.c        ****     const uint8_t submask[] = {255, 255, 255, 0};
+  71              		.loc 1 97 0
+  72 0006 1A4B     		ldr	r3, .L7
+  73 0008 1868     		ldr	r0, [r3]	@ unaligned
+  74              	.LVL2:
+  75 000a 0290     		str	r0, [sp, #8]	@ unaligned
+  76 000c 9A88     		ldrh	r2, [r3, #4]	@ unaligned
+  77 000e ADF80C20 		strh	r2, [sp, #12]	@ unaligned
+  98:main.c        ****     const uint8_t gtw_addr[] = {192, 168, 1, 70}; // pc addr
+  78              		.loc 1 98 0
+  79 0012 9868     		ldr	r0, [r3, #8]	@ unaligned
+  80 0014 0190     		str	r0, [sp, #4]	@ unaligned
+  99:main.c        ****     
+  81              		.loc 1 99 0
+  82 0016 D868     		ldr	r0, [r3, #12]	@ unaligned
+  83 0018 0090     		str	r0, [sp]	@ unaligned
+ 102:main.c        ****     // set transmit buffer for socket 0 to 1k
+  84              		.loc 1 102 0
+  85 001a 0122     		movs	r2, #1
+  86 001c 1E21     		movs	r1, #30
+  87 001e 1046     		mov	r0, r2
+  88 0020 FFF7FEFF 		bl	W5500_spi_write_byte
+  89              	.LVL3:
+ 104:main.c        ****     
+  90              		.loc 1 104 0
+  91 0024 0222     		movs	r2, #2
+  92 0026 1F21     		movs	r1, #31
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 6
+
+
+  93 0028 0120     		movs	r0, #1
+  94 002a FFF7FEFF 		bl	W5500_spi_write_byte
+  95              	.LVL4:
+ 107:main.c        ****     // gateway address register
+  96              		.loc 1 107 0
+  97 002e 0623     		movs	r3, #6
+  98 0030 02AA     		add	r2, sp, #8
+  99 0032 0921     		movs	r1, #9
+ 100 0034 0020     		movs	r0, #0
+ 101 0036 FFF7FEFF 		bl	W5500_spi_write
+ 102              	.LVL5:
+ 109:main.c        ****     // submask address
+ 103              		.loc 1 109 0
+ 104 003a 0423     		movs	r3, #4
+ 105 003c 6A46     		mov	r2, sp
+ 106 003e 0121     		movs	r1, #1
+ 107 0040 0020     		movs	r0, #0
+ 108 0042 FFF7FEFF 		bl	W5500_spi_write
+ 109              	.LVL6:
+ 111:main.c        ****     // ip address
+ 110              		.loc 1 111 0
+ 111 0046 0423     		movs	r3, #4
+ 112 0048 0DEB0302 		add	r2, sp, r3
+ 113 004c 0521     		movs	r1, #5
+ 114 004e 0020     		movs	r0, #0
+ 115 0050 FFF7FEFF 		bl	W5500_spi_write
+ 116              	.LVL7:
+ 113:main.c        ****     // enable socket 0 interrupts
+ 117              		.loc 1 113 0
+ 118 0054 0423     		movs	r3, #4
+ 119 0056 2246     		mov	r2, r4
+ 120 0058 0F21     		movs	r1, #15
+ 121 005a 0020     		movs	r0, #0
+ 122 005c FFF7FEFF 		bl	W5500_spi_write
+ 123              	.LVL8:
+ 115:main.c        **** }
+ 124              		.loc 1 115 0
+ 125 0060 0122     		movs	r2, #1
+ 126 0062 1821     		movs	r1, #24
+ 127 0064 0020     		movs	r0, #0
+ 128 0066 FFF7FEFF 		bl	W5500_spi_write_byte
+ 129              	.LVL9:
+ 116:main.c        **** 
+ 130              		.loc 1 116 0
+ 131 006a 04B0     		add	sp, sp, #16
+ 132              		.cfi_def_cfa_offset 8
+ 133              		@ sp needed
+ 134 006c 10BD     		pop	{r4, pc}
+ 135              	.LVL10:
+ 136              	.L8:
+ 137 006e 00BF     		.align	2
+ 138              	.L7:
+ 139 0070 00000000 		.word	.LANCHOR1
+ 140              		.cfi_endproc
+ 141              	.LFE65:
+ 142              		.size	wiz_init, .-wiz_init
+ 143              		.section	.text.socket0_init,"ax",%progbits
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 7
+
+
+ 144              		.align	2
+ 145              		.global	socket0_init
+ 146              		.thumb
+ 147              		.thumb_func
+ 148              		.type	socket0_init, %function
+ 149              	socket0_init:
+ 150              	.LFB66:
+ 119:main.c        ****     uint8_t tcp_port[] = {0, 80}; // 80d = 50h
+ 151              		.loc 1 119 0
+ 152              		.cfi_startproc
+ 153              		@ args = 0, pretend = 0, frame = 8
+ 154              		@ frame_needed = 0, uses_anonymous_args = 0
+ 155 0000 10B5     		push	{r4, lr}
+ 156              		.cfi_def_cfa_offset 8
+ 157              		.cfi_offset 4, -8
+ 158              		.cfi_offset 14, -4
+ 159 0002 82B0     		sub	sp, sp, #8
+ 160              		.cfi_def_cfa_offset 16
+ 120:main.c        ****     
+ 161              		.loc 1 120 0
+ 162 0004 0024     		movs	r4, #0
+ 163 0006 8DF80440 		strb	r4, [sp, #4]
+ 164 000a 5023     		movs	r3, #80
+ 165 000c 8DF80530 		strb	r3, [sp, #5]
+ 122:main.c        ****     // set tcp port to 80
+ 166              		.loc 1 122 0
+ 167 0010 0122     		movs	r2, #1
+ 168 0012 2146     		mov	r1, r4
+ 169 0014 1046     		mov	r0, r2
+ 170 0016 FFF7FEFF 		bl	W5500_spi_write_byte
+ 171              	.LVL11:
+ 124:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_OPEN);
+ 172              		.loc 1 124 0
+ 173 001a 0223     		movs	r3, #2
+ 174 001c 01AA     		add	r2, sp, #4
+ 175 001e 0421     		movs	r1, #4
+ 176 0020 0120     		movs	r0, #1
+ 177 0022 FFF7FEFF 		bl	W5500_spi_write
+ 178              	.LVL12:
+ 125:main.c        ****     
+ 179              		.loc 1 125 0
+ 180 0026 0122     		movs	r2, #1
+ 181 0028 1146     		mov	r1, r2
+ 182 002a 1046     		mov	r0, r2
+ 183 002c FFF7FEFF 		bl	W5500_spi_write_byte
+ 184              	.LVL13:
+ 127:main.c        ****     
+ 185              		.loc 1 127 0
+ 186 0030 0A20     		movs	r0, #10
+ 187 0032 FFF7FEFF 		bl	CyDelay
+ 188              	.LVL14:
+ 129:main.c        ****     
+ 189              		.loc 1 129 0
+ 190 0036 0222     		movs	r2, #2
+ 191 0038 0121     		movs	r1, #1
+ 192 003a 0846     		mov	r0, r1
+ 193 003c FFF7FEFF 		bl	W5500_spi_write_byte
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 8
+
+
+ 194              	.LVL15:
+ 132:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x01);
+ 195              		.loc 1 132 0
+ 196 0040 2246     		mov	r2, r4
+ 197 0042 2C21     		movs	r1, #44
+ 198 0044 0120     		movs	r0, #1
+ 199 0046 FFF7FEFF 		bl	W5500_spi_write_byte
+ 200              	.LVL16:
+ 133:main.c        **** }
+ 201              		.loc 1 133 0
+ 202 004a 0122     		movs	r2, #1
+ 203 004c 2C21     		movs	r1, #44
+ 204 004e 1046     		mov	r0, r2
+ 205 0050 FFF7FEFF 		bl	W5500_spi_write_byte
+ 206              	.LVL17:
+ 134:main.c        **** 
+ 207              		.loc 1 134 0
+ 208 0054 02B0     		add	sp, sp, #8
+ 209              		.cfi_def_cfa_offset 8
+ 210              		@ sp needed
+ 211 0056 10BD     		pop	{r4, pc}
+ 212              		.cfi_endproc
+ 213              	.LFE66:
+ 214              		.size	socket0_init, .-socket0_init
+ 215              		.section	.text.handle_connection,"ax",%progbits
+ 216              		.align	2
+ 217              		.global	handle_connection
+ 218              		.thumb
+ 219              		.thumb_func
+ 220              		.type	handle_connection, %function
+ 221              	handle_connection:
+ 222              	.LFB67:
+ 137:main.c        ****     uint8_t skt_remote_ip[4] = {0};
+ 223              		.loc 1 137 0
+ 224              		.cfi_startproc
+ 225              		@ args = 0, pretend = 0, frame = 168
+ 226              		@ frame_needed = 0, uses_anonymous_args = 0
+ 227 0000 30B5     		push	{r4, r5, lr}
+ 228              		.cfi_def_cfa_offset 12
+ 229              		.cfi_offset 4, -12
+ 230              		.cfi_offset 5, -8
+ 231              		.cfi_offset 14, -4
+ 232 0002 B1B0     		sub	sp, sp, #196
+ 233              		.cfi_def_cfa_offset 208
+ 138:main.c        ****     uint8_t skt_remote_mac[6] = {0};
+ 234              		.loc 1 138 0
+ 235 0004 0023     		movs	r3, #0
+ 236 0006 2F93     		str	r3, [sp, #188]
+ 139:main.c        ****     char remote_mac[100];
+ 237              		.loc 1 139 0
+ 238 0008 2D93     		str	r3, [sp, #180]
+ 239 000a ADF8B830 		strh	r3, [sp, #184]	@ movhi
+ 143:main.c        ****     
+ 240              		.loc 1 143 0
+ 241 000e 1E48     		ldr	r0, .L13
+ 242 0010 FFF7FEFF 		bl	UART_PutString
+ 243              	.LVL18:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 9
+
+
+ 146:main.c        ****         skt_remote_mac, sizeof(skt_remote_mac));
+ 244              		.loc 1 146 0
+ 245 0014 0623     		movs	r3, #6
+ 246 0016 2DAA     		add	r2, sp, #180
+ 247 0018 1946     		mov	r1, r3
+ 248 001a 0120     		movs	r0, #1
+ 249 001c FFF7FEFF 		bl	W5500_spi_read
+ 250              	.LVL19:
+ 149:main.c        ****         skt_remote_ip, sizeof(skt_remote_ip));
+ 251              		.loc 1 149 0
+ 252 0020 0423     		movs	r3, #4
+ 253 0022 2FAA     		add	r2, sp, #188
+ 254 0024 0C21     		movs	r1, #12
+ 255 0026 0120     		movs	r0, #1
+ 256 0028 FFF7FEFF 		bl	W5500_spi_read
+ 257              	.LVL20:
+ 152:main.c        ****         skt_remote_mac[1], skt_remote_mac[2], skt_remote_mac[3], skt_remote_mac[4], skt_remote_mac[
+ 258              		.loc 1 152 0
+ 259 002c 9DF8B430 		ldrb	r3, [sp, #180]	@ zero_extendqisi2
+ 153:main.c        ****     
+ 260              		.loc 1 153 0
+ 261 0030 9DF8B520 		ldrb	r2, [sp, #181]	@ zero_extendqisi2
+ 262 0034 9DF8B610 		ldrb	r1, [sp, #182]	@ zero_extendqisi2
+ 263 0038 9DF8B700 		ldrb	r0, [sp, #183]	@ zero_extendqisi2
+ 264 003c 9DF8B840 		ldrb	r4, [sp, #184]	@ zero_extendqisi2
+ 265 0040 9DF8B950 		ldrb	r5, [sp, #185]	@ zero_extendqisi2
+ 152:main.c        ****         skt_remote_mac[1], skt_remote_mac[2], skt_remote_mac[3], skt_remote_mac[4], skt_remote_mac[
+ 266              		.loc 1 152 0
+ 267 0044 0495     		str	r5, [sp, #16]
+ 268 0046 0394     		str	r4, [sp, #12]
+ 269 0048 0290     		str	r0, [sp, #8]
+ 270 004a 0191     		str	r1, [sp, #4]
+ 271 004c 0092     		str	r2, [sp]
+ 272 004e 0F4A     		ldr	r2, .L13+4
+ 273 0050 6421     		movs	r1, #100
+ 274 0052 14A8     		add	r0, sp, #80
+ 275 0054 FFF7FEFF 		bl	snprintf
+ 276              	.LVL21:
+ 155:main.c        ****         skt_remote_ip[1], skt_remote_ip[2], skt_remote_ip[3]);
+ 277              		.loc 1 155 0
+ 278 0058 9DF8BC30 		ldrb	r3, [sp, #188]	@ zero_extendqisi2
+ 156:main.c        ****     
+ 279              		.loc 1 156 0
+ 280 005c 9DF8BD20 		ldrb	r2, [sp, #189]	@ zero_extendqisi2
+ 281 0060 9DF8BE10 		ldrb	r1, [sp, #190]	@ zero_extendqisi2
+ 282 0064 9DF8BF00 		ldrb	r0, [sp, #191]	@ zero_extendqisi2
+ 155:main.c        ****         skt_remote_ip[1], skt_remote_ip[2], skt_remote_ip[3]);
+ 283              		.loc 1 155 0
+ 284 0068 0290     		str	r0, [sp, #8]
+ 285 006a 0191     		str	r1, [sp, #4]
+ 286 006c 0092     		str	r2, [sp]
+ 287 006e 084A     		ldr	r2, .L13+8
+ 288 0070 3221     		movs	r1, #50
+ 289 0072 07A8     		add	r0, sp, #28
+ 290 0074 FFF7FEFF 		bl	snprintf
+ 291              	.LVL22:
+ 158:main.c        ****     UART_PutString(remote_ip);
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 10
+
+
+ 292              		.loc 1 158 0
+ 293 0078 14A8     		add	r0, sp, #80
+ 294 007a FFF7FEFF 		bl	UART_PutString
+ 295              	.LVL23:
+ 159:main.c        **** }
+ 296              		.loc 1 159 0
+ 297 007e 07A8     		add	r0, sp, #28
+ 298 0080 FFF7FEFF 		bl	UART_PutString
+ 299              	.LVL24:
+ 160:main.c        **** 
+ 300              		.loc 1 160 0
+ 301 0084 31B0     		add	sp, sp, #196
+ 302              		.cfi_def_cfa_offset 12
+ 303              		@ sp needed
+ 304 0086 30BD     		pop	{r4, r5, pc}
+ 305              	.L14:
+ 306              		.align	2
+ 307              	.L13:
+ 308 0088 00000000 		.word	.LC4
+ 309 008c 18000000 		.word	.LC5
+ 310 0090 38000000 		.word	.LC6
+ 311              		.cfi_endproc
+ 312              	.LFE67:
+ 313              		.size	handle_connection, .-handle_connection
+ 314              		.section	.text.close_socket0,"ax",%progbits
+ 315              		.align	2
+ 316              		.global	close_socket0
+ 317              		.thumb
+ 318              		.thumb_func
+ 319              		.type	close_socket0, %function
+ 320              	close_socket0:
+ 321              	.LFB68:
+ 163:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_DISCONNECT);
+ 322              		.loc 1 163 0
+ 323              		.cfi_startproc
+ 324              		@ args = 0, pretend = 0, frame = 0
+ 325              		@ frame_needed = 0, uses_anonymous_args = 0
+ 326 0000 08B5     		push	{r3, lr}
+ 327              		.cfi_def_cfa_offset 8
+ 328              		.cfi_offset 3, -8
+ 329              		.cfi_offset 14, -4
+ 164:main.c        ****     UART_PutString("Socket 0 closed\r\n");
+ 330              		.loc 1 164 0
+ 331 0002 0822     		movs	r2, #8
+ 332 0004 0121     		movs	r1, #1
+ 333 0006 0846     		mov	r0, r1
+ 334 0008 FFF7FEFF 		bl	W5500_spi_write_byte
+ 335              	.LVL25:
+ 165:main.c        **** }
+ 336              		.loc 1 165 0
+ 337 000c 0148     		ldr	r0, .L17
+ 338 000e FFF7FEFF 		bl	UART_PutString
+ 339              	.LVL26:
+ 340 0012 08BD     		pop	{r3, pc}
+ 341              	.L18:
+ 342              		.align	2
+ 343              	.L17:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 11
+
+
+ 344 0014 54000000 		.word	.LC7
+ 345              		.cfi_endproc
+ 346              	.LFE68:
+ 347              		.size	close_socket0, .-close_socket0
+ 348              		.section	.text.handle_disconnection,"ax",%progbits
+ 349              		.align	2
+ 350              		.global	handle_disconnection
+ 351              		.thumb
+ 352              		.thumb_func
+ 353              		.type	handle_disconnection, %function
+ 354              	handle_disconnection:
+ 355              	.LFB69:
+ 169:main.c        ****     UART_PutString("Closing the socket\r\n");
+ 356              		.loc 1 169 0
+ 357              		.cfi_startproc
+ 358              		@ args = 0, pretend = 0, frame = 0
+ 359              		@ frame_needed = 0, uses_anonymous_args = 0
+ 360 0000 08B5     		push	{r3, lr}
+ 361              		.cfi_def_cfa_offset 8
+ 362              		.cfi_offset 3, -8
+ 363              		.cfi_offset 14, -4
+ 170:main.c        ****     close_socket0();
+ 364              		.loc 1 170 0
+ 365 0002 0948     		ldr	r0, .L21
+ 366 0004 FFF7FEFF 		bl	UART_PutString
+ 367              	.LVL27:
+ 171:main.c        ****     UART_PutString("Socket open and listening\r\n");
+ 368              		.loc 1 171 0
+ 369 0008 FFF7FEFF 		bl	close_socket0
+ 370              	.LVL28:
+ 172:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_OPEN);
+ 371              		.loc 1 172 0
+ 372 000c 0748     		ldr	r0, .L21+4
+ 373 000e FFF7FEFF 		bl	UART_PutString
+ 374              	.LVL29:
+ 173:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_LISTEN);
+ 375              		.loc 1 173 0
+ 376 0012 0122     		movs	r2, #1
+ 377 0014 1146     		mov	r1, r2
+ 378 0016 1046     		mov	r0, r2
+ 379 0018 FFF7FEFF 		bl	W5500_spi_write_byte
+ 380              	.LVL30:
+ 174:main.c        **** }
+ 381              		.loc 1 174 0
+ 382 001c 0222     		movs	r2, #2
+ 383 001e 0121     		movs	r1, #1
+ 384 0020 0846     		mov	r0, r1
+ 385 0022 FFF7FEFF 		bl	W5500_spi_write_byte
+ 386              	.LVL31:
+ 387 0026 08BD     		pop	{r3, pc}
+ 388              	.L22:
+ 389              		.align	2
+ 390              	.L21:
+ 391 0028 68000000 		.word	.LC8
+ 392 002c 80000000 		.word	.LC9
+ 393              		.cfi_endproc
+ 394              	.LFE69:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 12
+
+
+ 395              		.size	handle_disconnection, .-handle_disconnection
+ 396              		.section	.text.handle_data,"ax",%progbits
+ 397              		.align	2
+ 398              		.global	handle_data
+ 399              		.thumb
+ 400              		.thumb_func
+ 401              		.type	handle_data, %function
+ 402              	handle_data:
+ 403              	.LFB71:
+ 188:main.c        **** }
+ 189:main.c        **** 
+ 190:main.c        **** void handle_data(void)
+ 191:main.c        **** {
+ 404              		.loc 1 191 0
+ 405              		.cfi_startproc
+ 406              		@ args = 0, pretend = 0, frame = 200
+ 407              		@ frame_needed = 0, uses_anonymous_args = 0
+ 408 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 409              		.cfi_def_cfa_offset 20
+ 410              		.cfi_offset 4, -20
+ 411              		.cfi_offset 5, -16
+ 412              		.cfi_offset 6, -12
+ 413              		.cfi_offset 7, -8
+ 414              		.cfi_offset 14, -4
+ 415 0002 B3B0     		sub	sp, sp, #204
+ 416              		.cfi_def_cfa_offset 224
+ 417              	.LVL32:
+ 192:main.c        ****     uint8_t skt_rcv_data_size[2] = {0};
+ 193:main.c        ****     uint8_t data_ptr[2] = {0};
+ 194:main.c        ****     uint16_t bytes_rcvd = 0;
+ 195:main.c        ****     uint16_t new_rx_addr = 0;
+ 196:main.c        ****     uint16_t data_addr = 0;
+ 197:main.c        ****     uint8_t data[100] = {0};
+ 418              		.loc 1 197 0
+ 419 0004 6422     		movs	r2, #100
+ 420 0006 0021     		movs	r1, #0
+ 421 0008 0DEB0200 		add	r0, sp, r2
+ 422 000c FFF7FEFF 		bl	memset
+ 423              	.LVL33:
+ 198:main.c        ****     char data_str[100];
+ 199:main.c        ****     
+ 200:main.c        ****     LED_Write(~LED_Read());
+ 424              		.loc 1 200 0
+ 425 0010 FFF7FEFF 		bl	LED_Read
+ 426              	.LVL34:
+ 427 0014 C043     		mvns	r0, r0
+ 428 0016 C0B2     		uxtb	r0, r0
+ 429 0018 FFF7FEFF 		bl	LED_Write
+ 430              	.LVL35:
+ 201:main.c        **** 
+ 202:main.c        ****     W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, sir_sts);
+ 431              		.loc 1 202 0
+ 432 001c 3C4B     		ldr	r3, .L26
+ 433 001e 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 434 0020 0221     		movs	r1, #2
+ 435 0022 0120     		movs	r0, #1
+ 436 0024 FFF7FEFF 		bl	W5500_spi_write_byte
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 13
+
+
+ 437              	.LVL36:
+ 203:main.c        ****     
+ 204:main.c        ****     // Read Sn_RX_RSR (Socket n Received Size), if it's > 0 then we have data
+ 205:main.c        ****     // Se calcula apartir de la diferencia entre el Sn_RX_WR y Sn_RX_RD
+ 206:main.c        ****     skt_rcv_data_size[0] = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_RECEIVED_SIZE
+ 438              		.loc 1 206 0
+ 439 0028 2621     		movs	r1, #38
+ 440 002a 0120     		movs	r0, #1
+ 441 002c FFF7FEFF 		bl	W5500_spi_read_byte
+ 442              	.LVL37:
+ 443 0030 0446     		mov	r4, r0
+ 207:main.c        ****     skt_rcv_data_size[1] = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_RECEIVED_SIZE
+ 444              		.loc 1 207 0
+ 445 0032 2721     		movs	r1, #39
+ 446 0034 0120     		movs	r0, #1
+ 447 0036 FFF7FEFF 		bl	W5500_spi_read_byte
+ 448              	.LVL38:
+ 208:main.c        ****     bytes_rcvd = (skt_rcv_data_size[0] << 8) | skt_rcv_data_size[1];
+ 449              		.loc 1 208 0
+ 450 003a 40EA0420 		orr	r0, r0, r4, lsl #8
+ 451 003e 84B2     		uxth	r4, r0
+ 452              	.LVL39:
+ 209:main.c        ****         
+ 210:main.c        ****     if (0 < bytes_rcvd) {
+ 453              		.loc 1 210 0
+ 454 0040 002C     		cmp	r4, #0
+ 455 0042 62D0     		beq	.L23
+ 211:main.c        ****         UART_PutString("Size of received data: ");
+ 456              		.loc 1 211 0
+ 457 0044 3348     		ldr	r0, .L26+4
+ 458 0046 FFF7FEFF 		bl	UART_PutString
+ 459              	.LVL40:
+ 212:main.c        ****         UART_PutHexInt(bytes_rcvd);
+ 460              		.loc 1 212 0
+ 461 004a 2046     		mov	r0, r4
+ 462 004c FFF7FEFF 		bl	UART_PutHexInt
+ 463              	.LVL41:
+ 213:main.c        ****         UART_PutCRLF();
+ 464              		.loc 1 213 0
+ 465 0050 FFF7FEFF 		bl	UART_PutCRLF
+ 466              	.LVL42:
+ 214:main.c        ****             
+ 215:main.c        ****         UART_PutString("Getting the received data\r\n");
+ 467              		.loc 1 215 0
+ 468 0054 3048     		ldr	r0, .L26+8
+ 469 0056 FFF7FEFF 		bl	UART_PutString
+ 470              	.LVL43:
+ 216:main.c        ****             
+ 217:main.c        ****         /* Read Sn_RX_RD (Socket n RX Read Pointer) to get RX Data Start Address */
+ 218:main.c        ****         data_ptr[0] = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_READ_POINTER0);
+ 471              		.loc 1 218 0
+ 472 005a 2821     		movs	r1, #40
+ 473 005c 0120     		movs	r0, #1
+ 474 005e FFF7FEFF 		bl	W5500_spi_read_byte
+ 475              	.LVL44:
+ 476 0062 0546     		mov	r5, r0
+ 219:main.c        ****         data_ptr[1] = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_READ_POINTER1);
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 14
+
+
+ 477              		.loc 1 219 0
+ 478 0064 2921     		movs	r1, #41
+ 479 0066 0120     		movs	r0, #1
+ 480 0068 FFF7FEFF 		bl	W5500_spi_read_byte
+ 481              	.LVL45:
+ 220:main.c        ****         data_addr = (data_ptr[0] << 8 | data_ptr[1]);
+ 482              		.loc 1 220 0
+ 483 006c 40EA0520 		orr	r0, r0, r5, lsl #8
+ 484 0070 85B2     		uxth	r5, r0
+ 485              	.LVL46:
+ 221:main.c        ****             
+ 222:main.c        ****         UART_PutString("Address of data: ");
+ 486              		.loc 1 222 0
+ 487 0072 2A48     		ldr	r0, .L26+12
+ 488 0074 FFF7FEFF 		bl	UART_PutString
+ 489              	.LVL47:
+ 223:main.c        ****         UART_PutHexInt(data_addr);
+ 490              		.loc 1 223 0
+ 491 0078 2846     		mov	r0, r5
+ 492 007a FFF7FEFF 		bl	UART_PutHexInt
+ 493              	.LVL48:
+ 224:main.c        ****         UART_PutCRLF();
+ 494              		.loc 1 224 0
+ 495 007e FFF7FEFF 		bl	UART_PutCRLF
+ 496              	.LVL49:
+ 225:main.c        ****             
+ 226:main.c        ****         /* Read received Data from Sn_RX_BUF */
+ 227:main.c        ****         W5500_spi_read(BLOCK_SOCKET_0_RX_BUFFER, data_addr, data, sizeof(data));
+ 497              		.loc 1 227 0
+ 498 0082 6423     		movs	r3, #100
+ 499 0084 0DEB0302 		add	r2, sp, r3
+ 500 0088 2946     		mov	r1, r5
+ 501 008a 0320     		movs	r0, #3
+ 502 008c FFF7FEFF 		bl	W5500_spi_read
+ 503              	.LVL50:
+ 228:main.c        ****             
+ 229:main.c        ****         /* Despues de leer los datos tenemos que actualizar Sn_RX_RD con el
+ 230:main.c        ****         * tamaño de los datos que leimos. Mandar el comando RECV para notificar
+ 231:main.c        ****         * al W5500. */
+ 232:main.c        ****         new_rx_addr = data_addr + bytes_rcvd;
+ 504              		.loc 1 232 0
+ 505 0090 2544     		add	r5, r5, r4
+ 506              	.LVL51:
+ 507 0092 ADB2     		uxth	r5, r5
+ 508              	.LVL52:
+ 233:main.c        ****         data_ptr[0] = (new_rx_addr & 0xFF00) >> 8;
+ 509              		.loc 1 233 0
+ 510 0094 2F0A     		lsrs	r7, r5, #8
+ 234:main.c        ****         data_ptr[1] = new_rx_addr & 0xFF;
+ 511              		.loc 1 234 0
+ 512 0096 EEB2     		uxtb	r6, r5
+ 235:main.c        ****         UART_PutString("Bytes received: ");
+ 513              		.loc 1 235 0
+ 514 0098 2148     		ldr	r0, .L26+16
+ 515 009a FFF7FEFF 		bl	UART_PutString
+ 516              	.LVL53:
+ 236:main.c        ****         UART_PutHexInt(bytes_rcvd);
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 15
+
+
+ 517              		.loc 1 236 0
+ 518 009e 2046     		mov	r0, r4
+ 519 00a0 FFF7FEFF 		bl	UART_PutHexInt
+ 520              	.LVL54:
+ 237:main.c        ****         UART_PutCRLF();            
+ 521              		.loc 1 237 0
+ 522 00a4 FFF7FEFF 		bl	UART_PutCRLF
+ 523              	.LVL55:
+ 238:main.c        ****         UART_PutString("New rx addr: ");
+ 524              		.loc 1 238 0
+ 525 00a8 1E48     		ldr	r0, .L26+20
+ 526 00aa FFF7FEFF 		bl	UART_PutString
+ 527              	.LVL56:
+ 239:main.c        ****         UART_PutHexInt(new_rx_addr);
+ 528              		.loc 1 239 0
+ 529 00ae 2846     		mov	r0, r5
+ 530 00b0 FFF7FEFF 		bl	UART_PutHexInt
+ 531              	.LVL57:
+ 240:main.c        ****         UART_PutCRLF();                      
+ 532              		.loc 1 240 0
+ 533 00b4 FFF7FEFF 		bl	UART_PutCRLF
+ 534              	.LVL58:
+ 241:main.c        ****         W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_READ_POINTER0, data_ptr[0]);
+ 535              		.loc 1 241 0
+ 536 00b8 3A46     		mov	r2, r7
+ 537 00ba 2821     		movs	r1, #40
+ 538 00bc 0120     		movs	r0, #1
+ 539 00be FFF7FEFF 		bl	W5500_spi_write_byte
+ 540              	.LVL59:
+ 242:main.c        ****         W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_READ_POINTER1, data_ptr[1]);
+ 541              		.loc 1 242 0
+ 542 00c2 3246     		mov	r2, r6
+ 543 00c4 2921     		movs	r1, #41
+ 544 00c6 0120     		movs	r0, #1
+ 545 00c8 FFF7FEFF 		bl	W5500_spi_write_byte
+ 546              	.LVL60:
+ 243:main.c        ****             
+ 244:main.c        ****         W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_RECV);
+ 547              		.loc 1 244 0
+ 548 00cc 4022     		movs	r2, #64
+ 549 00ce 0121     		movs	r1, #1
+ 550 00d0 0846     		mov	r0, r1
+ 551 00d2 FFF7FEFF 		bl	W5500_spi_write_byte
+ 552              	.LVL61:
+ 245:main.c        ****             
+ 246:main.c        ****         /* Add a NULL char so we can print the received data without problems */
+ 247:main.c        ****         data[bytes_rcvd] = '\0';
+ 553              		.loc 1 247 0
+ 554 00d6 32AB     		add	r3, sp, #200
+ 555 00d8 1C44     		add	r4, r4, r3
+ 556              	.LVL62:
+ 557 00da 0025     		movs	r5, #0
+ 558              	.LVL63:
+ 559 00dc 04F8645C 		strb	r5, [r4, #-100]
+ 248:main.c        ****         snprintf(data_str, sizeof(data_str), "data received: %s\r\n", data);
+ 560              		.loc 1 248 0
+ 561 00e0 19AB     		add	r3, sp, #100
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 16
+
+
+ 562 00e2 114A     		ldr	r2, .L26+24
+ 563 00e4 6421     		movs	r1, #100
+ 564 00e6 6846     		mov	r0, sp
+ 565 00e8 FFF7FEFF 		bl	snprintf
+ 566              	.LVL64:
+ 249:main.c        ****         UART_PutString(data_str);
+ 567              		.loc 1 249 0
+ 568 00ec 6846     		mov	r0, sp
+ 569 00ee FFF7FEFF 		bl	UART_PutString
+ 570              	.LVL65:
+ 250:main.c        ****             
+ 251:main.c        ****         memset(data_str, '\0', sizeof(data_str));
+ 571              		.loc 1 251 0
+ 572 00f2 6424     		movs	r4, #100
+ 573 00f4 2246     		mov	r2, r4
+ 574 00f6 2946     		mov	r1, r5
+ 575 00f8 6846     		mov	r0, sp
+ 576 00fa FFF7FEFF 		bl	memset
+ 577              	.LVL66:
+ 252:main.c        ****         memset(data, 0, sizeof(data));
+ 578              		.loc 1 252 0
+ 579 00fe 2246     		mov	r2, r4
+ 580 0100 2946     		mov	r1, r5
+ 581 0102 0DEB0400 		add	r0, sp, r4
+ 582 0106 FFF7FEFF 		bl	memset
+ 583              	.LVL67:
+ 584              	.L23:
+ 253:main.c        ****     }
+ 254:main.c        **** }
+ 585              		.loc 1 254 0
+ 586 010a 33B0     		add	sp, sp, #204
+ 587              		.cfi_def_cfa_offset 20
+ 588              		@ sp needed
+ 589 010c F0BD     		pop	{r4, r5, r6, r7, pc}
+ 590              	.L27:
+ 591 010e 00BF     		.align	2
+ 592              	.L26:
+ 593 0110 00000000 		.word	.LANCHOR0
+ 594 0114 9C000000 		.word	.LC10
+ 595 0118 B4000000 		.word	.LC11
+ 596 011c D0000000 		.word	.LC12
+ 597 0120 E4000000 		.word	.LC13
+ 598 0124 F8000000 		.word	.LC14
+ 599 0128 08010000 		.word	.LC15
+ 600              		.cfi_endproc
+ 601              	.LFE71:
+ 602              		.size	handle_data, .-handle_data
+ 603              		.section	.text.main,"ax",%progbits
+ 604              		.align	2
+ 605              		.global	main
+ 606              		.thumb
+ 607              		.thumb_func
+ 608              		.type	main, %function
+ 609              	main:
+ 610              	.LFB64:
+  22:main.c        ****     const uint8_t ip_addr[] = {192, 168, 137, 70};
+ 611              		.loc 1 22 0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 17
+
+
+ 612              		.cfi_startproc
+ 613              		@ args = 0, pretend = 0, frame = 8
+ 614              		@ frame_needed = 0, uses_anonymous_args = 0
+ 615 0000 30B5     		push	{r4, r5, lr}
+ 616              		.cfi_def_cfa_offset 12
+ 617              		.cfi_offset 4, -12
+ 618              		.cfi_offset 5, -8
+ 619              		.cfi_offset 14, -4
+ 620 0002 83B0     		sub	sp, sp, #12
+ 621              		.cfi_def_cfa_offset 24
+  23:main.c        ****     
+ 622              		.loc 1 23 0
+ 623 0004 404B     		ldr	r3, .L35
+ 624 0006 1868     		ldr	r0, [r3]	@ unaligned
+ 625 0008 0190     		str	r0, [sp, #4]	@ unaligned
+  25:main.c        ****     
+ 626              		.loc 1 25 0
+ 627 000a 4048     		ldr	r0, .L35+4
+ 628 000c FFF7FEFF 		bl	isr_W5500_StartEx
+ 629              	.LVL68:
+  27:main.c        **** 
+ 630              		.loc 1 27 0
+ 631              		.syntax unified
+ 632              	@ 27 "main.c" 1
+ 633 0010 62B6     		CPSIE   i
+ 634              	@ 0 "" 2
+  29:main.c        ****     UART_Start();
+ 635              		.loc 1 29 0
+ 636              		.thumb
+ 637              		.syntax unified
+ 638 0012 FFF7FEFF 		bl	SPI_Start
+ 639              	.LVL69:
+  30:main.c        ****     UART_PutChar(0x0C);
+ 640              		.loc 1 30 0
+ 641 0016 FFF7FEFF 		bl	UART_Start
+ 642              	.LVL70:
+  31:main.c        ****     
+ 643              		.loc 1 31 0
+ 644 001a 0C20     		movs	r0, #12
+ 645 001c FFF7FEFF 		bl	UART_PutChar
+ 646              	.LVL71:
+  33:main.c        ****     
+ 647              		.loc 1 33 0
+ 648 0020 6420     		movs	r0, #100
+ 649 0022 FFF7FEFF 		bl	CyDelay
+ 650              	.LVL72:
+  35:main.c        ****     
+ 651              		.loc 1 35 0
+ 652 0026 8022     		movs	r2, #128
+ 653 0028 0021     		movs	r1, #0
+ 654 002a 0846     		mov	r0, r1
+ 655 002c FFF7FEFF 		bl	W5500_spi_write_byte
+ 656              	.LVL73:
+  37:main.c        ****     
+ 657              		.loc 1 37 0
+ 658 0030 01A8     		add	r0, sp, #4
+ 659 0032 FFF7FEFF 		bl	wiz_init
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 18
+
+
+ 660              	.LVL74:
+  39:main.c        ****     UART_PutString("Waiting for connection...\r\n");
+ 661              		.loc 1 39 0
+ 662 0036 FFF7FEFF 		bl	socket0_init
+ 663              	.LVL75:
+  40:main.c        ****     
+ 664              		.loc 1 40 0
+ 665 003a 3548     		ldr	r0, .L35+8
+ 666 003c FFF7FEFF 		bl	UART_PutString
+ 667              	.LVL76:
+ 668              	.L29:
+  44:main.c        ****             w5500_interrupt_flag = false;
+ 669              		.loc 1 44 0
+ 670 0040 344B     		ldr	r3, .L35+12
+ 671 0042 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 672 0044 13F0FF0F 		tst	r3, #255
+ 673 0048 FAD0     		beq	.L29
+  45:main.c        ****             UART_PutString("Socket 0 interrupt\r\n");
+ 674              		.loc 1 45 0
+ 675 004a 324C     		ldr	r4, .L35+12
+ 676 004c 0025     		movs	r5, #0
+ 677 004e 2570     		strb	r5, [r4]
+  46:main.c        ****             
+ 678              		.loc 1 46 0
+ 679 0050 3148     		ldr	r0, .L35+16
+ 680 0052 FFF7FEFF 		bl	UART_PutString
+ 681              	.LVL77:
+  49:main.c        ****         
+ 682              		.loc 1 49 0
+ 683 0056 0122     		movs	r2, #1
+ 684 0058 1721     		movs	r1, #23
+ 685 005a 2846     		mov	r0, r5
+ 686 005c FFF7FEFF 		bl	W5500_spi_write_byte
+ 687              	.LVL78:
+  51:main.c        ****             UART_PutString("Socket 0 Interrupt Register: 0x");
+ 688              		.loc 1 51 0
+ 689 0060 0221     		movs	r1, #2
+ 690 0062 0120     		movs	r0, #1
+ 691 0064 FFF7FEFF 		bl	W5500_spi_read_byte
+ 692              	.LVL79:
+ 693 0068 6070     		strb	r0, [r4, #1]
+  52:main.c        ****             UART_PutHexByte(sir_sts);
+ 694              		.loc 1 52 0
+ 695 006a 2C48     		ldr	r0, .L35+20
+ 696 006c FFF7FEFF 		bl	UART_PutString
+ 697              	.LVL80:
+  53:main.c        ****             UART_PutCRLF();
+ 698              		.loc 1 53 0
+ 699 0070 6078     		ldrb	r0, [r4, #1]	@ zero_extendqisi2
+ 700 0072 FFF7FEFF 		bl	UART_PutHexByte
+ 701              	.LVL81:
+  54:main.c        ****         
+ 702              		.loc 1 54 0
+ 703 0076 FFF7FEFF 		bl	UART_PutCRLF
+ 704              	.LVL82:
+  56:main.c        ****             
+ 705              		.loc 1 56 0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 19
+
+
+ 706 007a 6278     		ldrb	r2, [r4, #1]	@ zero_extendqisi2
+ 707 007c 0221     		movs	r1, #2
+ 708 007e 0120     		movs	r0, #1
+ 709 0080 FFF7FEFF 		bl	W5500_spi_write_byte
+ 710              	.LVL83:
+  58:main.c        ****                 // Clear the interrupt flag
+ 711              		.loc 1 58 0
+ 712 0084 6378     		ldrb	r3, [r4, #1]	@ zero_extendqisi2
+ 713 0086 13F0010F 		tst	r3, #1
+ 714 008a 10D0     		beq	.L30
+  60:main.c        ****                 
+ 715              		.loc 1 60 0
+ 716 008c 0122     		movs	r2, #1
+ 717 008e 0221     		movs	r1, #2
+ 718 0090 1046     		mov	r0, r2
+ 719 0092 FFF7FEFF 		bl	W5500_spi_write_byte
+ 720              	.LVL84:
+  62:main.c        ****                 
+ 721              		.loc 1 62 0
+ 722 0096 FFF7FEFF 		bl	handle_connection
+ 723              	.LVL85:
+  65:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x04 | 0x0
+ 724              		.loc 1 65 0
+ 725 009a 2A46     		mov	r2, r5
+ 726 009c 2C21     		movs	r1, #44
+ 727 009e 0120     		movs	r0, #1
+ 728 00a0 FFF7FEFF 		bl	W5500_spi_write_byte
+ 729              	.LVL86:
+  66:main.c        ****             }
+ 730              		.loc 1 66 0
+ 731 00a4 0622     		movs	r2, #6
+ 732 00a6 2C21     		movs	r1, #44
+ 733 00a8 0120     		movs	r0, #1
+ 734 00aa FFF7FEFF 		bl	W5500_spi_write_byte
+ 735              	.LVL87:
+ 736              	.L30:
+  69:main.c        ****                 // Clear the interrupt flag
+ 737              		.loc 1 69 0
+ 738 00ae 194B     		ldr	r3, .L35+12
+ 739 00b0 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 740 00b2 13F0020F 		tst	r3, #2
+ 741 00b6 10D0     		beq	.L31
+  71:main.c        ****                 
+ 742              		.loc 1 71 0
+ 743 00b8 0222     		movs	r2, #2
+ 744 00ba 1146     		mov	r1, r2
+ 745 00bc 0120     		movs	r0, #1
+ 746 00be FFF7FEFF 		bl	W5500_spi_write_byte
+ 747              	.LVL88:
+  73:main.c        ****                 
+ 748              		.loc 1 73 0
+ 749 00c2 FFF7FEFF 		bl	handle_disconnection
+ 750              	.LVL89:
+  76:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x01);
+ 751              		.loc 1 76 0
+ 752 00c6 0022     		movs	r2, #0
+ 753 00c8 2C21     		movs	r1, #44
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 20
+
+
+ 754 00ca 0120     		movs	r0, #1
+ 755 00cc FFF7FEFF 		bl	W5500_spi_write_byte
+ 756              	.LVL90:
+  77:main.c        ****             }
+ 757              		.loc 1 77 0
+ 758 00d0 0122     		movs	r2, #1
+ 759 00d2 2C21     		movs	r1, #44
+ 760 00d4 1046     		mov	r0, r2
+ 761 00d6 FFF7FEFF 		bl	W5500_spi_write_byte
+ 762              	.LVL91:
+ 763              	.L31:
+  80:main.c        ****                 // Clear the interrupt flag
+ 764              		.loc 1 80 0
+ 765 00da 0E4B     		ldr	r3, .L35+12
+ 766 00dc 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 767 00de 13F0040F 		tst	r3, #4
+ 768 00e2 ADD0     		beq	.L29
+  82:main.c        ****                 
+ 769              		.loc 1 82 0
+ 770 00e4 0422     		movs	r2, #4
+ 771 00e6 0221     		movs	r1, #2
+ 772 00e8 0120     		movs	r0, #1
+ 773 00ea FFF7FEFF 		bl	W5500_spi_write_byte
+ 774              	.LVL92:
+  84:main.c        ****                 
+ 775              		.loc 1 84 0
+ 776 00ee FFF7FEFF 		bl	handle_data
+ 777              	.LVL93:
+  87:main.c        ****                 W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x04 | 0x0
+ 778              		.loc 1 87 0
+ 779 00f2 0022     		movs	r2, #0
+ 780 00f4 2C21     		movs	r1, #44
+ 781 00f6 0120     		movs	r0, #1
+ 782 00f8 FFF7FEFF 		bl	W5500_spi_write_byte
+ 783              	.LVL94:
+  88:main.c        ****             }
+ 784              		.loc 1 88 0
+ 785 00fc 0622     		movs	r2, #6
+ 786 00fe 2C21     		movs	r1, #44
+ 787 0100 0120     		movs	r0, #1
+ 788 0102 FFF7FEFF 		bl	W5500_spi_write_byte
+ 789              	.LVL95:
+ 790 0106 9BE7     		b	.L29
+ 791              	.L36:
+ 792              		.align	2
+ 793              	.L35:
+ 794 0108 10000000 		.word	.LANCHOR1+16
+ 795 010c 00000000 		.word	w5500_isr
+ 796 0110 1C010000 		.word	.LC16
+ 797 0114 00000000 		.word	.LANCHOR0
+ 798 0118 38010000 		.word	.LC17
+ 799 011c 50010000 		.word	.LC18
+ 800              		.cfi_endproc
+ 801              	.LFE64:
+ 802              		.size	main, .-main
+ 803              		.global	sir_sts
+ 804              		.global	w5500_interrupt_flag
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 21
+
+
+ 805              		.section	.rodata
+ 806              		.align	2
+ 807              		.set	.LANCHOR1,. + 0
+ 808              	.LC1:
+ 809 0000 00       		.byte	0
+ 810 0001 DE       		.byte	-34
+ 811 0002 AD       		.byte	-83
+ 812 0003 BE       		.byte	-66
+ 813 0004 EF       		.byte	-17
+ 814 0005 00       		.byte	0
+ 815 0006 0000     		.space	2
+ 816              	.LC2:
+ 817 0008 FF       		.byte	-1
+ 818 0009 FF       		.byte	-1
+ 819 000a FF       		.byte	-1
+ 820 000b 00       		.byte	0
+ 821              	.LC3:
+ 822 000c C0       		.byte	-64
+ 823 000d A8       		.byte	-88
+ 824 000e 01       		.byte	1
+ 825 000f 46       		.byte	70
+ 826              	.LC0:
+ 827 0010 C0       		.byte	-64
+ 828 0011 A8       		.byte	-88
+ 829 0012 89       		.byte	-119
+ 830 0013 46       		.byte	70
+ 831              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 832              		.align	2
+ 833              	.LC4:
+ 834 0000 52656D6F 		.ascii	"Remote connection...\015\012\000"
+ 834      74652063 
+ 834      6F6E6E65 
+ 834      6374696F 
+ 834      6E2E2E2E 
+ 835 0017 00       		.space	1
+ 836              	.LC5:
+ 837 0018 52656D6F 		.ascii	"Remote MAC: %X %X %X %X %X %X\015\012\000"
+ 837      7465204D 
+ 837      41433A20 
+ 837      25582025 
+ 837      58202558 
+ 838              	.LC6:
+ 839 0038 52656D6F 		.ascii	"Remote IP: %d %d %d %d\015\012\000"
+ 839      74652049 
+ 839      503A2025 
+ 839      64202564 
+ 839      20256420 
+ 840 0051 000000   		.space	3
+ 841              	.LC7:
+ 842 0054 536F636B 		.ascii	"Socket 0 closed\015\012\000"
+ 842      65742030 
+ 842      20636C6F 
+ 842      7365640D 
+ 842      0A00
+ 843 0066 0000     		.space	2
+ 844              	.LC8:
+ 845 0068 436C6F73 		.ascii	"Closing the socket\015\012\000"
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 22
+
+
+ 845      696E6720 
+ 845      74686520 
+ 845      736F636B 
+ 845      65740D0A 
+ 846 007d 000000   		.space	3
+ 847              	.LC9:
+ 848 0080 536F636B 		.ascii	"Socket open and listening\015\012\000"
+ 848      6574206F 
+ 848      70656E20 
+ 848      616E6420 
+ 848      6C697374 
+ 849              	.LC10:
+ 850 009c 53697A65 		.ascii	"Size of received data: \000"
+ 850      206F6620 
+ 850      72656365 
+ 850      69766564 
+ 850      20646174 
+ 851              	.LC11:
+ 852 00b4 47657474 		.ascii	"Getting the received data\015\012\000"
+ 852      696E6720 
+ 852      74686520 
+ 852      72656365 
+ 852      69766564 
+ 853              	.LC12:
+ 854 00d0 41646472 		.ascii	"Address of data: \000"
+ 854      65737320 
+ 854      6F662064 
+ 854      6174613A 
+ 854      2000
+ 855 00e2 0000     		.space	2
+ 856              	.LC13:
+ 857 00e4 42797465 		.ascii	"Bytes received: \000"
+ 857      73207265 
+ 857      63656976 
+ 857      65643A20 
+ 857      00
+ 858 00f5 000000   		.space	3
+ 859              	.LC14:
+ 860 00f8 4E657720 		.ascii	"New rx addr: \000"
+ 860      72782061 
+ 860      6464723A 
+ 860      2000
+ 861 0106 0000     		.space	2
+ 862              	.LC15:
+ 863 0108 64617461 		.ascii	"data received: %s\015\012\000"
+ 863      20726563 
+ 863      65697665 
+ 863      643A2025 
+ 863      730D0A00 
+ 864              	.LC16:
+ 865 011c 57616974 		.ascii	"Waiting for connection...\015\012\000"
+ 865      696E6720 
+ 865      666F7220 
+ 865      636F6E6E 
+ 865      65637469 
+ 866              	.LC17:
+ 867 0138 536F636B 		.ascii	"Socket 0 interrupt\015\012\000"
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 23
+
+
+ 867      65742030 
+ 867      20696E74 
+ 867      65727275 
+ 867      70740D0A 
+ 868 014d 000000   		.space	3
+ 869              	.LC18:
+ 870 0150 536F636B 		.ascii	"Socket 0 Interrupt Register: 0x\000"
+ 870      65742030 
+ 870      20496E74 
+ 870      65727275 
+ 870      70742052 
+ 871              		.bss
+ 872              		.set	.LANCHOR0,. + 0
+ 873              		.type	w5500_interrupt_flag, %object
+ 874              		.size	w5500_interrupt_flag, 1
+ 875              	w5500_interrupt_flag:
+ 876 0000 00       		.space	1
+ 877              		.type	sir_sts, %object
+ 878              		.size	sir_sts, 1
+ 879              	sir_sts:
+ 880 0001 00       		.space	1
+ 881              		.text
+ 882              	.Letext0:
+ 883              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 884              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 885              		.file 4 "common.h"
+ 886              		.file 5 "Generated_Source\\PSoC5/core_cm3.h"
+ 887              		.file 6 "Generated_Source\\PSoC5/W5500_ISR.h"
+ 888              		.file 7 "hal_spi.h"
+ 889              		.file 8 "Generated_Source\\PSoC5/CyLib.h"
+ 890              		.file 9 "Generated_Source\\PSoC5/UART.h"
+ 891              		.file 10 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4
+ 892              		.file 11 "Generated_Source\\PSoC5/LED.h"
+ 893              		.file 12 "Generated_Source\\PSoC5/isr_W5500.h"
+ 894              		.file 13 "Generated_Source\\PSoC5/SPI.h"
+ 895              		.section	.debug_info,"",%progbits
+ 896              	.Ldebug_info0:
+ 897 0000 610E0000 		.4byte	0xe61
+ 898 0004 0400     		.2byte	0x4
+ 899 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 900 000a 04       		.byte	0x4
+ 901 000b 01       		.uleb128 0x1
+ 902 000c 8C030000 		.4byte	.LASF150
+ 903 0010 0C       		.byte	0xc
+ 904 0011 3E000000 		.4byte	.LASF151
+ 905 0015 8C080000 		.4byte	.LASF152
+ 906 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 907 001d 00000000 		.4byte	0
+ 908 0021 00000000 		.4byte	.Ldebug_line0
+ 909 0025 02       		.uleb128 0x2
+ 910 0026 01       		.byte	0x1
+ 911 0027 06       		.byte	0x6
+ 912 0028 B90A0000 		.4byte	.LASF0
+ 913 002c 03       		.uleb128 0x3
+ 914 002d 01090000 		.4byte	.LASF3
+ 915 0031 02       		.byte	0x2
+ 916 0032 1D       		.byte	0x1d
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 24
+
+
+ 917 0033 37000000 		.4byte	0x37
+ 918 0037 02       		.uleb128 0x2
+ 919 0038 01       		.byte	0x1
+ 920 0039 08       		.byte	0x8
+ 921 003a 640A0000 		.4byte	.LASF1
+ 922 003e 02       		.uleb128 0x2
+ 923 003f 02       		.byte	0x2
+ 924 0040 05       		.byte	0x5
+ 925 0041 41080000 		.4byte	.LASF2
+ 926 0045 03       		.uleb128 0x3
+ 927 0046 2E030000 		.4byte	.LASF4
+ 928 004a 02       		.byte	0x2
+ 929 004b 2B       		.byte	0x2b
+ 930 004c 50000000 		.4byte	0x50
+ 931 0050 02       		.uleb128 0x2
+ 932 0051 02       		.byte	0x2
+ 933 0052 07       		.byte	0x7
+ 934 0053 C50A0000 		.4byte	.LASF5
+ 935 0057 03       		.uleb128 0x3
+ 936 0058 2F010000 		.4byte	.LASF6
+ 937 005c 02       		.byte	0x2
+ 938 005d 3F       		.byte	0x3f
+ 939 005e 62000000 		.4byte	0x62
+ 940 0062 02       		.uleb128 0x2
+ 941 0063 04       		.byte	0x4
+ 942 0064 05       		.byte	0x5
+ 943 0065 5D080000 		.4byte	.LASF7
+ 944 0069 02       		.uleb128 0x2
+ 945 006a 04       		.byte	0x4
+ 946 006b 07       		.byte	0x7
+ 947 006c 6D090000 		.4byte	.LASF8
+ 948 0070 02       		.uleb128 0x2
+ 949 0071 08       		.byte	0x8
+ 950 0072 05       		.byte	0x5
+ 951 0073 A7060000 		.4byte	.LASF9
+ 952 0077 02       		.uleb128 0x2
+ 953 0078 08       		.byte	0x8
+ 954 0079 07       		.byte	0x7
+ 955 007a 82020000 		.4byte	.LASF10
+ 956 007e 04       		.uleb128 0x4
+ 957 007f 04       		.byte	0x4
+ 958 0080 05       		.byte	0x5
+ 959 0081 696E7400 		.ascii	"int\000"
+ 960 0085 02       		.uleb128 0x2
+ 961 0086 04       		.byte	0x4
+ 962 0087 07       		.byte	0x7
+ 963 0088 F1000000 		.4byte	.LASF11
+ 964 008c 03       		.uleb128 0x3
+ 965 008d BA050000 		.4byte	.LASF12
+ 966 0091 03       		.byte	0x3
+ 967 0092 18       		.byte	0x18
+ 968 0093 2C000000 		.4byte	0x2c
+ 969 0097 03       		.uleb128 0x3
+ 970 0098 FD070000 		.4byte	.LASF13
+ 971 009c 03       		.byte	0x3
+ 972 009d 24       		.byte	0x24
+ 973 009e 45000000 		.4byte	0x45
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 25
+
+
+ 974 00a2 03       		.uleb128 0x3
+ 975 00a3 0A0A0000 		.4byte	.LASF14
+ 976 00a7 03       		.byte	0x3
+ 977 00a8 2C       		.byte	0x2c
+ 978 00a9 57000000 		.4byte	0x57
+ 979 00ad 02       		.uleb128 0x2
+ 980 00ae 04       		.byte	0x4
+ 981 00af 04       		.byte	0x4
+ 982 00b0 45020000 		.4byte	.LASF15
+ 983 00b4 02       		.uleb128 0x2
+ 984 00b5 08       		.byte	0x8
+ 985 00b6 04       		.byte	0x4
+ 986 00b7 210B0000 		.4byte	.LASF16
+ 987 00bb 02       		.uleb128 0x2
+ 988 00bc 01       		.byte	0x1
+ 989 00bd 08       		.byte	0x8
+ 990 00be 12050000 		.4byte	.LASF17
+ 991 00c2 02       		.uleb128 0x2
+ 992 00c3 08       		.byte	0x8
+ 993 00c4 04       		.byte	0x4
+ 994 00c5 D9070000 		.4byte	.LASF18
+ 995 00c9 02       		.uleb128 0x2
+ 996 00ca 04       		.byte	0x4
+ 997 00cb 07       		.byte	0x7
+ 998 00cc 64090000 		.4byte	.LASF19
+ 999 00d0 05       		.uleb128 0x5
+ 1000 00d1 8C000000 		.4byte	0x8c
+ 1001 00d5 06       		.uleb128 0x6
+ 1002 00d6 01       		.byte	0x1
+ 1003 00d7 37000000 		.4byte	0x37
+ 1004 00db 04       		.byte	0x4
+ 1005 00dc 1D       		.byte	0x1d
+ 1006 00dd FA000000 		.4byte	0xfa
+ 1007 00e1 07       		.uleb128 0x7
+ 1008 00e2 64060000 		.4byte	.LASF20
+ 1009 00e6 00       		.byte	0
+ 1010 00e7 07       		.uleb128 0x7
+ 1011 00e8 A5000000 		.4byte	.LASF21
+ 1012 00ec 01       		.byte	0x1
+ 1013 00ed 07       		.uleb128 0x7
+ 1014 00ee 29070000 		.4byte	.LASF22
+ 1015 00f2 02       		.byte	0x2
+ 1016 00f3 07       		.uleb128 0x7
+ 1017 00f4 2B0A0000 		.4byte	.LASF23
+ 1018 00f8 04       		.byte	0x4
+ 1019 00f9 00       		.byte	0
+ 1020 00fa 06       		.uleb128 0x6
+ 1021 00fb 01       		.byte	0x1
+ 1022 00fc 37000000 		.4byte	0x37
+ 1023 0100 04       		.byte	0x4
+ 1024 0101 34       		.byte	0x34
+ 1025 0102 3D010000 		.4byte	0x13d
+ 1026 0106 07       		.uleb128 0x7
+ 1027 0107 06080000 		.4byte	.LASF24
+ 1028 010b 01       		.byte	0x1
+ 1029 010c 07       		.uleb128 0x7
+ 1030 010d 12000000 		.4byte	.LASF25
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 26
+
+
+ 1031 0111 02       		.byte	0x2
+ 1032 0112 07       		.uleb128 0x7
+ 1033 0113 A60A0000 		.4byte	.LASF26
+ 1034 0117 04       		.byte	0x4
+ 1035 0118 07       		.uleb128 0x7
+ 1036 0119 2F020000 		.4byte	.LASF27
+ 1037 011d 08       		.byte	0x8
+ 1038 011e 07       		.uleb128 0x7
+ 1039 011f B5000000 		.4byte	.LASF28
+ 1040 0123 10       		.byte	0x10
+ 1041 0124 07       		.uleb128 0x7
+ 1042 0125 ED010000 		.4byte	.LASF29
+ 1043 0129 20       		.byte	0x20
+ 1044 012a 07       		.uleb128 0x7
+ 1045 012b 410B0000 		.4byte	.LASF30
+ 1046 012f 21       		.byte	0x21
+ 1047 0130 07       		.uleb128 0x7
+ 1048 0131 50000000 		.4byte	.LASF31
+ 1049 0135 22       		.byte	0x22
+ 1050 0136 07       		.uleb128 0x7
+ 1051 0137 960A0000 		.4byte	.LASF32
+ 1052 013b 40       		.byte	0x40
+ 1053 013c 00       		.byte	0
+ 1054 013d 06       		.uleb128 0x6
+ 1055 013e 01       		.byte	0x1
+ 1056 013f 37000000 		.4byte	0x37
+ 1057 0143 04       		.byte	0x4
+ 1058 0144 40       		.byte	0x40
+ 1059 0145 3A020000 		.4byte	0x23a
+ 1060 0149 07       		.uleb128 0x7
+ 1061 014a E5080000 		.4byte	.LASF33
+ 1062 014e 00       		.byte	0
+ 1063 014f 07       		.uleb128 0x7
+ 1064 0150 DE000000 		.4byte	.LASF34
+ 1065 0154 01       		.byte	0x1
+ 1066 0155 07       		.uleb128 0x7
+ 1067 0156 D8010000 		.4byte	.LASF35
+ 1068 015a 02       		.byte	0x2
+ 1069 015b 07       		.uleb128 0x7
+ 1070 015c 77050000 		.4byte	.LASF36
+ 1071 0160 03       		.byte	0x3
+ 1072 0161 07       		.uleb128 0x7
+ 1073 0162 96010000 		.4byte	.LASF37
+ 1074 0166 04       		.byte	0x4
+ 1075 0167 07       		.uleb128 0x7
+ 1076 0168 AE010000 		.4byte	.LASF38
+ 1077 016c 05       		.byte	0x5
+ 1078 016d 07       		.uleb128 0x7
+ 1079 016e 52040000 		.4byte	.LASF39
+ 1080 0172 06       		.byte	0x6
+ 1081 0173 07       		.uleb128 0x7
+ 1082 0174 72040000 		.4byte	.LASF40
+ 1083 0178 07       		.byte	0x7
+ 1084 0179 07       		.uleb128 0x7
+ 1085 017a 92040000 		.4byte	.LASF41
+ 1086 017e 08       		.byte	0x8
+ 1087 017f 07       		.uleb128 0x7
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 27
+
+
+ 1088 0180 B2040000 		.4byte	.LASF42
+ 1089 0184 09       		.byte	0x9
+ 1090 0185 07       		.uleb128 0x7
+ 1091 0186 D2040000 		.4byte	.LASF43
+ 1092 018a 0A       		.byte	0xa
+ 1093 018b 07       		.uleb128 0x7
+ 1094 018c F2040000 		.4byte	.LASF44
+ 1095 0190 0B       		.byte	0xb
+ 1096 0191 07       		.uleb128 0x7
+ 1097 0192 7F090000 		.4byte	.LASF45
+ 1098 0196 0C       		.byte	0xc
+ 1099 0197 07       		.uleb128 0x7
+ 1100 0198 9F090000 		.4byte	.LASF46
+ 1101 019c 0D       		.byte	0xd
+ 1102 019d 07       		.uleb128 0x7
+ 1103 019e BF090000 		.4byte	.LASF47
+ 1104 01a2 0E       		.byte	0xe
+ 1105 01a3 07       		.uleb128 0x7
+ 1106 01a4 DF090000 		.4byte	.LASF48
+ 1107 01a8 0F       		.byte	0xf
+ 1108 01a9 07       		.uleb128 0x7
+ 1109 01aa 0D060000 		.4byte	.LASF49
+ 1110 01ae 10       		.byte	0x10
+ 1111 01af 07       		.uleb128 0x7
+ 1112 01b0 2A060000 		.4byte	.LASF50
+ 1113 01b4 11       		.byte	0x11
+ 1114 01b5 07       		.uleb128 0x7
+ 1115 01b6 550B0000 		.4byte	.LASF51
+ 1116 01ba 12       		.byte	0x12
+ 1117 01bb 07       		.uleb128 0x7
+ 1118 01bc 720B0000 		.4byte	.LASF52
+ 1119 01c0 13       		.byte	0x13
+ 1120 01c1 07       		.uleb128 0x7
+ 1121 01c2 4B080000 		.4byte	.LASF53
+ 1122 01c6 15       		.byte	0x15
+ 1123 01c7 07       		.uleb128 0x7
+ 1124 01c8 00000000 		.4byte	.LASF54
+ 1125 01cc 16       		.byte	0x16
+ 1126 01cd 07       		.uleb128 0x7
+ 1127 01ce 38040000 		.4byte	.LASF55
+ 1128 01d2 1E       		.byte	0x1e
+ 1129 01d3 07       		.uleb128 0x7
+ 1130 01d4 52030000 		.4byte	.LASF56
+ 1131 01d8 1F       		.byte	0x1f
+ 1132 01d9 07       		.uleb128 0x7
+ 1133 01da 30050000 		.4byte	.LASF57
+ 1134 01de 20       		.byte	0x20
+ 1135 01df 07       		.uleb128 0x7
+ 1136 01e0 49050000 		.4byte	.LASF58
+ 1137 01e4 21       		.byte	0x21
+ 1138 01e5 07       		.uleb128 0x7
+ 1139 01e6 AB0B0000 		.4byte	.LASF59
+ 1140 01ea 22       		.byte	0x22
+ 1141 01eb 07       		.uleb128 0x7
+ 1142 01ec C70B0000 		.4byte	.LASF60
+ 1143 01f0 23       		.byte	0x23
+ 1144 01f1 07       		.uleb128 0x7
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 28
+
+
+ 1145 01f2 470A0000 		.4byte	.LASF61
+ 1146 01f6 24       		.byte	0x24
+ 1147 01f7 07       		.uleb128 0x7
+ 1148 01f8 47060000 		.4byte	.LASF62
+ 1149 01fc 25       		.byte	0x25
+ 1150 01fd 07       		.uleb128 0x7
+ 1151 01fe 39010000 		.4byte	.LASF63
+ 1152 0202 26       		.byte	0x26
+ 1153 0203 07       		.uleb128 0x7
+ 1154 0204 56010000 		.4byte	.LASF64
+ 1155 0208 27       		.byte	0x27
+ 1156 0209 07       		.uleb128 0x7
+ 1157 020a CE060000 		.4byte	.LASF65
+ 1158 020e 28       		.byte	0x28
+ 1159 020f 07       		.uleb128 0x7
+ 1160 0210 EA060000 		.4byte	.LASF66
+ 1161 0214 29       		.byte	0x29
+ 1162 0215 07       		.uleb128 0x7
+ 1163 0216 E70A0000 		.4byte	.LASF67
+ 1164 021a 2A       		.byte	0x2a
+ 1165 021b 07       		.uleb128 0x7
+ 1166 021c 040B0000 		.4byte	.LASF68
+ 1167 0220 2B       		.byte	0x2b
+ 1168 0221 07       		.uleb128 0x7
+ 1169 0222 A6070000 		.4byte	.LASF69
+ 1170 0226 2C       		.byte	0x2c
+ 1171 0227 07       		.uleb128 0x7
+ 1172 0228 C2050000 		.4byte	.LASF70
+ 1173 022c 2D       		.byte	0x2d
+ 1174 022d 07       		.uleb128 0x7
+ 1175 022e E3050000 		.4byte	.LASF71
+ 1176 0232 2E       		.byte	0x2e
+ 1177 0233 07       		.uleb128 0x7
+ 1178 0234 48090000 		.4byte	.LASF72
+ 1179 0238 2F       		.byte	0x2f
+ 1180 0239 00       		.byte	0
+ 1181 023a 06       		.uleb128 0x6
+ 1182 023b 01       		.byte	0x1
+ 1183 023c 37000000 		.4byte	0x37
+ 1184 0240 04       		.byte	0x4
+ 1185 0241 6C       		.byte	0x6c
+ 1186 0242 0D030000 		.4byte	0x30d
+ 1187 0246 07       		.uleb128 0x7
+ 1188 0247 1A090000 		.4byte	.LASF73
+ 1189 024b 00       		.byte	0
+ 1190 024c 07       		.uleb128 0x7
+ 1191 024d C6000000 		.4byte	.LASF74
+ 1192 0251 01       		.byte	0x1
+ 1193 0252 07       		.uleb128 0x7
+ 1194 0253 0D020000 		.4byte	.LASF75
+ 1195 0257 02       		.byte	0x2
+ 1196 0258 07       		.uleb128 0x7
+ 1197 0259 C0070000 		.4byte	.LASF76
+ 1198 025d 03       		.byte	0x3
+ 1199 025e 07       		.uleb128 0x7
+ 1200 025f 99020000 		.4byte	.LASF77
+ 1201 0263 04       		.byte	0x4
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 29
+
+
+ 1202 0264 07       		.uleb128 0x7
+ 1203 0265 74030000 		.4byte	.LASF78
+ 1204 0269 05       		.byte	0x5
+ 1205 026a 07       		.uleb128 0x7
+ 1206 026b 77000000 		.4byte	.LASF79
+ 1207 026f 06       		.byte	0x6
+ 1208 0270 07       		.uleb128 0x7
+ 1209 0271 84060000 		.4byte	.LASF80
+ 1210 0275 07       		.byte	0x7
+ 1211 0276 07       		.uleb128 0x7
+ 1212 0277 AA020000 		.4byte	.LASF81
+ 1213 027b 08       		.byte	0x8
+ 1214 027c 07       		.uleb128 0x7
+ 1215 027d E5070000 		.4byte	.LASF82
+ 1216 0281 09       		.byte	0x9
+ 1217 0282 07       		.uleb128 0x7
+ 1218 0283 120A0000 		.4byte	.LASF83
+ 1219 0287 0A       		.byte	0xa
+ 1220 0288 07       		.uleb128 0x7
+ 1221 0289 5F020000 		.4byte	.LASF84
+ 1222 028d 0B       		.byte	0xb
+ 1223 028e 07       		.uleb128 0x7
+ 1224 028f BB020000 		.4byte	.LASF85
+ 1225 0293 0C       		.byte	0xc
+ 1226 0294 07       		.uleb128 0x7
+ 1227 0295 720A0000 		.4byte	.LASF86
+ 1228 0299 0D       		.byte	0xd
+ 1229 029a 07       		.uleb128 0x7
+ 1230 029b 16080000 		.4byte	.LASF87
+ 1231 029f 0E       		.byte	0xe
+ 1232 02a0 07       		.uleb128 0x7
+ 1233 02a1 16010000 		.4byte	.LASF88
+ 1234 02a5 0F       		.byte	0xf
+ 1235 02a6 07       		.uleb128 0x7
+ 1236 02a7 CC020000 		.4byte	.LASF89
+ 1237 02ab 10       		.byte	0x10
+ 1238 02ac 07       		.uleb128 0x7
+ 1239 02ad FE000000 		.4byte	.LASF90
+ 1240 02b1 11       		.byte	0x11
+ 1241 02b2 07       		.uleb128 0x7
+ 1242 02b3 10070000 		.4byte	.LASF91
+ 1243 02b7 12       		.byte	0x12
+ 1244 02b8 07       		.uleb128 0x7
+ 1245 02b9 280B0000 		.4byte	.LASF92
+ 1246 02bd 13       		.byte	0x13
+ 1247 02be 07       		.uleb128 0x7
+ 1248 02bf DD020000 		.4byte	.LASF93
+ 1249 02c3 14       		.byte	0x14
+ 1250 02c4 07       		.uleb128 0x7
+ 1251 02c5 1A040000 		.4byte	.LASF94
+ 1252 02c9 15       		.byte	0x15
+ 1253 02ca 07       		.uleb128 0x7
+ 1254 02cb 39030000 		.4byte	.LASF95
+ 1255 02cf 16       		.byte	0x16
+ 1256 02d0 07       		.uleb128 0x7
+ 1257 02d1 73080000 		.4byte	.LASF96
+ 1258 02d5 17       		.byte	0x17
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 30
+
+
+ 1259 02d6 07       		.uleb128 0x7
+ 1260 02d7 EE020000 		.4byte	.LASF97
+ 1261 02db 18       		.byte	0x18
+ 1262 02dc 07       		.uleb128 0x7
+ 1263 02dd 49070000 		.4byte	.LASF98
+ 1264 02e1 19       		.byte	0x19
+ 1265 02e2 07       		.uleb128 0x7
+ 1266 02e3 7D010000 		.4byte	.LASF99
+ 1267 02e7 1A       		.byte	0x1a
+ 1268 02e8 07       		.uleb128 0x7
+ 1269 02e9 85070000 		.4byte	.LASF100
+ 1270 02ed 1B       		.byte	0x1b
+ 1271 02ee 07       		.uleb128 0x7
+ 1272 02ef FF020000 		.4byte	.LASF101
+ 1273 02f3 1C       		.byte	0x1c
+ 1274 02f4 07       		.uleb128 0x7
+ 1275 02f5 30090000 		.4byte	.LASF102
+ 1276 02f9 1D       		.byte	0x1d
+ 1277 02fa 07       		.uleb128 0x7
+ 1278 02fb F80B0000 		.4byte	.LASF103
+ 1279 02ff 1E       		.byte	0x1e
+ 1280 0300 07       		.uleb128 0x7
+ 1281 0301 17050000 		.4byte	.LASF104
+ 1282 0305 1F       		.byte	0x1f
+ 1283 0306 07       		.uleb128 0x7
+ 1284 0307 AC050000 		.4byte	.LASF105
+ 1285 030b 20       		.byte	0x20
+ 1286 030c 00       		.byte	0
+ 1287 030d 08       		.uleb128 0x8
+ 1288 030e 8C000000 		.4byte	0x8c
+ 1289 0312 1D030000 		.4byte	0x31d
+ 1290 0316 09       		.uleb128 0x9
+ 1291 0317 C9000000 		.4byte	0xc9
+ 1292 031b 05       		.byte	0x5
+ 1293 031c 00       		.byte	0
+ 1294 031d 08       		.uleb128 0x8
+ 1295 031e 8C000000 		.4byte	0x8c
+ 1296 0322 2D030000 		.4byte	0x32d
+ 1297 0326 09       		.uleb128 0x9
+ 1298 0327 C9000000 		.4byte	0xc9
+ 1299 032b 03       		.byte	0x3
+ 1300 032c 00       		.byte	0
+ 1301 032d 0A       		.uleb128 0xa
+ 1302 032e 9D060000 		.4byte	.LASF106
+ 1303 0332 01       		.byte	0x1
+ 1304 0333 B8       		.byte	0xb8
+ 1305 0334 00000000 		.4byte	.LFB70
+ 1306 0338 14000000 		.4byte	.LFE70-.LFB70
+ 1307 033c 01       		.uleb128 0x1
+ 1308 033d 9C       		.byte	0x9c
+ 1309 033e 4C030000 		.4byte	0x34c
+ 1310 0342 0B       		.uleb128 0xb
+ 1311 0343 0C000000 		.4byte	.LVL0
+ 1312 0347 A00D0000 		.4byte	0xda0
+ 1313 034b 00       		.byte	0
+ 1314 034c 0A       		.uleb128 0xa
+ 1315 034d 56020000 		.4byte	.LASF107
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 31
+
+
+ 1316 0351 01       		.byte	0x1
+ 1317 0352 5F       		.byte	0x5f
+ 1318 0353 00000000 		.4byte	.LFB65
+ 1319 0357 74000000 		.4byte	.LFE65-.LFB65
+ 1320 035b 01       		.uleb128 0x1
+ 1321 035c 9C       		.byte	0x9c
+ 1322 035d 7A040000 		.4byte	0x47a
+ 1323 0361 0C       		.uleb128 0xc
+ 1324 0362 F00B0000 		.4byte	.LASF128
+ 1325 0366 01       		.byte	0x1
+ 1326 0367 5F       		.byte	0x5f
+ 1327 0368 7A040000 		.4byte	0x47a
+ 1328 036c 00000000 		.4byte	.LLST0
+ 1329 0370 0D       		.uleb128 0xd
+ 1330 0371 26020000 		.4byte	.LASF108
+ 1331 0375 01       		.byte	0x1
+ 1332 0376 61       		.byte	0x61
+ 1333 0377 95040000 		.4byte	0x495
+ 1334 037b 02       		.uleb128 0x2
+ 1335 037c 91       		.byte	0x91
+ 1336 037d 70       		.sleb128 -16
+ 1337 037e 0D       		.uleb128 0xd
+ 1338 037f 6C030000 		.4byte	.LASF109
+ 1339 0383 01       		.byte	0x1
+ 1340 0384 62       		.byte	0x62
+ 1341 0385 AA040000 		.4byte	0x4aa
+ 1342 0389 02       		.uleb128 0x2
+ 1343 038a 91       		.byte	0x91
+ 1344 038b 6C       		.sleb128 -20
+ 1345 038c 0D       		.uleb128 0xd
+ 1346 038d 3E0A0000 		.4byte	.LASF110
+ 1347 0391 01       		.byte	0x1
+ 1348 0392 63       		.byte	0x63
+ 1349 0393 AF040000 		.4byte	0x4af
+ 1350 0397 02       		.uleb128 0x2
+ 1351 0398 91       		.byte	0x91
+ 1352 0399 68       		.sleb128 -24
+ 1353 039a 0E       		.uleb128 0xe
+ 1354 039b 24000000 		.4byte	.LVL3
+ 1355 039f AB0D0000 		.4byte	0xdab
+ 1356 03a3 B7030000 		.4byte	0x3b7
+ 1357 03a7 0F       		.uleb128 0xf
+ 1358 03a8 01       		.uleb128 0x1
+ 1359 03a9 50       		.byte	0x50
+ 1360 03aa 01       		.uleb128 0x1
+ 1361 03ab 31       		.byte	0x31
+ 1362 03ac 0F       		.uleb128 0xf
+ 1363 03ad 01       		.uleb128 0x1
+ 1364 03ae 51       		.byte	0x51
+ 1365 03af 01       		.uleb128 0x1
+ 1366 03b0 4E       		.byte	0x4e
+ 1367 03b1 0F       		.uleb128 0xf
+ 1368 03b2 01       		.uleb128 0x1
+ 1369 03b3 52       		.byte	0x52
+ 1370 03b4 01       		.uleb128 0x1
+ 1371 03b5 31       		.byte	0x31
+ 1372 03b6 00       		.byte	0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 32
+
+
+ 1373 03b7 0E       		.uleb128 0xe
+ 1374 03b8 2E000000 		.4byte	.LVL4
+ 1375 03bc AB0D0000 		.4byte	0xdab
+ 1376 03c0 D4030000 		.4byte	0x3d4
+ 1377 03c4 0F       		.uleb128 0xf
+ 1378 03c5 01       		.uleb128 0x1
+ 1379 03c6 50       		.byte	0x50
+ 1380 03c7 01       		.uleb128 0x1
+ 1381 03c8 31       		.byte	0x31
+ 1382 03c9 0F       		.uleb128 0xf
+ 1383 03ca 01       		.uleb128 0x1
+ 1384 03cb 51       		.byte	0x51
+ 1385 03cc 01       		.uleb128 0x1
+ 1386 03cd 4F       		.byte	0x4f
+ 1387 03ce 0F       		.uleb128 0xf
+ 1388 03cf 01       		.uleb128 0x1
+ 1389 03d0 52       		.byte	0x52
+ 1390 03d1 01       		.uleb128 0x1
+ 1391 03d2 32       		.byte	0x32
+ 1392 03d3 00       		.byte	0
+ 1393 03d4 0E       		.uleb128 0xe
+ 1394 03d5 3A000000 		.4byte	.LVL5
+ 1395 03d9 B60D0000 		.4byte	0xdb6
+ 1396 03dd F7030000 		.4byte	0x3f7
+ 1397 03e1 0F       		.uleb128 0xf
+ 1398 03e2 01       		.uleb128 0x1
+ 1399 03e3 50       		.byte	0x50
+ 1400 03e4 01       		.uleb128 0x1
+ 1401 03e5 30       		.byte	0x30
+ 1402 03e6 0F       		.uleb128 0xf
+ 1403 03e7 01       		.uleb128 0x1
+ 1404 03e8 51       		.byte	0x51
+ 1405 03e9 01       		.uleb128 0x1
+ 1406 03ea 39       		.byte	0x39
+ 1407 03eb 0F       		.uleb128 0xf
+ 1408 03ec 01       		.uleb128 0x1
+ 1409 03ed 52       		.byte	0x52
+ 1410 03ee 02       		.uleb128 0x2
+ 1411 03ef 91       		.byte	0x91
+ 1412 03f0 70       		.sleb128 -16
+ 1413 03f1 0F       		.uleb128 0xf
+ 1414 03f2 01       		.uleb128 0x1
+ 1415 03f3 53       		.byte	0x53
+ 1416 03f4 01       		.uleb128 0x1
+ 1417 03f5 36       		.byte	0x36
+ 1418 03f6 00       		.byte	0
+ 1419 03f7 0E       		.uleb128 0xe
+ 1420 03f8 46000000 		.4byte	.LVL6
+ 1421 03fc B60D0000 		.4byte	0xdb6
+ 1422 0400 1A040000 		.4byte	0x41a
+ 1423 0404 0F       		.uleb128 0xf
+ 1424 0405 01       		.uleb128 0x1
+ 1425 0406 50       		.byte	0x50
+ 1426 0407 01       		.uleb128 0x1
+ 1427 0408 30       		.byte	0x30
+ 1428 0409 0F       		.uleb128 0xf
+ 1429 040a 01       		.uleb128 0x1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 33
+
+
+ 1430 040b 51       		.byte	0x51
+ 1431 040c 01       		.uleb128 0x1
+ 1432 040d 31       		.byte	0x31
+ 1433 040e 0F       		.uleb128 0xf
+ 1434 040f 01       		.uleb128 0x1
+ 1435 0410 52       		.byte	0x52
+ 1436 0411 02       		.uleb128 0x2
+ 1437 0412 7D       		.byte	0x7d
+ 1438 0413 00       		.sleb128 0
+ 1439 0414 0F       		.uleb128 0xf
+ 1440 0415 01       		.uleb128 0x1
+ 1441 0416 53       		.byte	0x53
+ 1442 0417 01       		.uleb128 0x1
+ 1443 0418 34       		.byte	0x34
+ 1444 0419 00       		.byte	0
+ 1445 041a 0E       		.uleb128 0xe
+ 1446 041b 54000000 		.4byte	.LVL7
+ 1447 041f B60D0000 		.4byte	0xdb6
+ 1448 0423 3D040000 		.4byte	0x43d
+ 1449 0427 0F       		.uleb128 0xf
+ 1450 0428 01       		.uleb128 0x1
+ 1451 0429 50       		.byte	0x50
+ 1452 042a 01       		.uleb128 0x1
+ 1453 042b 30       		.byte	0x30
+ 1454 042c 0F       		.uleb128 0xf
+ 1455 042d 01       		.uleb128 0x1
+ 1456 042e 51       		.byte	0x51
+ 1457 042f 01       		.uleb128 0x1
+ 1458 0430 35       		.byte	0x35
+ 1459 0431 0F       		.uleb128 0xf
+ 1460 0432 01       		.uleb128 0x1
+ 1461 0433 52       		.byte	0x52
+ 1462 0434 02       		.uleb128 0x2
+ 1463 0435 91       		.byte	0x91
+ 1464 0436 6C       		.sleb128 -20
+ 1465 0437 0F       		.uleb128 0xf
+ 1466 0438 01       		.uleb128 0x1
+ 1467 0439 53       		.byte	0x53
+ 1468 043a 01       		.uleb128 0x1
+ 1469 043b 34       		.byte	0x34
+ 1470 043c 00       		.byte	0
+ 1471 043d 0E       		.uleb128 0xe
+ 1472 043e 60000000 		.4byte	.LVL8
+ 1473 0442 B60D0000 		.4byte	0xdb6
+ 1474 0446 60040000 		.4byte	0x460
+ 1475 044a 0F       		.uleb128 0xf
+ 1476 044b 01       		.uleb128 0x1
+ 1477 044c 50       		.byte	0x50
+ 1478 044d 01       		.uleb128 0x1
+ 1479 044e 30       		.byte	0x30
+ 1480 044f 0F       		.uleb128 0xf
+ 1481 0450 01       		.uleb128 0x1
+ 1482 0451 51       		.byte	0x51
+ 1483 0452 01       		.uleb128 0x1
+ 1484 0453 3F       		.byte	0x3f
+ 1485 0454 0F       		.uleb128 0xf
+ 1486 0455 01       		.uleb128 0x1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 34
+
+
+ 1487 0456 52       		.byte	0x52
+ 1488 0457 02       		.uleb128 0x2
+ 1489 0458 74       		.byte	0x74
+ 1490 0459 00       		.sleb128 0
+ 1491 045a 0F       		.uleb128 0xf
+ 1492 045b 01       		.uleb128 0x1
+ 1493 045c 53       		.byte	0x53
+ 1494 045d 01       		.uleb128 0x1
+ 1495 045e 34       		.byte	0x34
+ 1496 045f 00       		.byte	0
+ 1497 0460 10       		.uleb128 0x10
+ 1498 0461 6A000000 		.4byte	.LVL9
+ 1499 0465 AB0D0000 		.4byte	0xdab
+ 1500 0469 0F       		.uleb128 0xf
+ 1501 046a 01       		.uleb128 0x1
+ 1502 046b 50       		.byte	0x50
+ 1503 046c 01       		.uleb128 0x1
+ 1504 046d 30       		.byte	0x30
+ 1505 046e 0F       		.uleb128 0xf
+ 1506 046f 01       		.uleb128 0x1
+ 1507 0470 51       		.byte	0x51
+ 1508 0471 01       		.uleb128 0x1
+ 1509 0472 48       		.byte	0x48
+ 1510 0473 0F       		.uleb128 0xf
+ 1511 0474 01       		.uleb128 0x1
+ 1512 0475 52       		.byte	0x52
+ 1513 0476 01       		.uleb128 0x1
+ 1514 0477 31       		.byte	0x31
+ 1515 0478 00       		.byte	0
+ 1516 0479 00       		.byte	0
+ 1517 047a 11       		.uleb128 0x11
+ 1518 047b 04       		.byte	0x4
+ 1519 047c 80040000 		.4byte	0x480
+ 1520 0480 12       		.uleb128 0x12
+ 1521 0481 8C000000 		.4byte	0x8c
+ 1522 0485 08       		.uleb128 0x8
+ 1523 0486 80040000 		.4byte	0x480
+ 1524 048a 95040000 		.4byte	0x495
+ 1525 048e 09       		.uleb128 0x9
+ 1526 048f C9000000 		.4byte	0xc9
+ 1527 0493 05       		.byte	0x5
+ 1528 0494 00       		.byte	0
+ 1529 0495 12       		.uleb128 0x12
+ 1530 0496 85040000 		.4byte	0x485
+ 1531 049a 08       		.uleb128 0x8
+ 1532 049b 80040000 		.4byte	0x480
+ 1533 049f AA040000 		.4byte	0x4aa
+ 1534 04a3 09       		.uleb128 0x9
+ 1535 04a4 C9000000 		.4byte	0xc9
+ 1536 04a8 03       		.byte	0x3
+ 1537 04a9 00       		.byte	0
+ 1538 04aa 12       		.uleb128 0x12
+ 1539 04ab 9A040000 		.4byte	0x49a
+ 1540 04af 12       		.uleb128 0x12
+ 1541 04b0 9A040000 		.4byte	0x49a
+ 1542 04b4 0A       		.uleb128 0xa
+ 1543 04b5 110C0000 		.4byte	.LASF111
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 35
+
+
+ 1544 04b9 01       		.byte	0x1
+ 1545 04ba 76       		.byte	0x76
+ 1546 04bb 00000000 		.4byte	.LFB66
+ 1547 04bf 58000000 		.4byte	.LFE66-.LFB66
+ 1548 04c3 01       		.uleb128 0x1
+ 1549 04c4 9C       		.byte	0x9c
+ 1550 04c5 9F050000 		.4byte	0x59f
+ 1551 04c9 0D       		.uleb128 0xd
+ 1552 04ca 38080000 		.4byte	.LASF112
+ 1553 04ce 01       		.byte	0x1
+ 1554 04cf 78       		.byte	0x78
+ 1555 04d0 9F050000 		.4byte	0x59f
+ 1556 04d4 02       		.uleb128 0x2
+ 1557 04d5 91       		.byte	0x91
+ 1558 04d6 74       		.sleb128 -12
+ 1559 04d7 0E       		.uleb128 0xe
+ 1560 04d8 1A000000 		.4byte	.LVL11
+ 1561 04dc AB0D0000 		.4byte	0xdab
+ 1562 04e0 F5040000 		.4byte	0x4f5
+ 1563 04e4 0F       		.uleb128 0xf
+ 1564 04e5 01       		.uleb128 0x1
+ 1565 04e6 50       		.byte	0x50
+ 1566 04e7 01       		.uleb128 0x1
+ 1567 04e8 31       		.byte	0x31
+ 1568 04e9 0F       		.uleb128 0xf
+ 1569 04ea 01       		.uleb128 0x1
+ 1570 04eb 51       		.byte	0x51
+ 1571 04ec 02       		.uleb128 0x2
+ 1572 04ed 74       		.byte	0x74
+ 1573 04ee 00       		.sleb128 0
+ 1574 04ef 0F       		.uleb128 0xf
+ 1575 04f0 01       		.uleb128 0x1
+ 1576 04f1 52       		.byte	0x52
+ 1577 04f2 01       		.uleb128 0x1
+ 1578 04f3 31       		.byte	0x31
+ 1579 04f4 00       		.byte	0
+ 1580 04f5 0E       		.uleb128 0xe
+ 1581 04f6 26000000 		.4byte	.LVL12
+ 1582 04fa B60D0000 		.4byte	0xdb6
+ 1583 04fe 18050000 		.4byte	0x518
+ 1584 0502 0F       		.uleb128 0xf
+ 1585 0503 01       		.uleb128 0x1
+ 1586 0504 50       		.byte	0x50
+ 1587 0505 01       		.uleb128 0x1
+ 1588 0506 31       		.byte	0x31
+ 1589 0507 0F       		.uleb128 0xf
+ 1590 0508 01       		.uleb128 0x1
+ 1591 0509 51       		.byte	0x51
+ 1592 050a 01       		.uleb128 0x1
+ 1593 050b 34       		.byte	0x34
+ 1594 050c 0F       		.uleb128 0xf
+ 1595 050d 01       		.uleb128 0x1
+ 1596 050e 52       		.byte	0x52
+ 1597 050f 02       		.uleb128 0x2
+ 1598 0510 91       		.byte	0x91
+ 1599 0511 74       		.sleb128 -12
+ 1600 0512 0F       		.uleb128 0xf
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 36
+
+
+ 1601 0513 01       		.uleb128 0x1
+ 1602 0514 53       		.byte	0x53
+ 1603 0515 01       		.uleb128 0x1
+ 1604 0516 32       		.byte	0x32
+ 1605 0517 00       		.byte	0
+ 1606 0518 0E       		.uleb128 0xe
+ 1607 0519 30000000 		.4byte	.LVL13
+ 1608 051d AB0D0000 		.4byte	0xdab
+ 1609 0521 35050000 		.4byte	0x535
+ 1610 0525 0F       		.uleb128 0xf
+ 1611 0526 01       		.uleb128 0x1
+ 1612 0527 50       		.byte	0x50
+ 1613 0528 01       		.uleb128 0x1
+ 1614 0529 31       		.byte	0x31
+ 1615 052a 0F       		.uleb128 0xf
+ 1616 052b 01       		.uleb128 0x1
+ 1617 052c 51       		.byte	0x51
+ 1618 052d 01       		.uleb128 0x1
+ 1619 052e 31       		.byte	0x31
+ 1620 052f 0F       		.uleb128 0xf
+ 1621 0530 01       		.uleb128 0x1
+ 1622 0531 52       		.byte	0x52
+ 1623 0532 01       		.uleb128 0x1
+ 1624 0533 31       		.byte	0x31
+ 1625 0534 00       		.byte	0
+ 1626 0535 0E       		.uleb128 0xe
+ 1627 0536 36000000 		.4byte	.LVL14
+ 1628 053a C10D0000 		.4byte	0xdc1
+ 1629 053e 48050000 		.4byte	0x548
+ 1630 0542 0F       		.uleb128 0xf
+ 1631 0543 01       		.uleb128 0x1
+ 1632 0544 50       		.byte	0x50
+ 1633 0545 01       		.uleb128 0x1
+ 1634 0546 3A       		.byte	0x3a
+ 1635 0547 00       		.byte	0
+ 1636 0548 0E       		.uleb128 0xe
+ 1637 0549 40000000 		.4byte	.LVL15
+ 1638 054d AB0D0000 		.4byte	0xdab
+ 1639 0551 65050000 		.4byte	0x565
+ 1640 0555 0F       		.uleb128 0xf
+ 1641 0556 01       		.uleb128 0x1
+ 1642 0557 50       		.byte	0x50
+ 1643 0558 01       		.uleb128 0x1
+ 1644 0559 31       		.byte	0x31
+ 1645 055a 0F       		.uleb128 0xf
+ 1646 055b 01       		.uleb128 0x1
+ 1647 055c 51       		.byte	0x51
+ 1648 055d 01       		.uleb128 0x1
+ 1649 055e 31       		.byte	0x31
+ 1650 055f 0F       		.uleb128 0xf
+ 1651 0560 01       		.uleb128 0x1
+ 1652 0561 52       		.byte	0x52
+ 1653 0562 01       		.uleb128 0x1
+ 1654 0563 32       		.byte	0x32
+ 1655 0564 00       		.byte	0
+ 1656 0565 0E       		.uleb128 0xe
+ 1657 0566 4A000000 		.4byte	.LVL16
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 37
+
+
+ 1658 056a AB0D0000 		.4byte	0xdab
+ 1659 056e 84050000 		.4byte	0x584
+ 1660 0572 0F       		.uleb128 0xf
+ 1661 0573 01       		.uleb128 0x1
+ 1662 0574 50       		.byte	0x50
+ 1663 0575 01       		.uleb128 0x1
+ 1664 0576 31       		.byte	0x31
+ 1665 0577 0F       		.uleb128 0xf
+ 1666 0578 01       		.uleb128 0x1
+ 1667 0579 51       		.byte	0x51
+ 1668 057a 02       		.uleb128 0x2
+ 1669 057b 08       		.byte	0x8
+ 1670 057c 2C       		.byte	0x2c
+ 1671 057d 0F       		.uleb128 0xf
+ 1672 057e 01       		.uleb128 0x1
+ 1673 057f 52       		.byte	0x52
+ 1674 0580 02       		.uleb128 0x2
+ 1675 0581 74       		.byte	0x74
+ 1676 0582 00       		.sleb128 0
+ 1677 0583 00       		.byte	0
+ 1678 0584 10       		.uleb128 0x10
+ 1679 0585 54000000 		.4byte	.LVL17
+ 1680 0589 AB0D0000 		.4byte	0xdab
+ 1681 058d 0F       		.uleb128 0xf
+ 1682 058e 01       		.uleb128 0x1
+ 1683 058f 50       		.byte	0x50
+ 1684 0590 01       		.uleb128 0x1
+ 1685 0591 31       		.byte	0x31
+ 1686 0592 0F       		.uleb128 0xf
+ 1687 0593 01       		.uleb128 0x1
+ 1688 0594 51       		.byte	0x51
+ 1689 0595 02       		.uleb128 0x2
+ 1690 0596 08       		.byte	0x8
+ 1691 0597 2C       		.byte	0x2c
+ 1692 0598 0F       		.uleb128 0xf
+ 1693 0599 01       		.uleb128 0x1
+ 1694 059a 52       		.byte	0x52
+ 1695 059b 01       		.uleb128 0x1
+ 1696 059c 31       		.byte	0x31
+ 1697 059d 00       		.byte	0
+ 1698 059e 00       		.byte	0
+ 1699 059f 08       		.uleb128 0x8
+ 1700 05a0 8C000000 		.4byte	0x8c
+ 1701 05a4 AF050000 		.4byte	0x5af
+ 1702 05a8 09       		.uleb128 0x9
+ 1703 05a9 C9000000 		.4byte	0xc9
+ 1704 05ad 01       		.byte	0x1
+ 1705 05ae 00       		.byte	0
+ 1706 05af 0A       		.uleb128 0xa
+ 1707 05b0 C6010000 		.4byte	.LASF113
+ 1708 05b4 01       		.byte	0x1
+ 1709 05b5 88       		.byte	0x88
+ 1710 05b6 00000000 		.4byte	.LFB67
+ 1711 05ba 94000000 		.4byte	.LFE67-.LFB67
+ 1712 05be 01       		.uleb128 0x1
+ 1713 05bf 9C       		.byte	0x9c
+ 1714 05c0 D8060000 		.4byte	0x6d8
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 38
+
+
+ 1715 05c4 0D       		.uleb128 0xd
+ 1716 05c5 9D0B0000 		.4byte	.LASF114
+ 1717 05c9 01       		.byte	0x1
+ 1718 05ca 8A       		.byte	0x8a
+ 1719 05cb 1D030000 		.4byte	0x31d
+ 1720 05cf 02       		.uleb128 0x2
+ 1721 05d0 91       		.byte	0x91
+ 1722 05d1 6C       		.sleb128 -20
+ 1723 05d2 0D       		.uleb128 0xd
+ 1724 05d3 8E050000 		.4byte	.LASF115
+ 1725 05d7 01       		.byte	0x1
+ 1726 05d8 8B       		.byte	0x8b
+ 1727 05d9 0D030000 		.4byte	0x30d
+ 1728 05dd 02       		.uleb128 0x2
+ 1729 05de 91       		.byte	0x91
+ 1730 05df 64       		.sleb128 -28
+ 1731 05e0 0D       		.uleb128 0xd
+ 1732 05e1 4B020000 		.4byte	.LASF116
+ 1733 05e5 01       		.byte	0x1
+ 1734 05e6 8C       		.byte	0x8c
+ 1735 05e7 D8060000 		.4byte	0x6d8
+ 1736 05eb 03       		.uleb128 0x3
+ 1737 05ec 91       		.byte	0x91
+ 1738 05ed 807F     		.sleb128 -128
+ 1739 05ef 0D       		.uleb128 0xd
+ 1740 05f0 DD0A0000 		.4byte	.LASF117
+ 1741 05f4 01       		.byte	0x1
+ 1742 05f5 8D       		.byte	0x8d
+ 1743 05f6 E8060000 		.4byte	0x6e8
+ 1744 05fa 03       		.uleb128 0x3
+ 1745 05fb 91       		.byte	0x91
+ 1746 05fc CC7E     		.sleb128 -180
+ 1747 05fe 0E       		.uleb128 0xe
+ 1748 05ff 14000000 		.4byte	.LVL18
+ 1749 0603 CC0D0000 		.4byte	0xdcc
+ 1750 0607 15060000 		.4byte	0x615
+ 1751 060b 0F       		.uleb128 0xf
+ 1752 060c 01       		.uleb128 0x1
+ 1753 060d 50       		.byte	0x50
+ 1754 060e 05       		.uleb128 0x5
+ 1755 060f 03       		.byte	0x3
+ 1756 0610 00000000 		.4byte	.LC4
+ 1757 0614 00       		.byte	0
+ 1758 0615 0E       		.uleb128 0xe
+ 1759 0616 20000000 		.4byte	.LVL19
+ 1760 061a D70D0000 		.4byte	0xdd7
+ 1761 061e 38060000 		.4byte	0x638
+ 1762 0622 0F       		.uleb128 0xf
+ 1763 0623 01       		.uleb128 0x1
+ 1764 0624 50       		.byte	0x50
+ 1765 0625 01       		.uleb128 0x1
+ 1766 0626 31       		.byte	0x31
+ 1767 0627 0F       		.uleb128 0xf
+ 1768 0628 01       		.uleb128 0x1
+ 1769 0629 51       		.byte	0x51
+ 1770 062a 01       		.uleb128 0x1
+ 1771 062b 36       		.byte	0x36
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 39
+
+
+ 1772 062c 0F       		.uleb128 0xf
+ 1773 062d 01       		.uleb128 0x1
+ 1774 062e 52       		.byte	0x52
+ 1775 062f 02       		.uleb128 0x2
+ 1776 0630 91       		.byte	0x91
+ 1777 0631 64       		.sleb128 -28
+ 1778 0632 0F       		.uleb128 0xf
+ 1779 0633 01       		.uleb128 0x1
+ 1780 0634 53       		.byte	0x53
+ 1781 0635 01       		.uleb128 0x1
+ 1782 0636 36       		.byte	0x36
+ 1783 0637 00       		.byte	0
+ 1784 0638 0E       		.uleb128 0xe
+ 1785 0639 2C000000 		.4byte	.LVL20
+ 1786 063d D70D0000 		.4byte	0xdd7
+ 1787 0641 5B060000 		.4byte	0x65b
+ 1788 0645 0F       		.uleb128 0xf
+ 1789 0646 01       		.uleb128 0x1
+ 1790 0647 50       		.byte	0x50
+ 1791 0648 01       		.uleb128 0x1
+ 1792 0649 31       		.byte	0x31
+ 1793 064a 0F       		.uleb128 0xf
+ 1794 064b 01       		.uleb128 0x1
+ 1795 064c 51       		.byte	0x51
+ 1796 064d 01       		.uleb128 0x1
+ 1797 064e 3C       		.byte	0x3c
+ 1798 064f 0F       		.uleb128 0xf
+ 1799 0650 01       		.uleb128 0x1
+ 1800 0651 52       		.byte	0x52
+ 1801 0652 02       		.uleb128 0x2
+ 1802 0653 91       		.byte	0x91
+ 1803 0654 6C       		.sleb128 -20
+ 1804 0655 0F       		.uleb128 0xf
+ 1805 0656 01       		.uleb128 0x1
+ 1806 0657 53       		.byte	0x53
+ 1807 0658 01       		.uleb128 0x1
+ 1808 0659 34       		.byte	0x34
+ 1809 065a 00       		.byte	0
+ 1810 065b 0E       		.uleb128 0xe
+ 1811 065c 58000000 		.4byte	.LVL21
+ 1812 0660 E20D0000 		.4byte	0xde2
+ 1813 0664 8D060000 		.4byte	0x68d
+ 1814 0668 0F       		.uleb128 0xf
+ 1815 0669 01       		.uleb128 0x1
+ 1816 066a 50       		.byte	0x50
+ 1817 066b 03       		.uleb128 0x3
+ 1818 066c 91       		.byte	0x91
+ 1819 066d 807F     		.sleb128 -128
+ 1820 066f 0F       		.uleb128 0xf
+ 1821 0670 01       		.uleb128 0x1
+ 1822 0671 51       		.byte	0x51
+ 1823 0672 02       		.uleb128 0x2
+ 1824 0673 08       		.byte	0x8
+ 1825 0674 64       		.byte	0x64
+ 1826 0675 0F       		.uleb128 0xf
+ 1827 0676 01       		.uleb128 0x1
+ 1828 0677 52       		.byte	0x52
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 40
+
+
+ 1829 0678 05       		.uleb128 0x5
+ 1830 0679 03       		.byte	0x3
+ 1831 067a 18000000 		.4byte	.LC5
+ 1832 067e 0F       		.uleb128 0xf
+ 1833 067f 02       		.uleb128 0x2
+ 1834 0680 7D       		.byte	0x7d
+ 1835 0681 0C       		.sleb128 12
+ 1836 0682 02       		.uleb128 0x2
+ 1837 0683 74       		.byte	0x74
+ 1838 0684 00       		.sleb128 0
+ 1839 0685 0F       		.uleb128 0xf
+ 1840 0686 02       		.uleb128 0x2
+ 1841 0687 7D       		.byte	0x7d
+ 1842 0688 10       		.sleb128 16
+ 1843 0689 02       		.uleb128 0x2
+ 1844 068a 75       		.byte	0x75
+ 1845 068b 00       		.sleb128 0
+ 1846 068c 00       		.byte	0
+ 1847 068d 0E       		.uleb128 0xe
+ 1848 068e 78000000 		.4byte	.LVL22
+ 1849 0692 E20D0000 		.4byte	0xde2
+ 1850 0696 B1060000 		.4byte	0x6b1
+ 1851 069a 0F       		.uleb128 0xf
+ 1852 069b 01       		.uleb128 0x1
+ 1853 069c 50       		.byte	0x50
+ 1854 069d 03       		.uleb128 0x3
+ 1855 069e 91       		.byte	0x91
+ 1856 069f CC7E     		.sleb128 -180
+ 1857 06a1 0F       		.uleb128 0xf
+ 1858 06a2 01       		.uleb128 0x1
+ 1859 06a3 51       		.byte	0x51
+ 1860 06a4 02       		.uleb128 0x2
+ 1861 06a5 08       		.byte	0x8
+ 1862 06a6 32       		.byte	0x32
+ 1863 06a7 0F       		.uleb128 0xf
+ 1864 06a8 01       		.uleb128 0x1
+ 1865 06a9 52       		.byte	0x52
+ 1866 06aa 05       		.uleb128 0x5
+ 1867 06ab 03       		.byte	0x3
+ 1868 06ac 38000000 		.4byte	.LC6
+ 1869 06b0 00       		.byte	0
+ 1870 06b1 0E       		.uleb128 0xe
+ 1871 06b2 7E000000 		.4byte	.LVL23
+ 1872 06b6 CC0D0000 		.4byte	0xdcc
+ 1873 06ba C6060000 		.4byte	0x6c6
+ 1874 06be 0F       		.uleb128 0xf
+ 1875 06bf 01       		.uleb128 0x1
+ 1876 06c0 50       		.byte	0x50
+ 1877 06c1 03       		.uleb128 0x3
+ 1878 06c2 91       		.byte	0x91
+ 1879 06c3 807F     		.sleb128 -128
+ 1880 06c5 00       		.byte	0
+ 1881 06c6 10       		.uleb128 0x10
+ 1882 06c7 84000000 		.4byte	.LVL24
+ 1883 06cb CC0D0000 		.4byte	0xdcc
+ 1884 06cf 0F       		.uleb128 0xf
+ 1885 06d0 01       		.uleb128 0x1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 41
+
+
+ 1886 06d1 50       		.byte	0x50
+ 1887 06d2 03       		.uleb128 0x3
+ 1888 06d3 91       		.byte	0x91
+ 1889 06d4 CC7E     		.sleb128 -180
+ 1890 06d6 00       		.byte	0
+ 1891 06d7 00       		.byte	0
+ 1892 06d8 08       		.uleb128 0x8
+ 1893 06d9 BB000000 		.4byte	0xbb
+ 1894 06dd E8060000 		.4byte	0x6e8
+ 1895 06e1 09       		.uleb128 0x9
+ 1896 06e2 C9000000 		.4byte	0xc9
+ 1897 06e6 63       		.byte	0x63
+ 1898 06e7 00       		.byte	0
+ 1899 06e8 08       		.uleb128 0x8
+ 1900 06e9 BB000000 		.4byte	0xbb
+ 1901 06ed F8060000 		.4byte	0x6f8
+ 1902 06f1 09       		.uleb128 0x9
+ 1903 06f2 C9000000 		.4byte	0xc9
+ 1904 06f6 31       		.byte	0x31
+ 1905 06f7 00       		.byte	0
+ 1906 06f8 0A       		.uleb128 0xa
+ 1907 06f9 8F0B0000 		.4byte	.LASF118
+ 1908 06fd 01       		.byte	0x1
+ 1909 06fe A2       		.byte	0xa2
+ 1910 06ff 00000000 		.4byte	.LFB68
+ 1911 0703 18000000 		.4byte	.LFE68-.LFB68
+ 1912 0707 01       		.uleb128 0x1
+ 1913 0708 9C       		.byte	0x9c
+ 1914 0709 3E070000 		.4byte	0x73e
+ 1915 070d 0E       		.uleb128 0xe
+ 1916 070e 0C000000 		.4byte	.LVL25
+ 1917 0712 AB0D0000 		.4byte	0xdab
+ 1918 0716 2A070000 		.4byte	0x72a
+ 1919 071a 0F       		.uleb128 0xf
+ 1920 071b 01       		.uleb128 0x1
+ 1921 071c 50       		.byte	0x50
+ 1922 071d 01       		.uleb128 0x1
+ 1923 071e 31       		.byte	0x31
+ 1924 071f 0F       		.uleb128 0xf
+ 1925 0720 01       		.uleb128 0x1
+ 1926 0721 51       		.byte	0x51
+ 1927 0722 01       		.uleb128 0x1
+ 1928 0723 31       		.byte	0x31
+ 1929 0724 0F       		.uleb128 0xf
+ 1930 0725 01       		.uleb128 0x1
+ 1931 0726 52       		.byte	0x52
+ 1932 0727 01       		.uleb128 0x1
+ 1933 0728 38       		.byte	0x38
+ 1934 0729 00       		.byte	0
+ 1935 072a 10       		.uleb128 0x10
+ 1936 072b 12000000 		.4byte	.LVL26
+ 1937 072f CC0D0000 		.4byte	0xdcc
+ 1938 0733 0F       		.uleb128 0xf
+ 1939 0734 01       		.uleb128 0x1
+ 1940 0735 50       		.byte	0x50
+ 1941 0736 05       		.uleb128 0x5
+ 1942 0737 03       		.byte	0x3
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 42
+
+
+ 1943 0738 54000000 		.4byte	.LC7
+ 1944 073c 00       		.byte	0
+ 1945 073d 00       		.byte	0
+ 1946 073e 0A       		.uleb128 0xa
+ 1947 073f 90000000 		.4byte	.LASF119
+ 1948 0743 01       		.byte	0x1
+ 1949 0744 A8       		.byte	0xa8
+ 1950 0745 00000000 		.4byte	.LFB69
+ 1951 0749 30000000 		.4byte	.LFE69-.LFB69
+ 1952 074d 01       		.uleb128 0x1
+ 1953 074e 9C       		.byte	0x9c
+ 1954 074f C1070000 		.4byte	0x7c1
+ 1955 0753 0E       		.uleb128 0xe
+ 1956 0754 08000000 		.4byte	.LVL27
+ 1957 0758 CC0D0000 		.4byte	0xdcc
+ 1958 075c 6A070000 		.4byte	0x76a
+ 1959 0760 0F       		.uleb128 0xf
+ 1960 0761 01       		.uleb128 0x1
+ 1961 0762 50       		.byte	0x50
+ 1962 0763 05       		.uleb128 0x5
+ 1963 0764 03       		.byte	0x3
+ 1964 0765 68000000 		.4byte	.LC8
+ 1965 0769 00       		.byte	0
+ 1966 076a 0B       		.uleb128 0xb
+ 1967 076b 0C000000 		.4byte	.LVL28
+ 1968 076f F8060000 		.4byte	0x6f8
+ 1969 0773 0E       		.uleb128 0xe
+ 1970 0774 12000000 		.4byte	.LVL29
+ 1971 0778 CC0D0000 		.4byte	0xdcc
+ 1972 077c 8A070000 		.4byte	0x78a
+ 1973 0780 0F       		.uleb128 0xf
+ 1974 0781 01       		.uleb128 0x1
+ 1975 0782 50       		.byte	0x50
+ 1976 0783 05       		.uleb128 0x5
+ 1977 0784 03       		.byte	0x3
+ 1978 0785 80000000 		.4byte	.LC9
+ 1979 0789 00       		.byte	0
+ 1980 078a 0E       		.uleb128 0xe
+ 1981 078b 1C000000 		.4byte	.LVL30
+ 1982 078f AB0D0000 		.4byte	0xdab
+ 1983 0793 A7070000 		.4byte	0x7a7
+ 1984 0797 0F       		.uleb128 0xf
+ 1985 0798 01       		.uleb128 0x1
+ 1986 0799 50       		.byte	0x50
+ 1987 079a 01       		.uleb128 0x1
+ 1988 079b 31       		.byte	0x31
+ 1989 079c 0F       		.uleb128 0xf
+ 1990 079d 01       		.uleb128 0x1
+ 1991 079e 51       		.byte	0x51
+ 1992 079f 01       		.uleb128 0x1
+ 1993 07a0 31       		.byte	0x31
+ 1994 07a1 0F       		.uleb128 0xf
+ 1995 07a2 01       		.uleb128 0x1
+ 1996 07a3 52       		.byte	0x52
+ 1997 07a4 01       		.uleb128 0x1
+ 1998 07a5 31       		.byte	0x31
+ 1999 07a6 00       		.byte	0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 43
+
+
+ 2000 07a7 10       		.uleb128 0x10
+ 2001 07a8 26000000 		.4byte	.LVL31
+ 2002 07ac AB0D0000 		.4byte	0xdab
+ 2003 07b0 0F       		.uleb128 0xf
+ 2004 07b1 01       		.uleb128 0x1
+ 2005 07b2 50       		.byte	0x50
+ 2006 07b3 01       		.uleb128 0x1
+ 2007 07b4 31       		.byte	0x31
+ 2008 07b5 0F       		.uleb128 0xf
+ 2009 07b6 01       		.uleb128 0x1
+ 2010 07b7 51       		.byte	0x51
+ 2011 07b8 01       		.uleb128 0x1
+ 2012 07b9 31       		.byte	0x31
+ 2013 07ba 0F       		.uleb128 0xf
+ 2014 07bb 01       		.uleb128 0x1
+ 2015 07bc 52       		.byte	0x52
+ 2016 07bd 01       		.uleb128 0x1
+ 2017 07be 32       		.byte	0x32
+ 2018 07bf 00       		.byte	0
+ 2019 07c0 00       		.byte	0
+ 2020 07c1 0A       		.uleb128 0xa
+ 2021 07c2 8A0A0000 		.4byte	.LASF120
+ 2022 07c6 01       		.byte	0x1
+ 2023 07c7 BE       		.byte	0xbe
+ 2024 07c8 00000000 		.4byte	.LFB71
+ 2025 07cc 2C010000 		.4byte	.LFE71-.LFB71
+ 2026 07d0 01       		.uleb128 0x1
+ 2027 07d1 9C       		.byte	0x9c
+ 2028 07d2 CF0A0000 		.4byte	0xacf
+ 2029 07d6 13       		.uleb128 0x13
+ 2030 07d7 2C000000 		.4byte	.LASF121
+ 2031 07db 01       		.byte	0x1
+ 2032 07dc C0       		.byte	0xc0
+ 2033 07dd 9F050000 		.4byte	0x59f
+ 2034 07e1 13       		.uleb128 0x13
+ 2035 07e2 10030000 		.4byte	.LASF122
+ 2036 07e6 01       		.byte	0x1
+ 2037 07e7 C1       		.byte	0xc1
+ 2038 07e8 9F050000 		.4byte	0x59f
+ 2039 07ec 14       		.uleb128 0x14
+ 2040 07ed 45000000 		.4byte	.LASF123
+ 2041 07f1 01       		.byte	0x1
+ 2042 07f2 C2       		.byte	0xc2
+ 2043 07f3 97000000 		.4byte	0x97
+ 2044 07f7 2C000000 		.4byte	.LLST1
+ 2045 07fb 14       		.uleb128 0x14
+ 2046 07fc F5080000 		.4byte	.LASF124
+ 2047 0800 01       		.byte	0x1
+ 2048 0801 C3       		.byte	0xc3
+ 2049 0802 97000000 		.4byte	0x97
+ 2050 0806 4B000000 		.4byte	.LLST2
+ 2051 080a 14       		.uleb128 0x14
+ 2052 080b 06070000 		.4byte	.LASF125
+ 2053 080f 01       		.byte	0x1
+ 2054 0810 C4       		.byte	0xc4
+ 2055 0811 97000000 		.4byte	0x97
+ 2056 0815 6A000000 		.4byte	.LLST3
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 44
+
+
+ 2057 0819 0D       		.uleb128 0xd
+ 2058 081a 89050000 		.4byte	.LASF126
+ 2059 081e 01       		.byte	0x1
+ 2060 081f C5       		.byte	0xc5
+ 2061 0820 CF0A0000 		.4byte	0xacf
+ 2062 0824 03       		.uleb128 0x3
+ 2063 0825 91       		.byte	0x91
+ 2064 0826 847F     		.sleb128 -124
+ 2065 0828 0D       		.uleb128 0xd
+ 2066 0829 2F080000 		.4byte	.LASF127
+ 2067 082d 01       		.byte	0x1
+ 2068 082e C6       		.byte	0xc6
+ 2069 082f D8060000 		.4byte	0x6d8
+ 2070 0833 03       		.uleb128 0x3
+ 2071 0834 91       		.byte	0x91
+ 2072 0835 A07E     		.sleb128 -224
+ 2073 0837 0E       		.uleb128 0xe
+ 2074 0838 10000000 		.4byte	.LVL33
+ 2075 083c ED0D0000 		.4byte	0xded
+ 2076 0840 57080000 		.4byte	0x857
+ 2077 0844 0F       		.uleb128 0xf
+ 2078 0845 01       		.uleb128 0x1
+ 2079 0846 50       		.byte	0x50
+ 2080 0847 03       		.uleb128 0x3
+ 2081 0848 91       		.byte	0x91
+ 2082 0849 847F     		.sleb128 -124
+ 2083 084b 0F       		.uleb128 0xf
+ 2084 084c 01       		.uleb128 0x1
+ 2085 084d 51       		.byte	0x51
+ 2086 084e 01       		.uleb128 0x1
+ 2087 084f 30       		.byte	0x30
+ 2088 0850 0F       		.uleb128 0xf
+ 2089 0851 01       		.uleb128 0x1
+ 2090 0852 52       		.byte	0x52
+ 2091 0853 02       		.uleb128 0x2
+ 2092 0854 08       		.byte	0x8
+ 2093 0855 64       		.byte	0x64
+ 2094 0856 00       		.byte	0
+ 2095 0857 0B       		.uleb128 0xb
+ 2096 0858 14000000 		.4byte	.LVL34
+ 2097 085c F60D0000 		.4byte	0xdf6
+ 2098 0860 0B       		.uleb128 0xb
+ 2099 0861 1C000000 		.4byte	.LVL35
+ 2100 0865 010E0000 		.4byte	0xe01
+ 2101 0869 0E       		.uleb128 0xe
+ 2102 086a 28000000 		.4byte	.LVL36
+ 2103 086e AB0D0000 		.4byte	0xdab
+ 2104 0872 81080000 		.4byte	0x881
+ 2105 0876 0F       		.uleb128 0xf
+ 2106 0877 01       		.uleb128 0x1
+ 2107 0878 50       		.byte	0x50
+ 2108 0879 01       		.uleb128 0x1
+ 2109 087a 31       		.byte	0x31
+ 2110 087b 0F       		.uleb128 0xf
+ 2111 087c 01       		.uleb128 0x1
+ 2112 087d 51       		.byte	0x51
+ 2113 087e 01       		.uleb128 0x1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 45
+
+
+ 2114 087f 32       		.byte	0x32
+ 2115 0880 00       		.byte	0
+ 2116 0881 0E       		.uleb128 0xe
+ 2117 0882 30000000 		.4byte	.LVL37
+ 2118 0886 0C0E0000 		.4byte	0xe0c
+ 2119 088a 9A080000 		.4byte	0x89a
+ 2120 088e 0F       		.uleb128 0xf
+ 2121 088f 01       		.uleb128 0x1
+ 2122 0890 50       		.byte	0x50
+ 2123 0891 01       		.uleb128 0x1
+ 2124 0892 31       		.byte	0x31
+ 2125 0893 0F       		.uleb128 0xf
+ 2126 0894 01       		.uleb128 0x1
+ 2127 0895 51       		.byte	0x51
+ 2128 0896 02       		.uleb128 0x2
+ 2129 0897 08       		.byte	0x8
+ 2130 0898 26       		.byte	0x26
+ 2131 0899 00       		.byte	0
+ 2132 089a 0E       		.uleb128 0xe
+ 2133 089b 3A000000 		.4byte	.LVL38
+ 2134 089f 0C0E0000 		.4byte	0xe0c
+ 2135 08a3 B3080000 		.4byte	0x8b3
+ 2136 08a7 0F       		.uleb128 0xf
+ 2137 08a8 01       		.uleb128 0x1
+ 2138 08a9 50       		.byte	0x50
+ 2139 08aa 01       		.uleb128 0x1
+ 2140 08ab 31       		.byte	0x31
+ 2141 08ac 0F       		.uleb128 0xf
+ 2142 08ad 01       		.uleb128 0x1
+ 2143 08ae 51       		.byte	0x51
+ 2144 08af 02       		.uleb128 0x2
+ 2145 08b0 08       		.byte	0x8
+ 2146 08b1 27       		.byte	0x27
+ 2147 08b2 00       		.byte	0
+ 2148 08b3 0E       		.uleb128 0xe
+ 2149 08b4 4A000000 		.4byte	.LVL40
+ 2150 08b8 CC0D0000 		.4byte	0xdcc
+ 2151 08bc CA080000 		.4byte	0x8ca
+ 2152 08c0 0F       		.uleb128 0xf
+ 2153 08c1 01       		.uleb128 0x1
+ 2154 08c2 50       		.byte	0x50
+ 2155 08c3 05       		.uleb128 0x5
+ 2156 08c4 03       		.byte	0x3
+ 2157 08c5 9C000000 		.4byte	.LC10
+ 2158 08c9 00       		.byte	0
+ 2159 08ca 0E       		.uleb128 0xe
+ 2160 08cb 50000000 		.4byte	.LVL41
+ 2161 08cf 170E0000 		.4byte	0xe17
+ 2162 08d3 DE080000 		.4byte	0x8de
+ 2163 08d7 0F       		.uleb128 0xf
+ 2164 08d8 01       		.uleb128 0x1
+ 2165 08d9 50       		.byte	0x50
+ 2166 08da 02       		.uleb128 0x2
+ 2167 08db 74       		.byte	0x74
+ 2168 08dc 00       		.sleb128 0
+ 2169 08dd 00       		.byte	0
+ 2170 08de 0B       		.uleb128 0xb
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 46
+
+
+ 2171 08df 54000000 		.4byte	.LVL42
+ 2172 08e3 220E0000 		.4byte	0xe22
+ 2173 08e7 0E       		.uleb128 0xe
+ 2174 08e8 5A000000 		.4byte	.LVL43
+ 2175 08ec CC0D0000 		.4byte	0xdcc
+ 2176 08f0 FE080000 		.4byte	0x8fe
+ 2177 08f4 0F       		.uleb128 0xf
+ 2178 08f5 01       		.uleb128 0x1
+ 2179 08f6 50       		.byte	0x50
+ 2180 08f7 05       		.uleb128 0x5
+ 2181 08f8 03       		.byte	0x3
+ 2182 08f9 B4000000 		.4byte	.LC11
+ 2183 08fd 00       		.byte	0
+ 2184 08fe 0E       		.uleb128 0xe
+ 2185 08ff 62000000 		.4byte	.LVL44
+ 2186 0903 0C0E0000 		.4byte	0xe0c
+ 2187 0907 17090000 		.4byte	0x917
+ 2188 090b 0F       		.uleb128 0xf
+ 2189 090c 01       		.uleb128 0x1
+ 2190 090d 50       		.byte	0x50
+ 2191 090e 01       		.uleb128 0x1
+ 2192 090f 31       		.byte	0x31
+ 2193 0910 0F       		.uleb128 0xf
+ 2194 0911 01       		.uleb128 0x1
+ 2195 0912 51       		.byte	0x51
+ 2196 0913 02       		.uleb128 0x2
+ 2197 0914 08       		.byte	0x8
+ 2198 0915 28       		.byte	0x28
+ 2199 0916 00       		.byte	0
+ 2200 0917 0E       		.uleb128 0xe
+ 2201 0918 6C000000 		.4byte	.LVL45
+ 2202 091c 0C0E0000 		.4byte	0xe0c
+ 2203 0920 30090000 		.4byte	0x930
+ 2204 0924 0F       		.uleb128 0xf
+ 2205 0925 01       		.uleb128 0x1
+ 2206 0926 50       		.byte	0x50
+ 2207 0927 01       		.uleb128 0x1
+ 2208 0928 31       		.byte	0x31
+ 2209 0929 0F       		.uleb128 0xf
+ 2210 092a 01       		.uleb128 0x1
+ 2211 092b 51       		.byte	0x51
+ 2212 092c 02       		.uleb128 0x2
+ 2213 092d 08       		.byte	0x8
+ 2214 092e 29       		.byte	0x29
+ 2215 092f 00       		.byte	0
+ 2216 0930 0E       		.uleb128 0xe
+ 2217 0931 78000000 		.4byte	.LVL47
+ 2218 0935 CC0D0000 		.4byte	0xdcc
+ 2219 0939 47090000 		.4byte	0x947
+ 2220 093d 0F       		.uleb128 0xf
+ 2221 093e 01       		.uleb128 0x1
+ 2222 093f 50       		.byte	0x50
+ 2223 0940 05       		.uleb128 0x5
+ 2224 0941 03       		.byte	0x3
+ 2225 0942 D0000000 		.4byte	.LC12
+ 2226 0946 00       		.byte	0
+ 2227 0947 0E       		.uleb128 0xe
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 47
+
+
+ 2228 0948 7E000000 		.4byte	.LVL48
+ 2229 094c 170E0000 		.4byte	0xe17
+ 2230 0950 5B090000 		.4byte	0x95b
+ 2231 0954 0F       		.uleb128 0xf
+ 2232 0955 01       		.uleb128 0x1
+ 2233 0956 50       		.byte	0x50
+ 2234 0957 02       		.uleb128 0x2
+ 2235 0958 75       		.byte	0x75
+ 2236 0959 00       		.sleb128 0
+ 2237 095a 00       		.byte	0
+ 2238 095b 0B       		.uleb128 0xb
+ 2239 095c 82000000 		.4byte	.LVL49
+ 2240 0960 220E0000 		.4byte	0xe22
+ 2241 0964 0E       		.uleb128 0xe
+ 2242 0965 90000000 		.4byte	.LVL50
+ 2243 0969 D70D0000 		.4byte	0xdd7
+ 2244 096d 8A090000 		.4byte	0x98a
+ 2245 0971 0F       		.uleb128 0xf
+ 2246 0972 01       		.uleb128 0x1
+ 2247 0973 50       		.byte	0x50
+ 2248 0974 01       		.uleb128 0x1
+ 2249 0975 33       		.byte	0x33
+ 2250 0976 0F       		.uleb128 0xf
+ 2251 0977 01       		.uleb128 0x1
+ 2252 0978 51       		.byte	0x51
+ 2253 0979 02       		.uleb128 0x2
+ 2254 097a 75       		.byte	0x75
+ 2255 097b 00       		.sleb128 0
+ 2256 097c 0F       		.uleb128 0xf
+ 2257 097d 01       		.uleb128 0x1
+ 2258 097e 52       		.byte	0x52
+ 2259 097f 03       		.uleb128 0x3
+ 2260 0980 91       		.byte	0x91
+ 2261 0981 847F     		.sleb128 -124
+ 2262 0983 0F       		.uleb128 0xf
+ 2263 0984 01       		.uleb128 0x1
+ 2264 0985 53       		.byte	0x53
+ 2265 0986 02       		.uleb128 0x2
+ 2266 0987 08       		.byte	0x8
+ 2267 0988 64       		.byte	0x64
+ 2268 0989 00       		.byte	0
+ 2269 098a 0E       		.uleb128 0xe
+ 2270 098b 9E000000 		.4byte	.LVL53
+ 2271 098f CC0D0000 		.4byte	0xdcc
+ 2272 0993 A1090000 		.4byte	0x9a1
+ 2273 0997 0F       		.uleb128 0xf
+ 2274 0998 01       		.uleb128 0x1
+ 2275 0999 50       		.byte	0x50
+ 2276 099a 05       		.uleb128 0x5
+ 2277 099b 03       		.byte	0x3
+ 2278 099c E4000000 		.4byte	.LC13
+ 2279 09a0 00       		.byte	0
+ 2280 09a1 0E       		.uleb128 0xe
+ 2281 09a2 A4000000 		.4byte	.LVL54
+ 2282 09a6 170E0000 		.4byte	0xe17
+ 2283 09aa B5090000 		.4byte	0x9b5
+ 2284 09ae 0F       		.uleb128 0xf
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 48
+
+
+ 2285 09af 01       		.uleb128 0x1
+ 2286 09b0 50       		.byte	0x50
+ 2287 09b1 02       		.uleb128 0x2
+ 2288 09b2 74       		.byte	0x74
+ 2289 09b3 00       		.sleb128 0
+ 2290 09b4 00       		.byte	0
+ 2291 09b5 0B       		.uleb128 0xb
+ 2292 09b6 A8000000 		.4byte	.LVL55
+ 2293 09ba 220E0000 		.4byte	0xe22
+ 2294 09be 0E       		.uleb128 0xe
+ 2295 09bf AE000000 		.4byte	.LVL56
+ 2296 09c3 CC0D0000 		.4byte	0xdcc
+ 2297 09c7 D5090000 		.4byte	0x9d5
+ 2298 09cb 0F       		.uleb128 0xf
+ 2299 09cc 01       		.uleb128 0x1
+ 2300 09cd 50       		.byte	0x50
+ 2301 09ce 05       		.uleb128 0x5
+ 2302 09cf 03       		.byte	0x3
+ 2303 09d0 F8000000 		.4byte	.LC14
+ 2304 09d4 00       		.byte	0
+ 2305 09d5 0E       		.uleb128 0xe
+ 2306 09d6 B4000000 		.4byte	.LVL57
+ 2307 09da 170E0000 		.4byte	0xe17
+ 2308 09de E9090000 		.4byte	0x9e9
+ 2309 09e2 0F       		.uleb128 0xf
+ 2310 09e3 01       		.uleb128 0x1
+ 2311 09e4 50       		.byte	0x50
+ 2312 09e5 02       		.uleb128 0x2
+ 2313 09e6 75       		.byte	0x75
+ 2314 09e7 00       		.sleb128 0
+ 2315 09e8 00       		.byte	0
+ 2316 09e9 0B       		.uleb128 0xb
+ 2317 09ea B8000000 		.4byte	.LVL58
+ 2318 09ee 220E0000 		.4byte	0xe22
+ 2319 09f2 0E       		.uleb128 0xe
+ 2320 09f3 C2000000 		.4byte	.LVL59
+ 2321 09f7 AB0D0000 		.4byte	0xdab
+ 2322 09fb 110A0000 		.4byte	0xa11
+ 2323 09ff 0F       		.uleb128 0xf
+ 2324 0a00 01       		.uleb128 0x1
+ 2325 0a01 50       		.byte	0x50
+ 2326 0a02 01       		.uleb128 0x1
+ 2327 0a03 31       		.byte	0x31
+ 2328 0a04 0F       		.uleb128 0xf
+ 2329 0a05 01       		.uleb128 0x1
+ 2330 0a06 51       		.byte	0x51
+ 2331 0a07 02       		.uleb128 0x2
+ 2332 0a08 08       		.byte	0x8
+ 2333 0a09 28       		.byte	0x28
+ 2334 0a0a 0F       		.uleb128 0xf
+ 2335 0a0b 01       		.uleb128 0x1
+ 2336 0a0c 52       		.byte	0x52
+ 2337 0a0d 02       		.uleb128 0x2
+ 2338 0a0e 77       		.byte	0x77
+ 2339 0a0f 00       		.sleb128 0
+ 2340 0a10 00       		.byte	0
+ 2341 0a11 0E       		.uleb128 0xe
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 49
+
+
+ 2342 0a12 CC000000 		.4byte	.LVL60
+ 2343 0a16 AB0D0000 		.4byte	0xdab
+ 2344 0a1a 300A0000 		.4byte	0xa30
+ 2345 0a1e 0F       		.uleb128 0xf
+ 2346 0a1f 01       		.uleb128 0x1
+ 2347 0a20 50       		.byte	0x50
+ 2348 0a21 01       		.uleb128 0x1
+ 2349 0a22 31       		.byte	0x31
+ 2350 0a23 0F       		.uleb128 0xf
+ 2351 0a24 01       		.uleb128 0x1
+ 2352 0a25 51       		.byte	0x51
+ 2353 0a26 02       		.uleb128 0x2
+ 2354 0a27 08       		.byte	0x8
+ 2355 0a28 29       		.byte	0x29
+ 2356 0a29 0F       		.uleb128 0xf
+ 2357 0a2a 01       		.uleb128 0x1
+ 2358 0a2b 52       		.byte	0x52
+ 2359 0a2c 02       		.uleb128 0x2
+ 2360 0a2d 76       		.byte	0x76
+ 2361 0a2e 00       		.sleb128 0
+ 2362 0a2f 00       		.byte	0
+ 2363 0a30 0E       		.uleb128 0xe
+ 2364 0a31 D6000000 		.4byte	.LVL61
+ 2365 0a35 AB0D0000 		.4byte	0xdab
+ 2366 0a39 4E0A0000 		.4byte	0xa4e
+ 2367 0a3d 0F       		.uleb128 0xf
+ 2368 0a3e 01       		.uleb128 0x1
+ 2369 0a3f 50       		.byte	0x50
+ 2370 0a40 01       		.uleb128 0x1
+ 2371 0a41 31       		.byte	0x31
+ 2372 0a42 0F       		.uleb128 0xf
+ 2373 0a43 01       		.uleb128 0x1
+ 2374 0a44 51       		.byte	0x51
+ 2375 0a45 01       		.uleb128 0x1
+ 2376 0a46 31       		.byte	0x31
+ 2377 0a47 0F       		.uleb128 0xf
+ 2378 0a48 01       		.uleb128 0x1
+ 2379 0a49 52       		.byte	0x52
+ 2380 0a4a 02       		.uleb128 0x2
+ 2381 0a4b 08       		.byte	0x8
+ 2382 0a4c 40       		.byte	0x40
+ 2383 0a4d 00       		.byte	0
+ 2384 0a4e 0E       		.uleb128 0xe
+ 2385 0a4f EC000000 		.4byte	.LVL64
+ 2386 0a53 E20D0000 		.4byte	0xde2
+ 2387 0a57 780A0000 		.4byte	0xa78
+ 2388 0a5b 0F       		.uleb128 0xf
+ 2389 0a5c 01       		.uleb128 0x1
+ 2390 0a5d 50       		.byte	0x50
+ 2391 0a5e 02       		.uleb128 0x2
+ 2392 0a5f 7D       		.byte	0x7d
+ 2393 0a60 00       		.sleb128 0
+ 2394 0a61 0F       		.uleb128 0xf
+ 2395 0a62 01       		.uleb128 0x1
+ 2396 0a63 51       		.byte	0x51
+ 2397 0a64 02       		.uleb128 0x2
+ 2398 0a65 08       		.byte	0x8
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 50
+
+
+ 2399 0a66 64       		.byte	0x64
+ 2400 0a67 0F       		.uleb128 0xf
+ 2401 0a68 01       		.uleb128 0x1
+ 2402 0a69 52       		.byte	0x52
+ 2403 0a6a 05       		.uleb128 0x5
+ 2404 0a6b 03       		.byte	0x3
+ 2405 0a6c 08010000 		.4byte	.LC15
+ 2406 0a70 0F       		.uleb128 0xf
+ 2407 0a71 01       		.uleb128 0x1
+ 2408 0a72 53       		.byte	0x53
+ 2409 0a73 03       		.uleb128 0x3
+ 2410 0a74 91       		.byte	0x91
+ 2411 0a75 847F     		.sleb128 -124
+ 2412 0a77 00       		.byte	0
+ 2413 0a78 0E       		.uleb128 0xe
+ 2414 0a79 F2000000 		.4byte	.LVL65
+ 2415 0a7d CC0D0000 		.4byte	0xdcc
+ 2416 0a81 8C0A0000 		.4byte	0xa8c
+ 2417 0a85 0F       		.uleb128 0xf
+ 2418 0a86 01       		.uleb128 0x1
+ 2419 0a87 50       		.byte	0x50
+ 2420 0a88 02       		.uleb128 0x2
+ 2421 0a89 7D       		.byte	0x7d
+ 2422 0a8a 00       		.sleb128 0
+ 2423 0a8b 00       		.byte	0
+ 2424 0a8c 0E       		.uleb128 0xe
+ 2425 0a8d FE000000 		.4byte	.LVL66
+ 2426 0a91 ED0D0000 		.4byte	0xded
+ 2427 0a95 AC0A0000 		.4byte	0xaac
+ 2428 0a99 0F       		.uleb128 0xf
+ 2429 0a9a 01       		.uleb128 0x1
+ 2430 0a9b 50       		.byte	0x50
+ 2431 0a9c 02       		.uleb128 0x2
+ 2432 0a9d 7D       		.byte	0x7d
+ 2433 0a9e 00       		.sleb128 0
+ 2434 0a9f 0F       		.uleb128 0xf
+ 2435 0aa0 01       		.uleb128 0x1
+ 2436 0aa1 51       		.byte	0x51
+ 2437 0aa2 02       		.uleb128 0x2
+ 2438 0aa3 75       		.byte	0x75
+ 2439 0aa4 00       		.sleb128 0
+ 2440 0aa5 0F       		.uleb128 0xf
+ 2441 0aa6 01       		.uleb128 0x1
+ 2442 0aa7 52       		.byte	0x52
+ 2443 0aa8 02       		.uleb128 0x2
+ 2444 0aa9 74       		.byte	0x74
+ 2445 0aaa 00       		.sleb128 0
+ 2446 0aab 00       		.byte	0
+ 2447 0aac 10       		.uleb128 0x10
+ 2448 0aad 0A010000 		.4byte	.LVL67
+ 2449 0ab1 ED0D0000 		.4byte	0xded
+ 2450 0ab5 0F       		.uleb128 0xf
+ 2451 0ab6 01       		.uleb128 0x1
+ 2452 0ab7 50       		.byte	0x50
+ 2453 0ab8 08       		.uleb128 0x8
+ 2454 0ab9 91       		.byte	0x91
+ 2455 0aba 00       		.sleb128 0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 51
+
+
+ 2456 0abb 74       		.byte	0x74
+ 2457 0abc 00       		.sleb128 0
+ 2458 0abd 22       		.byte	0x22
+ 2459 0abe 08       		.byte	0x8
+ 2460 0abf E0       		.byte	0xe0
+ 2461 0ac0 1C       		.byte	0x1c
+ 2462 0ac1 0F       		.uleb128 0xf
+ 2463 0ac2 01       		.uleb128 0x1
+ 2464 0ac3 51       		.byte	0x51
+ 2465 0ac4 02       		.uleb128 0x2
+ 2466 0ac5 75       		.byte	0x75
+ 2467 0ac6 00       		.sleb128 0
+ 2468 0ac7 0F       		.uleb128 0xf
+ 2469 0ac8 01       		.uleb128 0x1
+ 2470 0ac9 52       		.byte	0x52
+ 2471 0aca 02       		.uleb128 0x2
+ 2472 0acb 74       		.byte	0x74
+ 2473 0acc 00       		.sleb128 0
+ 2474 0acd 00       		.byte	0
+ 2475 0ace 00       		.byte	0
+ 2476 0acf 08       		.uleb128 0x8
+ 2477 0ad0 8C000000 		.4byte	0x8c
+ 2478 0ad4 DF0A0000 		.4byte	0xadf
+ 2479 0ad8 09       		.uleb128 0x9
+ 2480 0ad9 C9000000 		.4byte	0xc9
+ 2481 0add 63       		.byte	0x63
+ 2482 0ade 00       		.byte	0
+ 2483 0adf 15       		.uleb128 0x15
+ 2484 0ae0 D80A0000 		.4byte	.LASF153
+ 2485 0ae4 01       		.byte	0x1
+ 2486 0ae5 15       		.byte	0x15
+ 2487 0ae6 7E000000 		.4byte	0x7e
+ 2488 0aea 00000000 		.4byte	.LFB64
+ 2489 0aee 20010000 		.4byte	.LFE64-.LFB64
+ 2490 0af2 01       		.uleb128 0x1
+ 2491 0af3 9C       		.byte	0x9c
+ 2492 0af4 5C0D0000 		.4byte	0xd5c
+ 2493 0af8 0D       		.uleb128 0xd
+ 2494 0af9 F00B0000 		.4byte	.LASF128
+ 2495 0afd 01       		.byte	0x1
+ 2496 0afe 17       		.byte	0x17
+ 2497 0aff 5C0D0000 		.4byte	0xd5c
+ 2498 0b03 02       		.uleb128 0x2
+ 2499 0b04 91       		.byte	0x91
+ 2500 0b05 6C       		.sleb128 -20
+ 2501 0b06 0E       		.uleb128 0xe
+ 2502 0b07 10000000 		.4byte	.LVL68
+ 2503 0b0b 2D0E0000 		.4byte	0xe2d
+ 2504 0b0f 1D0B0000 		.4byte	0xb1d
+ 2505 0b13 0F       		.uleb128 0xf
+ 2506 0b14 01       		.uleb128 0x1
+ 2507 0b15 50       		.byte	0x50
+ 2508 0b16 05       		.uleb128 0x5
+ 2509 0b17 03       		.byte	0x3
+ 2510 0b18 00000000 		.4byte	w5500_isr
+ 2511 0b1c 00       		.byte	0
+ 2512 0b1d 0B       		.uleb128 0xb
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 52
+
+
+ 2513 0b1e 16000000 		.4byte	.LVL69
+ 2514 0b22 380E0000 		.4byte	0xe38
+ 2515 0b26 0B       		.uleb128 0xb
+ 2516 0b27 1A000000 		.4byte	.LVL70
+ 2517 0b2b 430E0000 		.4byte	0xe43
+ 2518 0b2f 0E       		.uleb128 0xe
+ 2519 0b30 20000000 		.4byte	.LVL71
+ 2520 0b34 4E0E0000 		.4byte	0xe4e
+ 2521 0b38 420B0000 		.4byte	0xb42
+ 2522 0b3c 0F       		.uleb128 0xf
+ 2523 0b3d 01       		.uleb128 0x1
+ 2524 0b3e 50       		.byte	0x50
+ 2525 0b3f 01       		.uleb128 0x1
+ 2526 0b40 3C       		.byte	0x3c
+ 2527 0b41 00       		.byte	0
+ 2528 0b42 0E       		.uleb128 0xe
+ 2529 0b43 26000000 		.4byte	.LVL72
+ 2530 0b47 C10D0000 		.4byte	0xdc1
+ 2531 0b4b 560B0000 		.4byte	0xb56
+ 2532 0b4f 0F       		.uleb128 0xf
+ 2533 0b50 01       		.uleb128 0x1
+ 2534 0b51 50       		.byte	0x50
+ 2535 0b52 02       		.uleb128 0x2
+ 2536 0b53 08       		.byte	0x8
+ 2537 0b54 64       		.byte	0x64
+ 2538 0b55 00       		.byte	0
+ 2539 0b56 0E       		.uleb128 0xe
+ 2540 0b57 30000000 		.4byte	.LVL73
+ 2541 0b5b AB0D0000 		.4byte	0xdab
+ 2542 0b5f 740B0000 		.4byte	0xb74
+ 2543 0b63 0F       		.uleb128 0xf
+ 2544 0b64 01       		.uleb128 0x1
+ 2545 0b65 50       		.byte	0x50
+ 2546 0b66 01       		.uleb128 0x1
+ 2547 0b67 30       		.byte	0x30
+ 2548 0b68 0F       		.uleb128 0xf
+ 2549 0b69 01       		.uleb128 0x1
+ 2550 0b6a 51       		.byte	0x51
+ 2551 0b6b 01       		.uleb128 0x1
+ 2552 0b6c 30       		.byte	0x30
+ 2553 0b6d 0F       		.uleb128 0xf
+ 2554 0b6e 01       		.uleb128 0x1
+ 2555 0b6f 52       		.byte	0x52
+ 2556 0b70 02       		.uleb128 0x2
+ 2557 0b71 09       		.byte	0x9
+ 2558 0b72 80       		.byte	0x80
+ 2559 0b73 00       		.byte	0
+ 2560 0b74 0E       		.uleb128 0xe
+ 2561 0b75 36000000 		.4byte	.LVL74
+ 2562 0b79 4C030000 		.4byte	0x34c
+ 2563 0b7d 880B0000 		.4byte	0xb88
+ 2564 0b81 0F       		.uleb128 0xf
+ 2565 0b82 01       		.uleb128 0x1
+ 2566 0b83 50       		.byte	0x50
+ 2567 0b84 02       		.uleb128 0x2
+ 2568 0b85 91       		.byte	0x91
+ 2569 0b86 6C       		.sleb128 -20
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 53
+
+
+ 2570 0b87 00       		.byte	0
+ 2571 0b88 0B       		.uleb128 0xb
+ 2572 0b89 3A000000 		.4byte	.LVL75
+ 2573 0b8d B4040000 		.4byte	0x4b4
+ 2574 0b91 0E       		.uleb128 0xe
+ 2575 0b92 40000000 		.4byte	.LVL76
+ 2576 0b96 CC0D0000 		.4byte	0xdcc
+ 2577 0b9a A80B0000 		.4byte	0xba8
+ 2578 0b9e 0F       		.uleb128 0xf
+ 2579 0b9f 01       		.uleb128 0x1
+ 2580 0ba0 50       		.byte	0x50
+ 2581 0ba1 05       		.uleb128 0x5
+ 2582 0ba2 03       		.byte	0x3
+ 2583 0ba3 1C010000 		.4byte	.LC16
+ 2584 0ba7 00       		.byte	0
+ 2585 0ba8 0E       		.uleb128 0xe
+ 2586 0ba9 56000000 		.4byte	.LVL77
+ 2587 0bad CC0D0000 		.4byte	0xdcc
+ 2588 0bb1 BF0B0000 		.4byte	0xbbf
+ 2589 0bb5 0F       		.uleb128 0xf
+ 2590 0bb6 01       		.uleb128 0x1
+ 2591 0bb7 50       		.byte	0x50
+ 2592 0bb8 05       		.uleb128 0x5
+ 2593 0bb9 03       		.byte	0x3
+ 2594 0bba 38010000 		.4byte	.LC17
+ 2595 0bbe 00       		.byte	0
+ 2596 0bbf 0E       		.uleb128 0xe
+ 2597 0bc0 60000000 		.4byte	.LVL78
+ 2598 0bc4 AB0D0000 		.4byte	0xdab
+ 2599 0bc8 DD0B0000 		.4byte	0xbdd
+ 2600 0bcc 0F       		.uleb128 0xf
+ 2601 0bcd 01       		.uleb128 0x1
+ 2602 0bce 50       		.byte	0x50
+ 2603 0bcf 02       		.uleb128 0x2
+ 2604 0bd0 75       		.byte	0x75
+ 2605 0bd1 00       		.sleb128 0
+ 2606 0bd2 0F       		.uleb128 0xf
+ 2607 0bd3 01       		.uleb128 0x1
+ 2608 0bd4 51       		.byte	0x51
+ 2609 0bd5 01       		.uleb128 0x1
+ 2610 0bd6 47       		.byte	0x47
+ 2611 0bd7 0F       		.uleb128 0xf
+ 2612 0bd8 01       		.uleb128 0x1
+ 2613 0bd9 52       		.byte	0x52
+ 2614 0bda 01       		.uleb128 0x1
+ 2615 0bdb 31       		.byte	0x31
+ 2616 0bdc 00       		.byte	0
+ 2617 0bdd 0E       		.uleb128 0xe
+ 2618 0bde 68000000 		.4byte	.LVL79
+ 2619 0be2 0C0E0000 		.4byte	0xe0c
+ 2620 0be6 F50B0000 		.4byte	0xbf5
+ 2621 0bea 0F       		.uleb128 0xf
+ 2622 0beb 01       		.uleb128 0x1
+ 2623 0bec 50       		.byte	0x50
+ 2624 0bed 01       		.uleb128 0x1
+ 2625 0bee 31       		.byte	0x31
+ 2626 0bef 0F       		.uleb128 0xf
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 54
+
+
+ 2627 0bf0 01       		.uleb128 0x1
+ 2628 0bf1 51       		.byte	0x51
+ 2629 0bf2 01       		.uleb128 0x1
+ 2630 0bf3 32       		.byte	0x32
+ 2631 0bf4 00       		.byte	0
+ 2632 0bf5 0E       		.uleb128 0xe
+ 2633 0bf6 70000000 		.4byte	.LVL80
+ 2634 0bfa CC0D0000 		.4byte	0xdcc
+ 2635 0bfe 0C0C0000 		.4byte	0xc0c
+ 2636 0c02 0F       		.uleb128 0xf
+ 2637 0c03 01       		.uleb128 0x1
+ 2638 0c04 50       		.byte	0x50
+ 2639 0c05 05       		.uleb128 0x5
+ 2640 0c06 03       		.byte	0x3
+ 2641 0c07 50010000 		.4byte	.LC18
+ 2642 0c0b 00       		.byte	0
+ 2643 0c0c 0B       		.uleb128 0xb
+ 2644 0c0d 76000000 		.4byte	.LVL81
+ 2645 0c11 590E0000 		.4byte	0xe59
+ 2646 0c15 0B       		.uleb128 0xb
+ 2647 0c16 7A000000 		.4byte	.LVL82
+ 2648 0c1a 220E0000 		.4byte	0xe22
+ 2649 0c1e 0E       		.uleb128 0xe
+ 2650 0c1f 84000000 		.4byte	.LVL83
+ 2651 0c23 AB0D0000 		.4byte	0xdab
+ 2652 0c27 360C0000 		.4byte	0xc36
+ 2653 0c2b 0F       		.uleb128 0xf
+ 2654 0c2c 01       		.uleb128 0x1
+ 2655 0c2d 50       		.byte	0x50
+ 2656 0c2e 01       		.uleb128 0x1
+ 2657 0c2f 31       		.byte	0x31
+ 2658 0c30 0F       		.uleb128 0xf
+ 2659 0c31 01       		.uleb128 0x1
+ 2660 0c32 51       		.byte	0x51
+ 2661 0c33 01       		.uleb128 0x1
+ 2662 0c34 32       		.byte	0x32
+ 2663 0c35 00       		.byte	0
+ 2664 0c36 0E       		.uleb128 0xe
+ 2665 0c37 96000000 		.4byte	.LVL84
+ 2666 0c3b AB0D0000 		.4byte	0xdab
+ 2667 0c3f 530C0000 		.4byte	0xc53
+ 2668 0c43 0F       		.uleb128 0xf
+ 2669 0c44 01       		.uleb128 0x1
+ 2670 0c45 50       		.byte	0x50
+ 2671 0c46 01       		.uleb128 0x1
+ 2672 0c47 31       		.byte	0x31
+ 2673 0c48 0F       		.uleb128 0xf
+ 2674 0c49 01       		.uleb128 0x1
+ 2675 0c4a 51       		.byte	0x51
+ 2676 0c4b 01       		.uleb128 0x1
+ 2677 0c4c 32       		.byte	0x32
+ 2678 0c4d 0F       		.uleb128 0xf
+ 2679 0c4e 01       		.uleb128 0x1
+ 2680 0c4f 52       		.byte	0x52
+ 2681 0c50 01       		.uleb128 0x1
+ 2682 0c51 31       		.byte	0x31
+ 2683 0c52 00       		.byte	0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 55
+
+
+ 2684 0c53 0B       		.uleb128 0xb
+ 2685 0c54 9A000000 		.4byte	.LVL85
+ 2686 0c58 AF050000 		.4byte	0x5af
+ 2687 0c5c 0E       		.uleb128 0xe
+ 2688 0c5d A4000000 		.4byte	.LVL86
+ 2689 0c61 AB0D0000 		.4byte	0xdab
+ 2690 0c65 7B0C0000 		.4byte	0xc7b
+ 2691 0c69 0F       		.uleb128 0xf
+ 2692 0c6a 01       		.uleb128 0x1
+ 2693 0c6b 50       		.byte	0x50
+ 2694 0c6c 01       		.uleb128 0x1
+ 2695 0c6d 31       		.byte	0x31
+ 2696 0c6e 0F       		.uleb128 0xf
+ 2697 0c6f 01       		.uleb128 0x1
+ 2698 0c70 51       		.byte	0x51
+ 2699 0c71 02       		.uleb128 0x2
+ 2700 0c72 08       		.byte	0x8
+ 2701 0c73 2C       		.byte	0x2c
+ 2702 0c74 0F       		.uleb128 0xf
+ 2703 0c75 01       		.uleb128 0x1
+ 2704 0c76 52       		.byte	0x52
+ 2705 0c77 02       		.uleb128 0x2
+ 2706 0c78 75       		.byte	0x75
+ 2707 0c79 00       		.sleb128 0
+ 2708 0c7a 00       		.byte	0
+ 2709 0c7b 0E       		.uleb128 0xe
+ 2710 0c7c AE000000 		.4byte	.LVL87
+ 2711 0c80 AB0D0000 		.4byte	0xdab
+ 2712 0c84 990C0000 		.4byte	0xc99
+ 2713 0c88 0F       		.uleb128 0xf
+ 2714 0c89 01       		.uleb128 0x1
+ 2715 0c8a 50       		.byte	0x50
+ 2716 0c8b 01       		.uleb128 0x1
+ 2717 0c8c 31       		.byte	0x31
+ 2718 0c8d 0F       		.uleb128 0xf
+ 2719 0c8e 01       		.uleb128 0x1
+ 2720 0c8f 51       		.byte	0x51
+ 2721 0c90 02       		.uleb128 0x2
+ 2722 0c91 08       		.byte	0x8
+ 2723 0c92 2C       		.byte	0x2c
+ 2724 0c93 0F       		.uleb128 0xf
+ 2725 0c94 01       		.uleb128 0x1
+ 2726 0c95 52       		.byte	0x52
+ 2727 0c96 01       		.uleb128 0x1
+ 2728 0c97 36       		.byte	0x36
+ 2729 0c98 00       		.byte	0
+ 2730 0c99 0E       		.uleb128 0xe
+ 2731 0c9a C2000000 		.4byte	.LVL88
+ 2732 0c9e AB0D0000 		.4byte	0xdab
+ 2733 0ca2 B60C0000 		.4byte	0xcb6
+ 2734 0ca6 0F       		.uleb128 0xf
+ 2735 0ca7 01       		.uleb128 0x1
+ 2736 0ca8 50       		.byte	0x50
+ 2737 0ca9 01       		.uleb128 0x1
+ 2738 0caa 31       		.byte	0x31
+ 2739 0cab 0F       		.uleb128 0xf
+ 2740 0cac 01       		.uleb128 0x1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 56
+
+
+ 2741 0cad 51       		.byte	0x51
+ 2742 0cae 01       		.uleb128 0x1
+ 2743 0caf 32       		.byte	0x32
+ 2744 0cb0 0F       		.uleb128 0xf
+ 2745 0cb1 01       		.uleb128 0x1
+ 2746 0cb2 52       		.byte	0x52
+ 2747 0cb3 01       		.uleb128 0x1
+ 2748 0cb4 32       		.byte	0x32
+ 2749 0cb5 00       		.byte	0
+ 2750 0cb6 0B       		.uleb128 0xb
+ 2751 0cb7 C6000000 		.4byte	.LVL89
+ 2752 0cbb 3E070000 		.4byte	0x73e
+ 2753 0cbf 0E       		.uleb128 0xe
+ 2754 0cc0 D0000000 		.4byte	.LVL90
+ 2755 0cc4 AB0D0000 		.4byte	0xdab
+ 2756 0cc8 DE0C0000 		.4byte	0xcde
+ 2757 0ccc 0F       		.uleb128 0xf
+ 2758 0ccd 01       		.uleb128 0x1
+ 2759 0cce 50       		.byte	0x50
+ 2760 0ccf 01       		.uleb128 0x1
+ 2761 0cd0 31       		.byte	0x31
+ 2762 0cd1 0F       		.uleb128 0xf
+ 2763 0cd2 01       		.uleb128 0x1
+ 2764 0cd3 51       		.byte	0x51
+ 2765 0cd4 02       		.uleb128 0x2
+ 2766 0cd5 08       		.byte	0x8
+ 2767 0cd6 2C       		.byte	0x2c
+ 2768 0cd7 0F       		.uleb128 0xf
+ 2769 0cd8 01       		.uleb128 0x1
+ 2770 0cd9 52       		.byte	0x52
+ 2771 0cda 02       		.uleb128 0x2
+ 2772 0cdb 75       		.byte	0x75
+ 2773 0cdc 00       		.sleb128 0
+ 2774 0cdd 00       		.byte	0
+ 2775 0cde 0E       		.uleb128 0xe
+ 2776 0cdf DA000000 		.4byte	.LVL91
+ 2777 0ce3 AB0D0000 		.4byte	0xdab
+ 2778 0ce7 FC0C0000 		.4byte	0xcfc
+ 2779 0ceb 0F       		.uleb128 0xf
+ 2780 0cec 01       		.uleb128 0x1
+ 2781 0ced 50       		.byte	0x50
+ 2782 0cee 01       		.uleb128 0x1
+ 2783 0cef 31       		.byte	0x31
+ 2784 0cf0 0F       		.uleb128 0xf
+ 2785 0cf1 01       		.uleb128 0x1
+ 2786 0cf2 51       		.byte	0x51
+ 2787 0cf3 02       		.uleb128 0x2
+ 2788 0cf4 08       		.byte	0x8
+ 2789 0cf5 2C       		.byte	0x2c
+ 2790 0cf6 0F       		.uleb128 0xf
+ 2791 0cf7 01       		.uleb128 0x1
+ 2792 0cf8 52       		.byte	0x52
+ 2793 0cf9 01       		.uleb128 0x1
+ 2794 0cfa 31       		.byte	0x31
+ 2795 0cfb 00       		.byte	0
+ 2796 0cfc 0E       		.uleb128 0xe
+ 2797 0cfd EE000000 		.4byte	.LVL92
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 57
+
+
+ 2798 0d01 AB0D0000 		.4byte	0xdab
+ 2799 0d05 190D0000 		.4byte	0xd19
+ 2800 0d09 0F       		.uleb128 0xf
+ 2801 0d0a 01       		.uleb128 0x1
+ 2802 0d0b 50       		.byte	0x50
+ 2803 0d0c 01       		.uleb128 0x1
+ 2804 0d0d 31       		.byte	0x31
+ 2805 0d0e 0F       		.uleb128 0xf
+ 2806 0d0f 01       		.uleb128 0x1
+ 2807 0d10 51       		.byte	0x51
+ 2808 0d11 01       		.uleb128 0x1
+ 2809 0d12 32       		.byte	0x32
+ 2810 0d13 0F       		.uleb128 0xf
+ 2811 0d14 01       		.uleb128 0x1
+ 2812 0d15 52       		.byte	0x52
+ 2813 0d16 01       		.uleb128 0x1
+ 2814 0d17 34       		.byte	0x34
+ 2815 0d18 00       		.byte	0
+ 2816 0d19 0B       		.uleb128 0xb
+ 2817 0d1a F2000000 		.4byte	.LVL93
+ 2818 0d1e C1070000 		.4byte	0x7c1
+ 2819 0d22 0E       		.uleb128 0xe
+ 2820 0d23 FC000000 		.4byte	.LVL94
+ 2821 0d27 AB0D0000 		.4byte	0xdab
+ 2822 0d2b 410D0000 		.4byte	0xd41
+ 2823 0d2f 0F       		.uleb128 0xf
+ 2824 0d30 01       		.uleb128 0x1
+ 2825 0d31 50       		.byte	0x50
+ 2826 0d32 01       		.uleb128 0x1
+ 2827 0d33 31       		.byte	0x31
+ 2828 0d34 0F       		.uleb128 0xf
+ 2829 0d35 01       		.uleb128 0x1
+ 2830 0d36 51       		.byte	0x51
+ 2831 0d37 02       		.uleb128 0x2
+ 2832 0d38 08       		.byte	0x8
+ 2833 0d39 2C       		.byte	0x2c
+ 2834 0d3a 0F       		.uleb128 0xf
+ 2835 0d3b 01       		.uleb128 0x1
+ 2836 0d3c 52       		.byte	0x52
+ 2837 0d3d 02       		.uleb128 0x2
+ 2838 0d3e 75       		.byte	0x75
+ 2839 0d3f 00       		.sleb128 0
+ 2840 0d40 00       		.byte	0
+ 2841 0d41 10       		.uleb128 0x10
+ 2842 0d42 06010000 		.4byte	.LVL95
+ 2843 0d46 AB0D0000 		.4byte	0xdab
+ 2844 0d4a 0F       		.uleb128 0xf
+ 2845 0d4b 01       		.uleb128 0x1
+ 2846 0d4c 50       		.byte	0x50
+ 2847 0d4d 01       		.uleb128 0x1
+ 2848 0d4e 31       		.byte	0x31
+ 2849 0d4f 0F       		.uleb128 0xf
+ 2850 0d50 01       		.uleb128 0x1
+ 2851 0d51 51       		.byte	0x51
+ 2852 0d52 02       		.uleb128 0x2
+ 2853 0d53 08       		.byte	0x8
+ 2854 0d54 2C       		.byte	0x2c
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 58
+
+
+ 2855 0d55 0F       		.uleb128 0xf
+ 2856 0d56 01       		.uleb128 0x1
+ 2857 0d57 52       		.byte	0x52
+ 2858 0d58 01       		.uleb128 0x1
+ 2859 0d59 36       		.byte	0x36
+ 2860 0d5a 00       		.byte	0
+ 2861 0d5b 00       		.byte	0
+ 2862 0d5c 12       		.uleb128 0x12
+ 2863 0d5d 9A040000 		.4byte	0x49a
+ 2864 0d61 16       		.uleb128 0x16
+ 2865 0d62 66080000 		.4byte	.LASF129
+ 2866 0d66 05       		.byte	0x5
+ 2867 0d67 1207     		.2byte	0x712
+ 2868 0d69 6D0D0000 		.4byte	0xd6d
+ 2869 0d6d 05       		.uleb128 0x5
+ 2870 0d6e A2000000 		.4byte	0xa2
+ 2871 0d72 17       		.uleb128 0x17
+ 2872 0d73 62050000 		.4byte	.LASF130
+ 2873 0d77 01       		.byte	0x1
+ 2874 0d78 12       		.byte	0x12
+ 2875 0d79 8A0D0000 		.4byte	0xd8a
+ 2876 0d7d 05       		.uleb128 0x5
+ 2877 0d7e 03       		.byte	0x3
+ 2878 0d7f 00000000 		.4byte	w5500_interrupt_flag
+ 2879 0d83 02       		.uleb128 0x2
+ 2880 0d84 01       		.byte	0x1
+ 2881 0d85 02       		.byte	0x2
+ 2882 0d86 32040000 		.4byte	.LASF131
+ 2883 0d8a 05       		.uleb128 0x5
+ 2884 0d8b 830D0000 		.4byte	0xd83
+ 2885 0d8f 17       		.uleb128 0x17
+ 2886 0d90 9E070000 		.4byte	.LASF132
+ 2887 0d94 01       		.byte	0x1
+ 2888 0d95 13       		.byte	0x13
+ 2889 0d96 D0000000 		.4byte	0xd0
+ 2890 0d9a 05       		.uleb128 0x5
+ 2891 0d9b 03       		.byte	0x3
+ 2892 0d9c 00000000 		.4byte	sir_sts
+ 2893 0da0 18       		.uleb128 0x18
+ 2894 0da1 B5060000 		.4byte	.LASF133
+ 2895 0da5 B5060000 		.4byte	.LASF133
+ 2896 0da9 06       		.byte	0x6
+ 2897 0daa 2B       		.byte	0x2b
+ 2898 0dab 18       		.uleb128 0x18
+ 2899 0dac 19030000 		.4byte	.LASF134
+ 2900 0db0 19030000 		.4byte	.LASF134
+ 2901 0db4 07       		.byte	0x7
+ 2902 0db5 0C       		.byte	0xc
+ 2903 0db6 18       		.uleb128 0x18
+ 2904 0db7 39070000 		.4byte	.LASF135
+ 2905 0dbb 39070000 		.4byte	.LASF135
+ 2906 0dbf 07       		.byte	0x7
+ 2907 0dc0 0A       		.byte	0xa
+ 2908 0dc1 18       		.uleb128 0x18
+ 2909 0dc2 24000000 		.4byte	.LASF136
+ 2910 0dc6 24000000 		.4byte	.LASF136
+ 2911 0dca 08       		.byte	0x8
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 59
+
+
+ 2912 0dcb 76       		.byte	0x76
+ 2913 0dcc 18       		.uleb128 0x18
+ 2914 0dcd 9D050000 		.4byte	.LASF137
+ 2915 0dd1 9D050000 		.4byte	.LASF137
+ 2916 0dd5 09       		.byte	0x9
+ 2917 0dd6 26       		.byte	0x26
+ 2918 0dd7 18       		.uleb128 0x18
+ 2919 0dd8 D6080000 		.4byte	.LASF138
+ 2920 0ddc D6080000 		.4byte	.LASF138
+ 2921 0de0 07       		.byte	0x7
+ 2922 0de1 09       		.byte	0x9
+ 2923 0de2 18       		.uleb128 0x18
+ 2924 0de3 7C070000 		.4byte	.LASF139
+ 2925 0de7 7C070000 		.4byte	.LASF139
+ 2926 0deb 0A       		.byte	0xa
+ 2927 0dec FD       		.byte	0xfd
+ 2928 0ded 19       		.uleb128 0x19
+ 2929 0dee 61070000 		.4byte	.LASF154
+ 2930 0df2 61070000 		.4byte	.LASF154
+ 2931 0df6 18       		.uleb128 0x18
+ 2932 0df7 04060000 		.4byte	.LASF140
+ 2933 0dfb 04060000 		.4byte	.LASF140
+ 2934 0dff 0B       		.byte	0xb
+ 2935 0e00 29       		.byte	0x29
+ 2936 0e01 18       		.uleb128 0x18
+ 2937 0e02 73010000 		.4byte	.LASF141
+ 2938 0e06 73010000 		.4byte	.LASF141
+ 2939 0e0a 0B       		.byte	0xb
+ 2940 0e0b 26       		.byte	0x26
+ 2941 0e0c 18       		.uleb128 0x18
+ 2942 0e0d 68070000 		.4byte	.LASF142
+ 2943 0e11 68070000 		.4byte	.LASF142
+ 2944 0e15 07       		.byte	0x7
+ 2945 0e16 0B       		.byte	0xb
+ 2946 0e17 18       		.uleb128 0x18
+ 2947 0e18 0B090000 		.4byte	.LASF143
+ 2948 0e1c 0B090000 		.4byte	.LASF143
+ 2949 0e20 09       		.byte	0x9
+ 2950 0e21 29       		.byte	0x29
+ 2951 0e22 18       		.uleb128 0x18
+ 2952 0e23 E30B0000 		.4byte	.LASF144
+ 2953 0e27 E30B0000 		.4byte	.LASF144
+ 2954 0e2b 09       		.byte	0x9
+ 2955 0e2c 2A       		.byte	0x2a
+ 2956 0e2d 18       		.uleb128 0x18
+ 2957 0e2e 65000000 		.4byte	.LASF145
+ 2958 0e32 65000000 		.4byte	.LASF145
+ 2959 0e36 0C       		.byte	0xc
+ 2960 0e37 18       		.byte	0x18
+ 2961 0e38 18       		.uleb128 0x18
+ 2962 0e39 78020000 		.4byte	.LASF146
+ 2963 0e3d 78020000 		.4byte	.LASF146
+ 2964 0e41 0D       		.byte	0xd
+ 2965 0e42 4D       		.byte	0x4d
+ 2966 0e43 18       		.uleb128 0x18
+ 2967 0e44 FF090000 		.4byte	.LASF147
+ 2968 0e48 FF090000 		.4byte	.LASF147
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 60
+
+
+ 2969 0e4c 09       		.byte	0x9
+ 2970 0e4d 1F       		.byte	0x1f
+ 2971 0e4e 18       		.uleb128 0x18
+ 2972 0e4f 77060000 		.4byte	.LASF148
+ 2973 0e53 77060000 		.4byte	.LASF148
+ 2974 0e57 09       		.byte	0x9
+ 2975 0e58 25       		.byte	0x25
+ 2976 0e59 18       		.uleb128 0x18
+ 2977 0e5a FD010000 		.4byte	.LASF149
+ 2978 0e5e FD010000 		.4byte	.LASF149
+ 2979 0e62 09       		.byte	0x9
+ 2980 0e63 28       		.byte	0x28
+ 2981 0e64 00       		.byte	0
+ 2982              		.section	.debug_abbrev,"",%progbits
+ 2983              	.Ldebug_abbrev0:
+ 2984 0000 01       		.uleb128 0x1
+ 2985 0001 11       		.uleb128 0x11
+ 2986 0002 01       		.byte	0x1
+ 2987 0003 25       		.uleb128 0x25
+ 2988 0004 0E       		.uleb128 0xe
+ 2989 0005 13       		.uleb128 0x13
+ 2990 0006 0B       		.uleb128 0xb
+ 2991 0007 03       		.uleb128 0x3
+ 2992 0008 0E       		.uleb128 0xe
+ 2993 0009 1B       		.uleb128 0x1b
+ 2994 000a 0E       		.uleb128 0xe
+ 2995 000b 55       		.uleb128 0x55
+ 2996 000c 17       		.uleb128 0x17
+ 2997 000d 11       		.uleb128 0x11
+ 2998 000e 01       		.uleb128 0x1
+ 2999 000f 10       		.uleb128 0x10
+ 3000 0010 17       		.uleb128 0x17
+ 3001 0011 00       		.byte	0
+ 3002 0012 00       		.byte	0
+ 3003 0013 02       		.uleb128 0x2
+ 3004 0014 24       		.uleb128 0x24
+ 3005 0015 00       		.byte	0
+ 3006 0016 0B       		.uleb128 0xb
+ 3007 0017 0B       		.uleb128 0xb
+ 3008 0018 3E       		.uleb128 0x3e
+ 3009 0019 0B       		.uleb128 0xb
+ 3010 001a 03       		.uleb128 0x3
+ 3011 001b 0E       		.uleb128 0xe
+ 3012 001c 00       		.byte	0
+ 3013 001d 00       		.byte	0
+ 3014 001e 03       		.uleb128 0x3
+ 3015 001f 16       		.uleb128 0x16
+ 3016 0020 00       		.byte	0
+ 3017 0021 03       		.uleb128 0x3
+ 3018 0022 0E       		.uleb128 0xe
+ 3019 0023 3A       		.uleb128 0x3a
+ 3020 0024 0B       		.uleb128 0xb
+ 3021 0025 3B       		.uleb128 0x3b
+ 3022 0026 0B       		.uleb128 0xb
+ 3023 0027 49       		.uleb128 0x49
+ 3024 0028 13       		.uleb128 0x13
+ 3025 0029 00       		.byte	0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 61
+
+
+ 3026 002a 00       		.byte	0
+ 3027 002b 04       		.uleb128 0x4
+ 3028 002c 24       		.uleb128 0x24
+ 3029 002d 00       		.byte	0
+ 3030 002e 0B       		.uleb128 0xb
+ 3031 002f 0B       		.uleb128 0xb
+ 3032 0030 3E       		.uleb128 0x3e
+ 3033 0031 0B       		.uleb128 0xb
+ 3034 0032 03       		.uleb128 0x3
+ 3035 0033 08       		.uleb128 0x8
+ 3036 0034 00       		.byte	0
+ 3037 0035 00       		.byte	0
+ 3038 0036 05       		.uleb128 0x5
+ 3039 0037 35       		.uleb128 0x35
+ 3040 0038 00       		.byte	0
+ 3041 0039 49       		.uleb128 0x49
+ 3042 003a 13       		.uleb128 0x13
+ 3043 003b 00       		.byte	0
+ 3044 003c 00       		.byte	0
+ 3045 003d 06       		.uleb128 0x6
+ 3046 003e 04       		.uleb128 0x4
+ 3047 003f 01       		.byte	0x1
+ 3048 0040 0B       		.uleb128 0xb
+ 3049 0041 0B       		.uleb128 0xb
+ 3050 0042 49       		.uleb128 0x49
+ 3051 0043 13       		.uleb128 0x13
+ 3052 0044 3A       		.uleb128 0x3a
+ 3053 0045 0B       		.uleb128 0xb
+ 3054 0046 3B       		.uleb128 0x3b
+ 3055 0047 0B       		.uleb128 0xb
+ 3056 0048 01       		.uleb128 0x1
+ 3057 0049 13       		.uleb128 0x13
+ 3058 004a 00       		.byte	0
+ 3059 004b 00       		.byte	0
+ 3060 004c 07       		.uleb128 0x7
+ 3061 004d 28       		.uleb128 0x28
+ 3062 004e 00       		.byte	0
+ 3063 004f 03       		.uleb128 0x3
+ 3064 0050 0E       		.uleb128 0xe
+ 3065 0051 1C       		.uleb128 0x1c
+ 3066 0052 0B       		.uleb128 0xb
+ 3067 0053 00       		.byte	0
+ 3068 0054 00       		.byte	0
+ 3069 0055 08       		.uleb128 0x8
+ 3070 0056 01       		.uleb128 0x1
+ 3071 0057 01       		.byte	0x1
+ 3072 0058 49       		.uleb128 0x49
+ 3073 0059 13       		.uleb128 0x13
+ 3074 005a 01       		.uleb128 0x1
+ 3075 005b 13       		.uleb128 0x13
+ 3076 005c 00       		.byte	0
+ 3077 005d 00       		.byte	0
+ 3078 005e 09       		.uleb128 0x9
+ 3079 005f 21       		.uleb128 0x21
+ 3080 0060 00       		.byte	0
+ 3081 0061 49       		.uleb128 0x49
+ 3082 0062 13       		.uleb128 0x13
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 62
+
+
+ 3083 0063 2F       		.uleb128 0x2f
+ 3084 0064 0B       		.uleb128 0xb
+ 3085 0065 00       		.byte	0
+ 3086 0066 00       		.byte	0
+ 3087 0067 0A       		.uleb128 0xa
+ 3088 0068 2E       		.uleb128 0x2e
+ 3089 0069 01       		.byte	0x1
+ 3090 006a 3F       		.uleb128 0x3f
+ 3091 006b 19       		.uleb128 0x19
+ 3092 006c 03       		.uleb128 0x3
+ 3093 006d 0E       		.uleb128 0xe
+ 3094 006e 3A       		.uleb128 0x3a
+ 3095 006f 0B       		.uleb128 0xb
+ 3096 0070 3B       		.uleb128 0x3b
+ 3097 0071 0B       		.uleb128 0xb
+ 3098 0072 27       		.uleb128 0x27
+ 3099 0073 19       		.uleb128 0x19
+ 3100 0074 11       		.uleb128 0x11
+ 3101 0075 01       		.uleb128 0x1
+ 3102 0076 12       		.uleb128 0x12
+ 3103 0077 06       		.uleb128 0x6
+ 3104 0078 40       		.uleb128 0x40
+ 3105 0079 18       		.uleb128 0x18
+ 3106 007a 9742     		.uleb128 0x2117
+ 3107 007c 19       		.uleb128 0x19
+ 3108 007d 01       		.uleb128 0x1
+ 3109 007e 13       		.uleb128 0x13
+ 3110 007f 00       		.byte	0
+ 3111 0080 00       		.byte	0
+ 3112 0081 0B       		.uleb128 0xb
+ 3113 0082 898201   		.uleb128 0x4109
+ 3114 0085 00       		.byte	0
+ 3115 0086 11       		.uleb128 0x11
+ 3116 0087 01       		.uleb128 0x1
+ 3117 0088 31       		.uleb128 0x31
+ 3118 0089 13       		.uleb128 0x13
+ 3119 008a 00       		.byte	0
+ 3120 008b 00       		.byte	0
+ 3121 008c 0C       		.uleb128 0xc
+ 3122 008d 05       		.uleb128 0x5
+ 3123 008e 00       		.byte	0
+ 3124 008f 03       		.uleb128 0x3
+ 3125 0090 0E       		.uleb128 0xe
+ 3126 0091 3A       		.uleb128 0x3a
+ 3127 0092 0B       		.uleb128 0xb
+ 3128 0093 3B       		.uleb128 0x3b
+ 3129 0094 0B       		.uleb128 0xb
+ 3130 0095 49       		.uleb128 0x49
+ 3131 0096 13       		.uleb128 0x13
+ 3132 0097 02       		.uleb128 0x2
+ 3133 0098 17       		.uleb128 0x17
+ 3134 0099 00       		.byte	0
+ 3135 009a 00       		.byte	0
+ 3136 009b 0D       		.uleb128 0xd
+ 3137 009c 34       		.uleb128 0x34
+ 3138 009d 00       		.byte	0
+ 3139 009e 03       		.uleb128 0x3
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 63
+
+
+ 3140 009f 0E       		.uleb128 0xe
+ 3141 00a0 3A       		.uleb128 0x3a
+ 3142 00a1 0B       		.uleb128 0xb
+ 3143 00a2 3B       		.uleb128 0x3b
+ 3144 00a3 0B       		.uleb128 0xb
+ 3145 00a4 49       		.uleb128 0x49
+ 3146 00a5 13       		.uleb128 0x13
+ 3147 00a6 02       		.uleb128 0x2
+ 3148 00a7 18       		.uleb128 0x18
+ 3149 00a8 00       		.byte	0
+ 3150 00a9 00       		.byte	0
+ 3151 00aa 0E       		.uleb128 0xe
+ 3152 00ab 898201   		.uleb128 0x4109
+ 3153 00ae 01       		.byte	0x1
+ 3154 00af 11       		.uleb128 0x11
+ 3155 00b0 01       		.uleb128 0x1
+ 3156 00b1 31       		.uleb128 0x31
+ 3157 00b2 13       		.uleb128 0x13
+ 3158 00b3 01       		.uleb128 0x1
+ 3159 00b4 13       		.uleb128 0x13
+ 3160 00b5 00       		.byte	0
+ 3161 00b6 00       		.byte	0
+ 3162 00b7 0F       		.uleb128 0xf
+ 3163 00b8 8A8201   		.uleb128 0x410a
+ 3164 00bb 00       		.byte	0
+ 3165 00bc 02       		.uleb128 0x2
+ 3166 00bd 18       		.uleb128 0x18
+ 3167 00be 9142     		.uleb128 0x2111
+ 3168 00c0 18       		.uleb128 0x18
+ 3169 00c1 00       		.byte	0
+ 3170 00c2 00       		.byte	0
+ 3171 00c3 10       		.uleb128 0x10
+ 3172 00c4 898201   		.uleb128 0x4109
+ 3173 00c7 01       		.byte	0x1
+ 3174 00c8 11       		.uleb128 0x11
+ 3175 00c9 01       		.uleb128 0x1
+ 3176 00ca 31       		.uleb128 0x31
+ 3177 00cb 13       		.uleb128 0x13
+ 3178 00cc 00       		.byte	0
+ 3179 00cd 00       		.byte	0
+ 3180 00ce 11       		.uleb128 0x11
+ 3181 00cf 0F       		.uleb128 0xf
+ 3182 00d0 00       		.byte	0
+ 3183 00d1 0B       		.uleb128 0xb
+ 3184 00d2 0B       		.uleb128 0xb
+ 3185 00d3 49       		.uleb128 0x49
+ 3186 00d4 13       		.uleb128 0x13
+ 3187 00d5 00       		.byte	0
+ 3188 00d6 00       		.byte	0
+ 3189 00d7 12       		.uleb128 0x12
+ 3190 00d8 26       		.uleb128 0x26
+ 3191 00d9 00       		.byte	0
+ 3192 00da 49       		.uleb128 0x49
+ 3193 00db 13       		.uleb128 0x13
+ 3194 00dc 00       		.byte	0
+ 3195 00dd 00       		.byte	0
+ 3196 00de 13       		.uleb128 0x13
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 64
+
+
+ 3197 00df 34       		.uleb128 0x34
+ 3198 00e0 00       		.byte	0
+ 3199 00e1 03       		.uleb128 0x3
+ 3200 00e2 0E       		.uleb128 0xe
+ 3201 00e3 3A       		.uleb128 0x3a
+ 3202 00e4 0B       		.uleb128 0xb
+ 3203 00e5 3B       		.uleb128 0x3b
+ 3204 00e6 0B       		.uleb128 0xb
+ 3205 00e7 49       		.uleb128 0x49
+ 3206 00e8 13       		.uleb128 0x13
+ 3207 00e9 00       		.byte	0
+ 3208 00ea 00       		.byte	0
+ 3209 00eb 14       		.uleb128 0x14
+ 3210 00ec 34       		.uleb128 0x34
+ 3211 00ed 00       		.byte	0
+ 3212 00ee 03       		.uleb128 0x3
+ 3213 00ef 0E       		.uleb128 0xe
+ 3214 00f0 3A       		.uleb128 0x3a
+ 3215 00f1 0B       		.uleb128 0xb
+ 3216 00f2 3B       		.uleb128 0x3b
+ 3217 00f3 0B       		.uleb128 0xb
+ 3218 00f4 49       		.uleb128 0x49
+ 3219 00f5 13       		.uleb128 0x13
+ 3220 00f6 02       		.uleb128 0x2
+ 3221 00f7 17       		.uleb128 0x17
+ 3222 00f8 00       		.byte	0
+ 3223 00f9 00       		.byte	0
+ 3224 00fa 15       		.uleb128 0x15
+ 3225 00fb 2E       		.uleb128 0x2e
+ 3226 00fc 01       		.byte	0x1
+ 3227 00fd 3F       		.uleb128 0x3f
+ 3228 00fe 19       		.uleb128 0x19
+ 3229 00ff 03       		.uleb128 0x3
+ 3230 0100 0E       		.uleb128 0xe
+ 3231 0101 3A       		.uleb128 0x3a
+ 3232 0102 0B       		.uleb128 0xb
+ 3233 0103 3B       		.uleb128 0x3b
+ 3234 0104 0B       		.uleb128 0xb
+ 3235 0105 27       		.uleb128 0x27
+ 3236 0106 19       		.uleb128 0x19
+ 3237 0107 49       		.uleb128 0x49
+ 3238 0108 13       		.uleb128 0x13
+ 3239 0109 8701     		.uleb128 0x87
+ 3240 010b 19       		.uleb128 0x19
+ 3241 010c 11       		.uleb128 0x11
+ 3242 010d 01       		.uleb128 0x1
+ 3243 010e 12       		.uleb128 0x12
+ 3244 010f 06       		.uleb128 0x6
+ 3245 0110 40       		.uleb128 0x40
+ 3246 0111 18       		.uleb128 0x18
+ 3247 0112 9742     		.uleb128 0x2117
+ 3248 0114 19       		.uleb128 0x19
+ 3249 0115 01       		.uleb128 0x1
+ 3250 0116 13       		.uleb128 0x13
+ 3251 0117 00       		.byte	0
+ 3252 0118 00       		.byte	0
+ 3253 0119 16       		.uleb128 0x16
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 65
+
+
+ 3254 011a 34       		.uleb128 0x34
+ 3255 011b 00       		.byte	0
+ 3256 011c 03       		.uleb128 0x3
+ 3257 011d 0E       		.uleb128 0xe
+ 3258 011e 3A       		.uleb128 0x3a
+ 3259 011f 0B       		.uleb128 0xb
+ 3260 0120 3B       		.uleb128 0x3b
+ 3261 0121 05       		.uleb128 0x5
+ 3262 0122 49       		.uleb128 0x49
+ 3263 0123 13       		.uleb128 0x13
+ 3264 0124 3F       		.uleb128 0x3f
+ 3265 0125 19       		.uleb128 0x19
+ 3266 0126 3C       		.uleb128 0x3c
+ 3267 0127 19       		.uleb128 0x19
+ 3268 0128 00       		.byte	0
+ 3269 0129 00       		.byte	0
+ 3270 012a 17       		.uleb128 0x17
+ 3271 012b 34       		.uleb128 0x34
+ 3272 012c 00       		.byte	0
+ 3273 012d 03       		.uleb128 0x3
+ 3274 012e 0E       		.uleb128 0xe
+ 3275 012f 3A       		.uleb128 0x3a
+ 3276 0130 0B       		.uleb128 0xb
+ 3277 0131 3B       		.uleb128 0x3b
+ 3278 0132 0B       		.uleb128 0xb
+ 3279 0133 49       		.uleb128 0x49
+ 3280 0134 13       		.uleb128 0x13
+ 3281 0135 3F       		.uleb128 0x3f
+ 3282 0136 19       		.uleb128 0x19
+ 3283 0137 02       		.uleb128 0x2
+ 3284 0138 18       		.uleb128 0x18
+ 3285 0139 00       		.byte	0
+ 3286 013a 00       		.byte	0
+ 3287 013b 18       		.uleb128 0x18
+ 3288 013c 2E       		.uleb128 0x2e
+ 3289 013d 00       		.byte	0
+ 3290 013e 3F       		.uleb128 0x3f
+ 3291 013f 19       		.uleb128 0x19
+ 3292 0140 3C       		.uleb128 0x3c
+ 3293 0141 19       		.uleb128 0x19
+ 3294 0142 6E       		.uleb128 0x6e
+ 3295 0143 0E       		.uleb128 0xe
+ 3296 0144 03       		.uleb128 0x3
+ 3297 0145 0E       		.uleb128 0xe
+ 3298 0146 3A       		.uleb128 0x3a
+ 3299 0147 0B       		.uleb128 0xb
+ 3300 0148 3B       		.uleb128 0x3b
+ 3301 0149 0B       		.uleb128 0xb
+ 3302 014a 00       		.byte	0
+ 3303 014b 00       		.byte	0
+ 3304 014c 19       		.uleb128 0x19
+ 3305 014d 2E       		.uleb128 0x2e
+ 3306 014e 00       		.byte	0
+ 3307 014f 3F       		.uleb128 0x3f
+ 3308 0150 19       		.uleb128 0x19
+ 3309 0151 3C       		.uleb128 0x3c
+ 3310 0152 19       		.uleb128 0x19
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 66
+
+
+ 3311 0153 6E       		.uleb128 0x6e
+ 3312 0154 0E       		.uleb128 0xe
+ 3313 0155 03       		.uleb128 0x3
+ 3314 0156 0E       		.uleb128 0xe
+ 3315 0157 00       		.byte	0
+ 3316 0158 00       		.byte	0
+ 3317 0159 00       		.byte	0
+ 3318              		.section	.debug_loc,"",%progbits
+ 3319              	.Ldebug_loc0:
+ 3320              	.LLST0:
+ 3321 0000 00000000 		.4byte	.LVL1
+ 3322 0004 0A000000 		.4byte	.LVL2
+ 3323 0008 0100     		.2byte	0x1
+ 3324 000a 50       		.byte	0x50
+ 3325 000b 0A000000 		.4byte	.LVL2
+ 3326 000f 6E000000 		.4byte	.LVL10
+ 3327 0013 0100     		.2byte	0x1
+ 3328 0015 54       		.byte	0x54
+ 3329 0016 6E000000 		.4byte	.LVL10
+ 3330 001a 74000000 		.4byte	.LFE65
+ 3331 001e 0400     		.2byte	0x4
+ 3332 0020 F3       		.byte	0xf3
+ 3333 0021 01       		.uleb128 0x1
+ 3334 0022 50       		.byte	0x50
+ 3335 0023 9F       		.byte	0x9f
+ 3336 0024 00000000 		.4byte	0
+ 3337 0028 00000000 		.4byte	0
+ 3338              	.LLST1:
+ 3339 002c 04000000 		.4byte	.LVL32
+ 3340 0030 40000000 		.4byte	.LVL39
+ 3341 0034 0200     		.2byte	0x2
+ 3342 0036 30       		.byte	0x30
+ 3343 0037 9F       		.byte	0x9f
+ 3344 0038 40000000 		.4byte	.LVL39
+ 3345 003c DA000000 		.4byte	.LVL62
+ 3346 0040 0100     		.2byte	0x1
+ 3347 0042 54       		.byte	0x54
+ 3348 0043 00000000 		.4byte	0
+ 3349 0047 00000000 		.4byte	0
+ 3350              	.LLST2:
+ 3351 004b 04000000 		.4byte	.LVL32
+ 3352 004f 94000000 		.4byte	.LVL52
+ 3353 0053 0200     		.2byte	0x2
+ 3354 0055 30       		.byte	0x30
+ 3355 0056 9F       		.byte	0x9f
+ 3356 0057 94000000 		.4byte	.LVL52
+ 3357 005b DC000000 		.4byte	.LVL63
+ 3358 005f 0100     		.2byte	0x1
+ 3359 0061 55       		.byte	0x55
+ 3360 0062 00000000 		.4byte	0
+ 3361 0066 00000000 		.4byte	0
+ 3362              	.LLST3:
+ 3363 006a 04000000 		.4byte	.LVL32
+ 3364 006e 72000000 		.4byte	.LVL46
+ 3365 0072 0200     		.2byte	0x2
+ 3366 0074 30       		.byte	0x30
+ 3367 0075 9F       		.byte	0x9f
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 67
+
+
+ 3368 0076 72000000 		.4byte	.LVL46
+ 3369 007a 92000000 		.4byte	.LVL51
+ 3370 007e 0100     		.2byte	0x1
+ 3371 0080 55       		.byte	0x55
+ 3372 0081 00000000 		.4byte	0
+ 3373 0085 00000000 		.4byte	0
+ 3374              		.section	.debug_aranges,"",%progbits
+ 3375 0000 54000000 		.4byte	0x54
+ 3376 0004 0200     		.2byte	0x2
+ 3377 0006 00000000 		.4byte	.Ldebug_info0
+ 3378 000a 04       		.byte	0x4
+ 3379 000b 00       		.byte	0
+ 3380 000c 0000     		.2byte	0
+ 3381 000e 0000     		.2byte	0
+ 3382 0010 00000000 		.4byte	.LFB70
+ 3383 0014 14000000 		.4byte	.LFE70-.LFB70
+ 3384 0018 00000000 		.4byte	.LFB65
+ 3385 001c 74000000 		.4byte	.LFE65-.LFB65
+ 3386 0020 00000000 		.4byte	.LFB66
+ 3387 0024 58000000 		.4byte	.LFE66-.LFB66
+ 3388 0028 00000000 		.4byte	.LFB67
+ 3389 002c 94000000 		.4byte	.LFE67-.LFB67
+ 3390 0030 00000000 		.4byte	.LFB68
+ 3391 0034 18000000 		.4byte	.LFE68-.LFB68
+ 3392 0038 00000000 		.4byte	.LFB69
+ 3393 003c 30000000 		.4byte	.LFE69-.LFB69
+ 3394 0040 00000000 		.4byte	.LFB71
+ 3395 0044 2C010000 		.4byte	.LFE71-.LFB71
+ 3396 0048 00000000 		.4byte	.LFB64
+ 3397 004c 20010000 		.4byte	.LFE64-.LFB64
+ 3398 0050 00000000 		.4byte	0
+ 3399 0054 00000000 		.4byte	0
+ 3400              		.section	.debug_ranges,"",%progbits
+ 3401              	.Ldebug_ranges0:
+ 3402 0000 00000000 		.4byte	.LFB70
+ 3403 0004 14000000 		.4byte	.LFE70
+ 3404 0008 00000000 		.4byte	.LFB65
+ 3405 000c 74000000 		.4byte	.LFE65
+ 3406 0010 00000000 		.4byte	.LFB66
+ 3407 0014 58000000 		.4byte	.LFE66
+ 3408 0018 00000000 		.4byte	.LFB67
+ 3409 001c 94000000 		.4byte	.LFE67
+ 3410 0020 00000000 		.4byte	.LFB68
+ 3411 0024 18000000 		.4byte	.LFE68
+ 3412 0028 00000000 		.4byte	.LFB69
+ 3413 002c 30000000 		.4byte	.LFE69
+ 3414 0030 00000000 		.4byte	.LFB71
+ 3415 0034 2C010000 		.4byte	.LFE71
+ 3416 0038 00000000 		.4byte	.LFB64
+ 3417 003c 20010000 		.4byte	.LFE64
+ 3418 0040 00000000 		.4byte	0
+ 3419 0044 00000000 		.4byte	0
+ 3420              		.section	.debug_line,"",%progbits
+ 3421              	.Ldebug_line0:
+ 3422 0000 06030000 		.section	.debug_str,"MS",%progbits,1
+ 3422      02001002 
+ 3422      00000201 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 68
+
+
+ 3422      FB0E0D00 
+ 3422      01010101 
+ 3423              	.LASF54:
+ 3424 0000 534F434B 		.ascii	"SOCKET_REG_IP_TTL\000"
+ 3424      45545F52 
+ 3424      45475F49 
+ 3424      505F5454 
+ 3424      4C00
+ 3425              	.LASF25:
+ 3426 0012 534F434B 		.ascii	"SOCKET_CMD_LISTEN\000"
+ 3426      45545F43 
+ 3426      4D445F4C 
+ 3426      49535445 
+ 3426      4E00
+ 3427              	.LASF136:
+ 3428 0024 43794465 		.ascii	"CyDelay\000"
+ 3428      6C617900 
+ 3429              	.LASF121:
+ 3430 002c 736B745F 		.ascii	"skt_rcv_data_size\000"
+ 3430      7263765F 
+ 3430      64617461 
+ 3430      5F73697A 
+ 3430      6500
+ 3431              	.LASF151:
+ 3432 003e 6D61696E 		.ascii	"main.c\000"
+ 3432      2E6300
+ 3433              	.LASF123:
+ 3434 0045 62797465 		.ascii	"bytes_rcvd\000"
+ 3434      735F7263 
+ 3434      766400
+ 3435              	.LASF31:
+ 3436 0050 534F434B 		.ascii	"SOCKET_CMD_SEND_KEEP\000"
+ 3436      45545F43 
+ 3436      4D445F53 
+ 3436      454E445F 
+ 3436      4B454550 
+ 3437              	.LASF145:
+ 3438 0065 6973725F 		.ascii	"isr_W5500_StartEx\000"
+ 3438      57353530 
+ 3438      305F5374 
+ 3438      61727445 
+ 3438      7800
+ 3439              	.LASF79:
+ 3440 0077 424C4F43 		.ascii	"BLOCK_SOCKET_1_TX_BUFFER\000"
+ 3440      4B5F534F 
+ 3440      434B4554 
+ 3440      5F315F54 
+ 3440      585F4255 
+ 3441              	.LASF119:
+ 3442 0090 68616E64 		.ascii	"handle_disconnection\000"
+ 3442      6C655F64 
+ 3442      6973636F 
+ 3442      6E6E6563 
+ 3442      74696F6E 
+ 3443              	.LASF21:
+ 3444 00a5 534F434B 		.ascii	"SOCKET_MODE_TCP\000"
+ 3444      45545F4D 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 69
+
+
+ 3444      4F44455F 
+ 3444      54435000 
+ 3445              	.LASF28:
+ 3446 00b5 534F434B 		.ascii	"SOCKET_CMD_CLOSE\000"
+ 3446      45545F43 
+ 3446      4D445F43 
+ 3446      4C4F5345 
+ 3446      00
+ 3447              	.LASF74:
+ 3448 00c6 424C4F43 		.ascii	"BLOCK_SOCKET_0_REGISTER\000"
+ 3448      4B5F534F 
+ 3448      434B4554 
+ 3448      5F305F52 
+ 3448      45474953 
+ 3449              	.LASF34:
+ 3450 00de 534F434B 		.ascii	"SOCKET_REG_COMMAND\000"
+ 3450      45545F52 
+ 3450      45475F43 
+ 3450      4F4D4D41 
+ 3450      4E4400
+ 3451              	.LASF11:
+ 3452 00f1 756E7369 		.ascii	"unsigned int\000"
+ 3452      676E6564 
+ 3452      20696E74 
+ 3452      00
+ 3453              	.LASF90:
+ 3454 00fe 424C4F43 		.ascii	"BLOCK_SOCKET_4_REGISTER\000"
+ 3454      4B5F534F 
+ 3454      434B4554 
+ 3454      5F345F52 
+ 3454      45474953 
+ 3455              	.LASF88:
+ 3456 0116 424C4F43 		.ascii	"BLOCK_SOCKET_3_RX_BUFFER\000"
+ 3456      4B5F534F 
+ 3456      434B4554 
+ 3456      5F335F52 
+ 3456      585F4255 
+ 3457              	.LASF6:
+ 3458 012f 5F5F696E 		.ascii	"__int32_t\000"
+ 3458      7433325F 
+ 3458      7400
+ 3459              	.LASF63:
+ 3460 0139 534F434B 		.ascii	"SOCKET_REG_RX_RECEIVED_SIZE0\000"
+ 3460      45545F52 
+ 3460      45475F52 
+ 3460      585F5245 
+ 3460      43454956 
+ 3461              	.LASF64:
+ 3462 0156 534F434B 		.ascii	"SOCKET_REG_RX_RECEIVED_SIZE1\000"
+ 3462      45545F52 
+ 3462      45475F52 
+ 3462      585F5245 
+ 3462      43454956 
+ 3463              	.LASF141:
+ 3464 0173 4C45445F 		.ascii	"LED_Write\000"
+ 3464      57726974 
+ 3464      6500
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 70
+
+
+ 3465              	.LASF99:
+ 3466 017d 424C4F43 		.ascii	"BLOCK_SOCKET_6_TX_BUFFER\000"
+ 3466      4B5F534F 
+ 3466      434B4554 
+ 3466      5F365F54 
+ 3466      585F4255 
+ 3467              	.LASF37:
+ 3468 0196 534F434B 		.ascii	"SOCKET_REG_SOURCE_PORT0\000"
+ 3468      45545F52 
+ 3468      45475F53 
+ 3468      4F555243 
+ 3468      455F504F 
+ 3469              	.LASF38:
+ 3470 01ae 534F434B 		.ascii	"SOCKET_REG_SOURCE_PORT1\000"
+ 3470      45545F52 
+ 3470      45475F53 
+ 3470      4F555243 
+ 3470      455F504F 
+ 3471              	.LASF113:
+ 3472 01c6 68616E64 		.ascii	"handle_connection\000"
+ 3472      6C655F63 
+ 3472      6F6E6E65 
+ 3472      6374696F 
+ 3472      6E00
+ 3473              	.LASF35:
+ 3474 01d8 534F434B 		.ascii	"SOCKET_REG_INTERRUPT\000"
+ 3474      45545F52 
+ 3474      45475F49 
+ 3474      4E544552 
+ 3474      52555054 
+ 3475              	.LASF29:
+ 3476 01ed 534F434B 		.ascii	"SOCKET_CMD_SEND\000"
+ 3476      45545F43 
+ 3476      4D445F53 
+ 3476      454E4400 
+ 3477              	.LASF149:
+ 3478 01fd 55415254 		.ascii	"UART_PutHexByte\000"
+ 3478      5F507574 
+ 3478      48657842 
+ 3478      79746500 
+ 3479              	.LASF75:
+ 3480 020d 424C4F43 		.ascii	"BLOCK_SOCKET_0_TX_BUFFER\000"
+ 3480      4B5F534F 
+ 3480      434B4554 
+ 3480      5F305F54 
+ 3480      585F4255 
+ 3481              	.LASF108:
+ 3482 0226 6D61635F 		.ascii	"mac_addr\000"
+ 3482      61646472 
+ 3482      00
+ 3483              	.LASF27:
+ 3484 022f 534F434B 		.ascii	"SOCKET_CMD_DISCONNECT\000"
+ 3484      45545F43 
+ 3484      4D445F44 
+ 3484      4953434F 
+ 3484      4E4E4543 
+ 3485              	.LASF15:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 71
+
+
+ 3486 0245 666C6F61 		.ascii	"float\000"
+ 3486      7400
+ 3487              	.LASF116:
+ 3488 024b 72656D6F 		.ascii	"remote_mac\000"
+ 3488      74655F6D 
+ 3488      616300
+ 3489              	.LASF107:
+ 3490 0256 77697A5F 		.ascii	"wiz_init\000"
+ 3490      696E6974 
+ 3490      00
+ 3491              	.LASF84:
+ 3492 025f 424C4F43 		.ascii	"BLOCK_SOCKET_2_RX_BUFFER\000"
+ 3492      4B5F534F 
+ 3492      434B4554 
+ 3492      5F325F52 
+ 3492      585F4255 
+ 3493              	.LASF146:
+ 3494 0278 5350495F 		.ascii	"SPI_Start\000"
+ 3494      53746172 
+ 3494      7400
+ 3495              	.LASF10:
+ 3496 0282 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 3496      206C6F6E 
+ 3496      6720756E 
+ 3496      7369676E 
+ 3496      65642069 
+ 3497              	.LASF77:
+ 3498 0299 424C4F43 		.ascii	"BLOCK_RESERVED_0\000"
+ 3498      4B5F5245 
+ 3498      53455256 
+ 3498      45445F30 
+ 3498      00
+ 3499              	.LASF81:
+ 3500 02aa 424C4F43 		.ascii	"BLOCK_RESERVED_1\000"
+ 3500      4B5F5245 
+ 3500      53455256 
+ 3500      45445F31 
+ 3500      00
+ 3501              	.LASF85:
+ 3502 02bb 424C4F43 		.ascii	"BLOCK_RESERVED_2\000"
+ 3502      4B5F5245 
+ 3502      53455256 
+ 3502      45445F32 
+ 3502      00
+ 3503              	.LASF89:
+ 3504 02cc 424C4F43 		.ascii	"BLOCK_RESERVED_3\000"
+ 3504      4B5F5245 
+ 3504      53455256 
+ 3504      45445F33 
+ 3504      00
+ 3505              	.LASF93:
+ 3506 02dd 424C4F43 		.ascii	"BLOCK_RESERVED_4\000"
+ 3506      4B5F5245 
+ 3506      53455256 
+ 3506      45445F34 
+ 3506      00
+ 3507              	.LASF97:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 72
+
+
+ 3508 02ee 424C4F43 		.ascii	"BLOCK_RESERVED_5\000"
+ 3508      4B5F5245 
+ 3508      53455256 
+ 3508      45445F35 
+ 3508      00
+ 3509              	.LASF101:
+ 3510 02ff 424C4F43 		.ascii	"BLOCK_RESERVED_6\000"
+ 3510      4B5F5245 
+ 3510      53455256 
+ 3510      45445F36 
+ 3510      00
+ 3511              	.LASF122:
+ 3512 0310 64617461 		.ascii	"data_ptr\000"
+ 3512      5F707472 
+ 3512      00
+ 3513              	.LASF134:
+ 3514 0319 57353530 		.ascii	"W5500_spi_write_byte\000"
+ 3514      305F7370 
+ 3514      695F7772 
+ 3514      6974655F 
+ 3514      62797465 
+ 3515              	.LASF4:
+ 3516 032e 5F5F7569 		.ascii	"__uint16_t\000"
+ 3516      6E743136 
+ 3516      5F7400
+ 3517              	.LASF95:
+ 3518 0339 424C4F43 		.ascii	"BLOCK_SOCKET_5_TX_BUFFER\000"
+ 3518      4B5F534F 
+ 3518      434B4554 
+ 3518      5F355F54 
+ 3518      585F4255 
+ 3519              	.LASF56:
+ 3520 0352 534F434B 		.ascii	"SOCKET_REG_TX_BUFFER_SIZE\000"
+ 3520      45545F52 
+ 3520      45475F54 
+ 3520      585F4255 
+ 3520      46464552 
+ 3521              	.LASF109:
+ 3522 036c 7375626D 		.ascii	"submask\000"
+ 3522      61736B00 
+ 3523              	.LASF78:
+ 3524 0374 424C4F43 		.ascii	"BLOCK_SOCKET_1_REGISTER\000"
+ 3524      4B5F534F 
+ 3524      434B4554 
+ 3524      5F315F52 
+ 3524      45474953 
+ 3525              	.LASF150:
+ 3526 038c 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 3526      43313120 
+ 3526      352E342E 
+ 3526      31203230 
+ 3526      31363036 
+ 3527 03bf 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 3527      20726576 
+ 3527      6973696F 
+ 3527      6E203233 
+ 3527      37373135 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 73
+
+
+ 3528 03f2 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 3528      66756E63 
+ 3528      74696F6E 
+ 3528      2D736563 
+ 3528      74696F6E 
+ 3529              	.LASF94:
+ 3530 041a 424C4F43 		.ascii	"BLOCK_SOCKET_5_REGISTER\000"
+ 3530      4B5F534F 
+ 3530      434B4554 
+ 3530      5F355F52 
+ 3530      45474953 
+ 3531              	.LASF131:
+ 3532 0432 5F426F6F 		.ascii	"_Bool\000"
+ 3532      6C00
+ 3533              	.LASF55:
+ 3534 0438 534F434B 		.ascii	"SOCKET_REG_RX_BUFFER_SIZE\000"
+ 3534      45545F52 
+ 3534      45475F52 
+ 3534      585F4255 
+ 3534      46464552 
+ 3535              	.LASF39:
+ 3536 0452 534F434B 		.ascii	"SOCKET_REG_DESTINATION_HW_ADDR0\000"
+ 3536      45545F52 
+ 3536      45475F44 
+ 3536      45535449 
+ 3536      4E415449 
+ 3537              	.LASF40:
+ 3538 0472 534F434B 		.ascii	"SOCKET_REG_DESTINATION_HW_ADDR1\000"
+ 3538      45545F52 
+ 3538      45475F44 
+ 3538      45535449 
+ 3538      4E415449 
+ 3539              	.LASF41:
+ 3540 0492 534F434B 		.ascii	"SOCKET_REG_DESTINATION_HW_ADDR2\000"
+ 3540      45545F52 
+ 3540      45475F44 
+ 3540      45535449 
+ 3540      4E415449 
+ 3541              	.LASF42:
+ 3542 04b2 534F434B 		.ascii	"SOCKET_REG_DESTINATION_HW_ADDR3\000"
+ 3542      45545F52 
+ 3542      45475F44 
+ 3542      45535449 
+ 3542      4E415449 
+ 3543              	.LASF43:
+ 3544 04d2 534F434B 		.ascii	"SOCKET_REG_DESTINATION_HW_ADDR4\000"
+ 3544      45545F52 
+ 3544      45475F44 
+ 3544      45535449 
+ 3544      4E415449 
+ 3545              	.LASF44:
+ 3546 04f2 534F434B 		.ascii	"SOCKET_REG_DESTINATION_HW_ADDR5\000"
+ 3546      45545F52 
+ 3546      45475F44 
+ 3546      45535449 
+ 3546      4E415449 
+ 3547              	.LASF17:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 74
+
+
+ 3548 0512 63686172 		.ascii	"char\000"
+ 3548      00
+ 3549              	.LASF104:
+ 3550 0517 424C4F43 		.ascii	"BLOCK_SOCKET_7_RX_BUFFER\000"
+ 3550      4B5F534F 
+ 3550      434B4554 
+ 3550      5F375F52 
+ 3550      585F4255 
+ 3551              	.LASF57:
+ 3552 0530 534F434B 		.ascii	"SOCKET_REG_TX_FREE_SIZE0\000"
+ 3552      45545F52 
+ 3552      45475F54 
+ 3552      585F4652 
+ 3552      45455F53 
+ 3553              	.LASF58:
+ 3554 0549 534F434B 		.ascii	"SOCKET_REG_TX_FREE_SIZE1\000"
+ 3554      45545F52 
+ 3554      45475F54 
+ 3554      585F4652 
+ 3554      45455F53 
+ 3555              	.LASF130:
+ 3556 0562 77353530 		.ascii	"w5500_interrupt_flag\000"
+ 3556      305F696E 
+ 3556      74657272 
+ 3556      7570745F 
+ 3556      666C6167 
+ 3557              	.LASF36:
+ 3558 0577 534F434B 		.ascii	"SOCKET_REG_STATUS\000"
+ 3558      45545F52 
+ 3558      45475F53 
+ 3558      54415455 
+ 3558      5300
+ 3559              	.LASF126:
+ 3560 0589 64617461 		.ascii	"data\000"
+ 3560      00
+ 3561              	.LASF115:
+ 3562 058e 736B745F 		.ascii	"skt_remote_mac\000"
+ 3562      72656D6F 
+ 3562      74655F6D 
+ 3562      616300
+ 3563              	.LASF137:
+ 3564 059d 55415254 		.ascii	"UART_PutString\000"
+ 3564      5F507574 
+ 3564      53747269 
+ 3564      6E6700
+ 3565              	.LASF105:
+ 3566 05ac 424C4F43 		.ascii	"BLOCK_INVALID\000"
+ 3566      4B5F494E 
+ 3566      56414C49 
+ 3566      4400
+ 3567              	.LASF12:
+ 3568 05ba 75696E74 		.ascii	"uint8_t\000"
+ 3568      385F7400 
+ 3569              	.LASF70:
+ 3570 05c2 534F434B 		.ascii	"SOCKET_REG_FRAGMENT_OFFSET_INIP0\000"
+ 3570      45545F52 
+ 3570      45475F46 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 75
+
+
+ 3570      5241474D 
+ 3570      454E545F 
+ 3571              	.LASF71:
+ 3572 05e3 534F434B 		.ascii	"SOCKET_REG_FRAGMENT_OFFSET_INIP1\000"
+ 3572      45545F52 
+ 3572      45475F46 
+ 3572      5241474D 
+ 3572      454E545F 
+ 3573              	.LASF140:
+ 3574 0604 4C45445F 		.ascii	"LED_Read\000"
+ 3574      52656164 
+ 3574      00
+ 3575              	.LASF49:
+ 3576 060d 534F434B 		.ascii	"SOCKET_REG_DESTINATION_PORT0\000"
+ 3576      45545F52 
+ 3576      45475F44 
+ 3576      45535449 
+ 3576      4E415449 
+ 3577              	.LASF50:
+ 3578 062a 534F434B 		.ascii	"SOCKET_REG_DESTINATION_PORT1\000"
+ 3578      45545F52 
+ 3578      45475F44 
+ 3578      45535449 
+ 3578      4E415449 
+ 3579              	.LASF62:
+ 3580 0647 534F434B 		.ascii	"SOCKET_REG_TX_WRITE_POINTER1\000"
+ 3580      45545F52 
+ 3580      45475F54 
+ 3580      585F5752 
+ 3580      4954455F 
+ 3581              	.LASF20:
+ 3582 0664 534F434B 		.ascii	"SOCKET_MODE_CLOSED\000"
+ 3582      45545F4D 
+ 3582      4F44455F 
+ 3582      434C4F53 
+ 3582      454400
+ 3583              	.LASF148:
+ 3584 0677 55415254 		.ascii	"UART_PutChar\000"
+ 3584      5F507574 
+ 3584      43686172 
+ 3584      00
+ 3585              	.LASF80:
+ 3586 0684 424C4F43 		.ascii	"BLOCK_SOCKET_1_RX_BUFFER\000"
+ 3586      4B5F534F 
+ 3586      434B4554 
+ 3586      5F315F52 
+ 3586      585F4255 
+ 3587              	.LASF106:
+ 3588 069d 77353530 		.ascii	"w5500_isr\000"
+ 3588      305F6973 
+ 3588      7200
+ 3589              	.LASF9:
+ 3590 06a7 6C6F6E67 		.ascii	"long long int\000"
+ 3590      206C6F6E 
+ 3590      6720696E 
+ 3590      7400
+ 3591              	.LASF133:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 76
+
+
+ 3592 06b5 57353530 		.ascii	"W5500_ISR_ClearInterrupt\000"
+ 3592      305F4953 
+ 3592      525F436C 
+ 3592      65617249 
+ 3592      6E746572 
+ 3593              	.LASF65:
+ 3594 06ce 534F434B 		.ascii	"SOCKET_REG_RX_READ_POINTER0\000"
+ 3594      45545F52 
+ 3594      45475F52 
+ 3594      585F5245 
+ 3594      41445F50 
+ 3595              	.LASF66:
+ 3596 06ea 534F434B 		.ascii	"SOCKET_REG_RX_READ_POINTER1\000"
+ 3596      45545F52 
+ 3596      45475F52 
+ 3596      585F5245 
+ 3596      41445F50 
+ 3597              	.LASF125:
+ 3598 0706 64617461 		.ascii	"data_addr\000"
+ 3598      5F616464 
+ 3598      7200
+ 3599              	.LASF91:
+ 3600 0710 424C4F43 		.ascii	"BLOCK_SOCKET_4_TX_BUFFER\000"
+ 3600      4B5F534F 
+ 3600      434B4554 
+ 3600      5F345F54 
+ 3600      585F4255 
+ 3601              	.LASF22:
+ 3602 0729 534F434B 		.ascii	"SOCKET_MODE_UDP\000"
+ 3602      45545F4D 
+ 3602      4F44455F 
+ 3602      55445000 
+ 3603              	.LASF135:
+ 3604 0739 57353530 		.ascii	"W5500_spi_write\000"
+ 3604      305F7370 
+ 3604      695F7772 
+ 3604      69746500 
+ 3605              	.LASF98:
+ 3606 0749 424C4F43 		.ascii	"BLOCK_SOCKET_6_REGISTER\000"
+ 3606      4B5F534F 
+ 3606      434B4554 
+ 3606      5F365F52 
+ 3606      45474953 
+ 3607              	.LASF154:
+ 3608 0761 6D656D73 		.ascii	"memset\000"
+ 3608      657400
+ 3609              	.LASF142:
+ 3610 0768 57353530 		.ascii	"W5500_spi_read_byte\000"
+ 3610      305F7370 
+ 3610      695F7265 
+ 3610      61645F62 
+ 3610      79746500 
+ 3611              	.LASF139:
+ 3612 077c 736E7072 		.ascii	"snprintf\000"
+ 3612      696E7466 
+ 3612      00
+ 3613              	.LASF100:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 77
+
+
+ 3614 0785 424C4F43 		.ascii	"BLOCK_SOCKET_6_RX_BUFFER\000"
+ 3614      4B5F534F 
+ 3614      434B4554 
+ 3614      5F365F52 
+ 3614      585F4255 
+ 3615              	.LASF132:
+ 3616 079e 7369725F 		.ascii	"sir_sts\000"
+ 3616      73747300 
+ 3617              	.LASF69:
+ 3618 07a6 534F434B 		.ascii	"SOCKET_REG_INTERRUPT_MASK\000"
+ 3618      45545F52 
+ 3618      45475F49 
+ 3618      4E544552 
+ 3618      52555054 
+ 3619              	.LASF76:
+ 3620 07c0 424C4F43 		.ascii	"BLOCK_SOCKET_0_RX_BUFFER\000"
+ 3620      4B5F534F 
+ 3620      434B4554 
+ 3620      5F305F52 
+ 3620      585F4255 
+ 3621              	.LASF18:
+ 3622 07d9 6C6F6E67 		.ascii	"long double\000"
+ 3622      20646F75 
+ 3622      626C6500 
+ 3623              	.LASF82:
+ 3624 07e5 424C4F43 		.ascii	"BLOCK_SOCKET_2_REGISTER\000"
+ 3624      4B5F534F 
+ 3624      434B4554 
+ 3624      5F325F52 
+ 3624      45474953 
+ 3625              	.LASF13:
+ 3626 07fd 75696E74 		.ascii	"uint16_t\000"
+ 3626      31365F74 
+ 3626      00
+ 3627              	.LASF24:
+ 3628 0806 534F434B 		.ascii	"SOCKET_CMD_OPEN\000"
+ 3628      45545F43 
+ 3628      4D445F4F 
+ 3628      50454E00 
+ 3629              	.LASF87:
+ 3630 0816 424C4F43 		.ascii	"BLOCK_SOCKET_3_TX_BUFFER\000"
+ 3630      4B5F534F 
+ 3630      434B4554 
+ 3630      5F335F54 
+ 3630      585F4255 
+ 3631              	.LASF127:
+ 3632 082f 64617461 		.ascii	"data_str\000"
+ 3632      5F737472 
+ 3632      00
+ 3633              	.LASF112:
+ 3634 0838 7463705F 		.ascii	"tcp_port\000"
+ 3634      706F7274 
+ 3634      00
+ 3635              	.LASF2:
+ 3636 0841 73686F72 		.ascii	"short int\000"
+ 3636      7420696E 
+ 3636      7400
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 78
+
+
+ 3637              	.LASF53:
+ 3638 084b 534F434B 		.ascii	"SOCKET_REG_IP_TOS\000"
+ 3638      45545F52 
+ 3638      45475F49 
+ 3638      505F544F 
+ 3638      5300
+ 3639              	.LASF7:
+ 3640 085d 6C6F6E67 		.ascii	"long int\000"
+ 3640      20696E74 
+ 3640      00
+ 3641              	.LASF129:
+ 3642 0866 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 3642      52784275 
+ 3642      66666572 
+ 3642      00
+ 3643              	.LASF96:
+ 3644 0873 424C4F43 		.ascii	"BLOCK_SOCKET_5_RX_BUFFER\000"
+ 3644      4B5F534F 
+ 3644      434B4554 
+ 3644      5F355F52 
+ 3644      585F4255 
+ 3645              	.LASF152:
+ 3646 088c 433A5C55 		.ascii	"C:\\Users\\d3bug\\Documents\\Creator\\W5x00\\test_p"
+ 3646      73657273 
+ 3646      5C643362 
+ 3646      75675C44 
+ 3646      6F63756D 
+ 3647 08b9 72696E74 		.ascii	"rint_remote_mac_ip_isr.cydsn\000"
+ 3647      5F72656D 
+ 3647      6F74655F 
+ 3647      6D61635F 
+ 3647      69705F69 
+ 3648              	.LASF138:
+ 3649 08d6 57353530 		.ascii	"W5500_spi_read\000"
+ 3649      305F7370 
+ 3649      695F7265 
+ 3649      616400
+ 3650              	.LASF33:
+ 3651 08e5 534F434B 		.ascii	"SOCKET_REG_MODE\000"
+ 3651      45545F52 
+ 3651      45475F4D 
+ 3651      4F444500 
+ 3652              	.LASF124:
+ 3653 08f5 6E65775F 		.ascii	"new_rx_addr\000"
+ 3653      72785F61 
+ 3653      64647200 
+ 3654              	.LASF3:
+ 3655 0901 5F5F7569 		.ascii	"__uint8_t\000"
+ 3655      6E74385F 
+ 3655      7400
+ 3656              	.LASF143:
+ 3657 090b 55415254 		.ascii	"UART_PutHexInt\000"
+ 3657      5F507574 
+ 3657      48657849 
+ 3657      6E7400
+ 3658              	.LASF73:
+ 3659 091a 424C4F43 		.ascii	"BLOCK_COMMON_REGISTER\000"
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 79
+
+
+ 3659      4B5F434F 
+ 3659      4D4D4F4E 
+ 3659      5F524547 
+ 3659      49535445 
+ 3660              	.LASF102:
+ 3661 0930 424C4F43 		.ascii	"BLOCK_SOCKET_7_REGISTER\000"
+ 3661      4B5F534F 
+ 3661      434B4554 
+ 3661      5F375F52 
+ 3661      45474953 
+ 3662              	.LASF72:
+ 3663 0948 534F434B 		.ascii	"SOCKET_REG_KEEP_ALIVE_TIMER\000"
+ 3663      45545F52 
+ 3663      45475F4B 
+ 3663      4545505F 
+ 3663      414C4956 
+ 3664              	.LASF19:
+ 3665 0964 73697A65 		.ascii	"sizetype\000"
+ 3665      74797065 
+ 3665      00
+ 3666              	.LASF8:
+ 3667 096d 6C6F6E67 		.ascii	"long unsigned int\000"
+ 3667      20756E73 
+ 3667      69676E65 
+ 3667      6420696E 
+ 3667      7400
+ 3668              	.LASF45:
+ 3669 097f 534F434B 		.ascii	"SOCKET_REG_DESTINATION_IP_ADDR0\000"
+ 3669      45545F52 
+ 3669      45475F44 
+ 3669      45535449 
+ 3669      4E415449 
+ 3670              	.LASF46:
+ 3671 099f 534F434B 		.ascii	"SOCKET_REG_DESTINATION_IP_ADDR1\000"
+ 3671      45545F52 
+ 3671      45475F44 
+ 3671      45535449 
+ 3671      4E415449 
+ 3672              	.LASF47:
+ 3673 09bf 534F434B 		.ascii	"SOCKET_REG_DESTINATION_IP_ADDR2\000"
+ 3673      45545F52 
+ 3673      45475F44 
+ 3673      45535449 
+ 3673      4E415449 
+ 3674              	.LASF48:
+ 3675 09df 534F434B 		.ascii	"SOCKET_REG_DESTINATION_IP_ADDR3\000"
+ 3675      45545F52 
+ 3675      45475F44 
+ 3675      45535449 
+ 3675      4E415449 
+ 3676              	.LASF147:
+ 3677 09ff 55415254 		.ascii	"UART_Start\000"
+ 3677      5F537461 
+ 3677      727400
+ 3678              	.LASF14:
+ 3679 0a0a 696E7433 		.ascii	"int32_t\000"
+ 3679      325F7400 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 80
+
+
+ 3680              	.LASF83:
+ 3681 0a12 424C4F43 		.ascii	"BLOCK_SOCKET_2_TX_BUFFER\000"
+ 3681      4B5F534F 
+ 3681      434B4554 
+ 3681      5F325F54 
+ 3681      585F4255 
+ 3682              	.LASF23:
+ 3683 0a2b 534F434B 		.ascii	"SOCKET_MODE_MACRAW\000"
+ 3683      45545F4D 
+ 3683      4F44455F 
+ 3683      4D414352 
+ 3683      415700
+ 3684              	.LASF110:
+ 3685 0a3e 6774775F 		.ascii	"gtw_addr\000"
+ 3685      61646472 
+ 3685      00
+ 3686              	.LASF61:
+ 3687 0a47 534F434B 		.ascii	"SOCKET_REG_TX_WRITE_POINTER0\000"
+ 3687      45545F52 
+ 3687      45475F54 
+ 3687      585F5752 
+ 3687      4954455F 
+ 3688              	.LASF1:
+ 3689 0a64 756E7369 		.ascii	"unsigned char\000"
+ 3689      676E6564 
+ 3689      20636861 
+ 3689      7200
+ 3690              	.LASF86:
+ 3691 0a72 424C4F43 		.ascii	"BLOCK_SOCKET_3_REGISTER\000"
+ 3691      4B5F534F 
+ 3691      434B4554 
+ 3691      5F335F52 
+ 3691      45474953 
+ 3692              	.LASF120:
+ 3693 0a8a 68616E64 		.ascii	"handle_data\000"
+ 3693      6C655F64 
+ 3693      61746100 
+ 3694              	.LASF32:
+ 3695 0a96 534F434B 		.ascii	"SOCKET_CMD_RECV\000"
+ 3695      45545F43 
+ 3695      4D445F52 
+ 3695      45435600 
+ 3696              	.LASF26:
+ 3697 0aa6 534F434B 		.ascii	"SOCKET_CMD_CONNECT\000"
+ 3697      45545F43 
+ 3697      4D445F43 
+ 3697      4F4E4E45 
+ 3697      435400
+ 3698              	.LASF0:
+ 3699 0ab9 7369676E 		.ascii	"signed char\000"
+ 3699      65642063 
+ 3699      68617200 
+ 3700              	.LASF5:
+ 3701 0ac5 73686F72 		.ascii	"short unsigned int\000"
+ 3701      7420756E 
+ 3701      7369676E 
+ 3701      65642069 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 81
+
+
+ 3701      6E7400
+ 3702              	.LASF153:
+ 3703 0ad8 6D61696E 		.ascii	"main\000"
+ 3703      00
+ 3704              	.LASF117:
+ 3705 0add 72656D6F 		.ascii	"remote_ip\000"
+ 3705      74655F69 
+ 3705      7000
+ 3706              	.LASF67:
+ 3707 0ae7 534F434B 		.ascii	"SOCKET_REG_RX_WRITE_POINTER0\000"
+ 3707      45545F52 
+ 3707      45475F52 
+ 3707      585F5752 
+ 3707      4954455F 
+ 3708              	.LASF68:
+ 3709 0b04 534F434B 		.ascii	"SOCKET_REG_RX_WRITE_POINTER1\000"
+ 3709      45545F52 
+ 3709      45475F52 
+ 3709      585F5752 
+ 3709      4954455F 
+ 3710              	.LASF16:
+ 3711 0b21 646F7562 		.ascii	"double\000"
+ 3711      6C6500
+ 3712              	.LASF92:
+ 3713 0b28 424C4F43 		.ascii	"BLOCK_SOCKET_4_RX_BUFFER\000"
+ 3713      4B5F534F 
+ 3713      434B4554 
+ 3713      5F345F52 
+ 3713      585F4255 
+ 3714              	.LASF30:
+ 3715 0b41 534F434B 		.ascii	"SOCKET_CMD_SEND_MAC\000"
+ 3715      45545F43 
+ 3715      4D445F53 
+ 3715      454E445F 
+ 3715      4D414300 
+ 3716              	.LASF51:
+ 3717 0b55 534F434B 		.ascii	"SOCKET_REG_MAX_SEGMENT_SIZE0\000"
+ 3717      45545F52 
+ 3717      45475F4D 
+ 3717      41585F53 
+ 3717      45474D45 
+ 3718              	.LASF52:
+ 3719 0b72 534F434B 		.ascii	"SOCKET_REG_MAX_SEGMENT_SIZE1\000"
+ 3719      45545F52 
+ 3719      45475F4D 
+ 3719      41585F53 
+ 3719      45474D45 
+ 3720              	.LASF118:
+ 3721 0b8f 636C6F73 		.ascii	"close_socket0\000"
+ 3721      655F736F 
+ 3721      636B6574 
+ 3721      3000
+ 3722              	.LASF114:
+ 3723 0b9d 736B745F 		.ascii	"skt_remote_ip\000"
+ 3723      72656D6F 
+ 3723      74655F69 
+ 3723      7000
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccmBadDX.s 			page 82
+
+
+ 3724              	.LASF59:
+ 3725 0bab 534F434B 		.ascii	"SOCKET_REG_TX_READ_POINTER0\000"
+ 3725      45545F52 
+ 3725      45475F54 
+ 3725      585F5245 
+ 3725      41445F50 
+ 3726              	.LASF60:
+ 3727 0bc7 534F434B 		.ascii	"SOCKET_REG_TX_READ_POINTER1\000"
+ 3727      45545F52 
+ 3727      45475F54 
+ 3727      585F5245 
+ 3727      41445F50 
+ 3728              	.LASF144:
+ 3729 0be3 55415254 		.ascii	"UART_PutCRLF\000"
+ 3729      5F507574 
+ 3729      43524C46 
+ 3729      00
+ 3730              	.LASF128:
+ 3731 0bf0 69705F61 		.ascii	"ip_addr\000"
+ 3731      64647200 
+ 3732              	.LASF103:
+ 3733 0bf8 424C4F43 		.ascii	"BLOCK_SOCKET_7_TX_BUFFER\000"
+ 3733      4B5F534F 
+ 3733      434B4554 
+ 3733      5F375F54 
+ 3733      585F4255 
+ 3734              	.LASF111:
+ 3735 0c11 736F636B 		.ascii	"socket0_init\000"
+ 3735      6574305F 
+ 3735      696E6974 
+ 3735      00
+ 3736              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

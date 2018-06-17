@@ -1,0 +1,916 @@
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"udp.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.w5500_udp_open,"ax",%progbits
+  20              		.align	2
+  21              		.global	w5500_udp_open
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	w5500_udp_open, %function
+  25              	w5500_udp_open:
+  26              	.LFB0:
+  27              		.file 1 "udp.c"
+   1:udp.c         **** #include "udp.h"
+   2:udp.c         **** 
+   3:udp.c         **** uint8_t w5500_udp_open(uint16_t port)
+   4:udp.c         **** {
+  28              		.loc 1 4 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+  33              	.LVL0:
+  34              	.LVL1:
+   5:udp.c         **** #if 0
+   6:udp.c         **** 	uint8_t socket = 0;
+   7:udp.c         ****     uint8_t status = ETH_SR_CLOSED;
+   8:udp.c         ****     uint8_t tries = 0;
+   9:udp.c         **** 	
+  10:udp.c         **** 	do {
+  11:udp.c         **** 		socket = ETH_SocketOpen(port, ETH_PROTO_UDP);
+  12:udp.c         **** 	
+  13:udp.c         **** 		if (socket < ETH_MAX_SOCKETS) {
+  14:udp.c         **** 			ETH_Send(ETH_SREG_SR, ETH_SOCKET_BASE(socket), 0, &status, 1);
+  15:udp.c         **** 			if (status != ETH_SR_UDP) {
+  16:udp.c         **** 				ETH_SocketClose(socket,0);
+  17:udp.c         **** 				socket = 0xFF;
+  18:udp.c         **** 			}
+  19:udp.c         **** 		}
+  20:udp.c         **** 		++tries;
+  21:udp.c         **** 	} while ( (tries < 5) && ( status != ETH_SR_UDP ) );
+  22:udp.c         **** 	
+  23:udp.c         **** 	return socket;
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 2
+
+
+  24:udp.c         **** #endif
+  25:udp.c         **** }
+  35              		.loc 1 25 0
+  36 0000 7047     		bx	lr
+  37              		.cfi_endproc
+  38              	.LFE0:
+  39              		.size	w5500_udp_open, .-w5500_udp_open
+  40 0002 00BF     		.section	.text.w5500_udp_send,"ax",%progbits
+  41              		.align	2
+  42              		.global	w5500_udp_send
+  43              		.thumb
+  44              		.thumb_func
+  45              		.type	w5500_udp_send, %function
+  46              	w5500_udp_send:
+  47              	.LFB1:
+  26:udp.c         **** 
+  27:udp.c         **** uint16_t w5500_udp_send(socket_n socket, uint16_t ip, uint16_t port,
+  28:udp.c         ****                         uint8_t *data, size_t data_size, uint8_t flags)
+  29:udp.c         **** {
+  48              		.loc 1 29 0
+  49              		.cfi_startproc
+  50              		@ args = 8, pretend = 0, frame = 0
+  51              		@ frame_needed = 0, uses_anonymous_args = 0
+  52              		@ link register save eliminated.
+  53              	.LVL2:
+  54              	.LVL3:
+  30:udp.c         **** #if 0
+  31:udp.c         **** 	uint16_t tx_length = ETH_GetTxLength(socket,len,flags);
+  32:udp.c         **** 	
+  33:udp.c         **** 	port = CYSWAP_ENDIAN16(port); // fix endian-ness
+  34:udp.c         ****     
+  35:udp.c         **** 	// setup destination information
+  36:udp.c         **** 	ETH_Send(ETH_SREG_DIPR,ETH_SOCKET_BASE(socket),1,(uint8*)&ip,4);
+  37:udp.c         **** 	ETH_Send(ETH_SREG_DPORT, ETH_SOCKET_BASE(socket),1,(uint8*)&port,2);
+  38:udp.c         **** 	ETH_WriteTxData(socket, buffer, tx_length, flags);
+  39:udp.c         **** 	
+  40:udp.c         **** 	return tx_length;
+  41:udp.c         **** #endif
+  42:udp.c         **** }
+  55              		.loc 1 42 0
+  56 0000 7047     		bx	lr
+  57              		.cfi_endproc
+  58              	.LFE1:
+  59              		.size	w5500_udp_send, .-w5500_udp_send
+  60 0002 00BF     		.section	.text.w5500_udp_receive,"ax",%progbits
+  61              		.align	2
+  62              		.global	w5500_udp_receive
+  63              		.thumb
+  64              		.thumb_func
+  65              		.type	w5500_udp_receive, %function
+  66              	w5500_udp_receive:
+  67              	.LFB2:
+  43:udp.c         **** 
+  44:udp.c         **** uint16_t w5500_udp_receive(socket_n socket, uint16_t ip, uint16_t port,
+  45:udp.c         ****                            uint8_t *data, size_t data_size, uint8_t flags)
+  46:udp.c         **** {
+  68              		.loc 1 46 0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 3
+
+
+  69              		.cfi_startproc
+  70              		@ args = 8, pretend = 0, frame = 0
+  71              		@ frame_needed = 0, uses_anonymous_args = 0
+  72              		@ link register save eliminated.
+  73              	.LVL4:
+  74              	.LVL5:
+  47:udp.c         **** #if 0
+  48:udp.c         **** 	uint16_t rx_size = 0;
+  49:udp.c         ****     uint16_t bytes = 0;
+  50:udp.c         ****     uint16_t ptr = 0;
+  51:udp.c         **** 	
+  52:udp.c         **** 	// request the length of the data block available for reading, but, add
+  53:udp.c         **** 	// the header size (8 bytes) to the length of data requested to account
+  54:udp.c         **** 	// for the header sitting in the Rx Buffers.
+  55:udp.c         **** 	do {
+  56:udp.c         **** 		rx_size = ETH_RxDataReady( socket );
+  57:udp.c         **** 	} while ( ( 8 > rx_size ) && ( flags & ETH_TXRX_FLG_WAIT ) );
+  58:udp.c         **** 	
+  59:udp.c         **** 	// if there is data to read from the buffer...
+  60:udp.c         **** 	if ( 7 < rx_size ) {
+  61:udp.c         **** 		// calculate the number of bytes to receive using the available data
+  62:udp.c         **** 		// and the requested length of data.
+  63:udp.c         **** 		bytes = ( rx_size > len ) ? len : rx_size;
+  64:udp.c         **** 		// Read the starting memory pointer address, and endian correct
+  65:udp.c         **** 		ETH_Send( ETH_SREG_RX_RD, ETH_SOCKET_BASE(socket),0,(uint8*)&ptr,2);
+  66:udp.c         **** 		ptr = CYSWAP_ENDIAN16( ptr );
+  67:udp.c         **** 		// Read the UDP header block from the memory
+  68:udp.c         **** 		ETH_Send( ptr,ETH_RX_BASE(socket),0,header,8);
+  69:udp.c         **** 		ptr += 8;
+  70:udp.c         **** 		// read the number of bytes to read from the UDP header
+  71:udp.c         **** 		bytes = header[6];
+  72:udp.c         **** 		bytes = ( bytes << 8 ) + header[7];
+  73:udp.c         **** 		
+  74:udp.c         **** 		// Retrieve the length of data from the received UDP packet, starting
+  75:udp.c         **** 		// right after the end of the packet header.
+  76:udp.c         **** 		ETH_Send( ptr, ETH_RX_BASE(socket),0,buffer,bytes);
+  77:udp.c         **** 		// Calculate the new buffer pointer location, endian correct, and
+  78:udp.c         **** 		// update the pointer register within the W5500 socket registers
+  79:udp.c         **** 		ptr += bytes;
+  80:udp.c         **** 		ptr = CYSWAP_ENDIAN16( ptr );
+  81:udp.c         **** 		ETH_Send(ETH_SREG_RX_RD, ETH_SOCKET_BASE(socket),1,(uint8*)&ptr,2);
+  82:udp.c         **** 		// when all of the available data was read from the message, execute
+  83:udp.c         **** 		// the receive command
+  84:udp.c         **** 		ETH_ExecuteSocketCommand( socket, ETH_CR_RECV );
+  85:udp.c         **** 		
+  86:udp.c         **** 	}
+  87:udp.c         **** 	
+  88:udp.c         **** 	return bytes;
+  89:udp.c         **** #endif
+  90:udp.c         **** }
+  75              		.loc 1 90 0
+  76 0000 7047     		bx	lr
+  77              		.cfi_endproc
+  78              	.LFE2:
+  79              		.size	w5500_udp_receive, .-w5500_udp_receive
+  80 0002 00BF     		.text
+  81              	.Letext0:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 4
+
+
+  82              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+  83              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+  84              		.file 4 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+  85              		.file 5 "common.h"
+  86              		.section	.debug_info,"",%progbits
+  87              	.Ldebug_info0:
+  88 0000 FC010000 		.4byte	0x1fc
+  89 0004 0400     		.2byte	0x4
+  90 0006 00000000 		.4byte	.Ldebug_abbrev0
+  91 000a 04       		.byte	0x4
+  92 000b 01       		.uleb128 0x1
+  93 000c 3D000000 		.4byte	.LASF33
+  94 0010 0C       		.byte	0xc
+  95 0011 FF000000 		.4byte	.LASF34
+  96 0015 54010000 		.4byte	.LASF35
+  97 0019 00000000 		.4byte	.Ldebug_ranges0+0
+  98 001d 00000000 		.4byte	0
+  99 0021 00000000 		.4byte	.Ldebug_line0
+ 100 0025 02       		.uleb128 0x2
+ 101 0026 04       		.byte	0x4
+ 102 0027 05       		.byte	0x5
+ 103 0028 696E7400 		.ascii	"int\000"
+ 104 002c 03       		.uleb128 0x3
+ 105 002d 0A000000 		.4byte	.LASF4
+ 106 0031 02       		.byte	0x2
+ 107 0032 D8       		.byte	0xd8
+ 108 0033 37000000 		.4byte	0x37
+ 109 0037 04       		.uleb128 0x4
+ 110 0038 04       		.byte	0x4
+ 111 0039 07       		.byte	0x7
+ 112 003a 22010000 		.4byte	.LASF0
+ 113 003e 04       		.uleb128 0x4
+ 114 003f 08       		.byte	0x8
+ 115 0040 05       		.byte	0x5
+ 116 0041 F8010000 		.4byte	.LASF1
+ 117 0045 04       		.uleb128 0x4
+ 118 0046 08       		.byte	0x8
+ 119 0047 04       		.byte	0x4
+ 120 0048 2E020000 		.4byte	.LASF2
+ 121 004c 04       		.uleb128 0x4
+ 122 004d 01       		.byte	0x1
+ 123 004e 06       		.byte	0x6
+ 124 004f 3A020000 		.4byte	.LASF3
+ 125 0053 03       		.uleb128 0x3
+ 126 0054 00000000 		.4byte	.LASF5
+ 127 0058 03       		.byte	0x3
+ 128 0059 1D       		.byte	0x1d
+ 129 005a 5E000000 		.4byte	0x5e
+ 130 005e 04       		.uleb128 0x4
+ 131 005f 01       		.byte	0x1
+ 132 0060 08       		.byte	0x8
+ 133 0061 2F000000 		.4byte	.LASF6
+ 134 0065 04       		.uleb128 0x4
+ 135 0066 02       		.byte	0x2
+ 136 0067 05       		.byte	0x5
+ 137 0068 0B020000 		.4byte	.LASF7
+ 138 006c 03       		.uleb128 0x3
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 5
+
+
+ 139 006d 05010000 		.4byte	.LASF8
+ 140 0071 03       		.byte	0x3
+ 141 0072 2B       		.byte	0x2b
+ 142 0073 77000000 		.4byte	0x77
+ 143 0077 04       		.uleb128 0x4
+ 144 0078 02       		.byte	0x2
+ 145 0079 07       		.byte	0x7
+ 146 007a DD000000 		.4byte	.LASF9
+ 147 007e 04       		.uleb128 0x4
+ 148 007f 04       		.byte	0x4
+ 149 0080 05       		.byte	0x5
+ 150 0081 25020000 		.4byte	.LASF10
+ 151 0085 04       		.uleb128 0x4
+ 152 0086 04       		.byte	0x4
+ 153 0087 07       		.byte	0x7
+ 154 0088 CB000000 		.4byte	.LASF11
+ 155 008c 04       		.uleb128 0x4
+ 156 008d 08       		.byte	0x8
+ 157 008e 07       		.byte	0x7
+ 158 008f 35010000 		.4byte	.LASF12
+ 159 0093 03       		.uleb128 0x3
+ 160 0094 4C010000 		.4byte	.LASF13
+ 161 0098 04       		.byte	0x4
+ 162 0099 18       		.byte	0x18
+ 163 009a 53000000 		.4byte	0x53
+ 164 009e 03       		.uleb128 0x3
+ 165 009f 15020000 		.4byte	.LASF14
+ 166 00a3 04       		.byte	0x4
+ 167 00a4 24       		.byte	0x24
+ 168 00a5 6C000000 		.4byte	0x6c
+ 169 00a9 05       		.uleb128 0x5
+ 170 00aa 01       		.byte	0x1
+ 171 00ab 5E000000 		.4byte	0x5e
+ 172 00af 05       		.byte	0x5
+ 173 00b0 11       		.byte	0x11
+ 174 00b1 EC000000 		.4byte	0xec
+ 175 00b5 06       		.uleb128 0x6
+ 176 00b6 A7010000 		.4byte	.LASF15
+ 177 00ba 00       		.byte	0
+ 178 00bb 06       		.uleb128 0x6
+ 179 00bc B0010000 		.4byte	.LASF16
+ 180 00c0 01       		.byte	0x1
+ 181 00c1 06       		.uleb128 0x6
+ 182 00c2 B9010000 		.4byte	.LASF17
+ 183 00c6 02       		.byte	0x2
+ 184 00c7 06       		.uleb128 0x6
+ 185 00c8 C2010000 		.4byte	.LASF18
+ 186 00cc 03       		.byte	0x3
+ 187 00cd 06       		.uleb128 0x6
+ 188 00ce CB010000 		.4byte	.LASF19
+ 189 00d2 04       		.byte	0x4
+ 190 00d3 06       		.uleb128 0x6
+ 191 00d4 D4010000 		.4byte	.LASF20
+ 192 00d8 05       		.byte	0x5
+ 193 00d9 06       		.uleb128 0x6
+ 194 00da DD010000 		.4byte	.LASF21
+ 195 00de 06       		.byte	0x6
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 6
+
+
+ 196 00df 06       		.uleb128 0x6
+ 197 00e0 E6010000 		.4byte	.LASF22
+ 198 00e4 07       		.byte	0x7
+ 199 00e5 06       		.uleb128 0x6
+ 200 00e6 F0000000 		.4byte	.LASF23
+ 201 00ea 08       		.byte	0x8
+ 202 00eb 00       		.byte	0
+ 203 00ec 03       		.uleb128 0x3
+ 204 00ed 9E010000 		.4byte	.LASF24
+ 205 00f1 05       		.byte	0x5
+ 206 00f2 1B       		.byte	0x1b
+ 207 00f3 A9000000 		.4byte	0xa9
+ 208 00f7 04       		.uleb128 0x4
+ 209 00f8 04       		.byte	0x4
+ 210 00f9 07       		.byte	0x7
+ 211 00fa EF010000 		.4byte	.LASF25
+ 212 00fe 07       		.uleb128 0x7
+ 213 00ff 1B000000 		.4byte	.LASF26
+ 214 0103 01       		.byte	0x1
+ 215 0104 03       		.byte	0x3
+ 216 0105 93000000 		.4byte	0x93
+ 217 0109 00000000 		.4byte	.LFB0
+ 218 010d 02000000 		.4byte	.LFE0-.LFB0
+ 219 0111 01       		.uleb128 0x1
+ 220 0112 9C       		.byte	0x9c
+ 221 0113 27010000 		.4byte	0x127
+ 222 0117 08       		.uleb128 0x8
+ 223 0118 06020000 		.4byte	.LASF28
+ 224 011c 01       		.byte	0x1
+ 225 011d 03       		.byte	0x3
+ 226 011e 9E000000 		.4byte	0x9e
+ 227 0122 00000000 		.4byte	.LLST0
+ 228 0126 00       		.byte	0
+ 229 0127 07       		.uleb128 0x7
+ 230 0128 46020000 		.4byte	.LASF27
+ 231 012c 01       		.byte	0x1
+ 232 012d 1B       		.byte	0x1b
+ 233 012e 9E000000 		.4byte	0x9e
+ 234 0132 00000000 		.4byte	.LFB1
+ 235 0136 02000000 		.4byte	.LFE1-.LFB1
+ 236 013a 01       		.uleb128 0x1
+ 237 013b 9C       		.byte	0x9c
+ 238 013c 92010000 		.4byte	0x192
+ 239 0140 08       		.uleb128 0x8
+ 240 0141 1E020000 		.4byte	.LASF29
+ 241 0145 01       		.byte	0x1
+ 242 0146 1B       		.byte	0x1b
+ 243 0147 EC000000 		.4byte	0xec
+ 244 014b 21000000 		.4byte	.LLST1
+ 245 014f 09       		.uleb128 0x9
+ 246 0150 697000   		.ascii	"ip\000"
+ 247 0153 01       		.byte	0x1
+ 248 0154 1B       		.byte	0x1b
+ 249 0155 9E000000 		.4byte	0x9e
+ 250 0159 01       		.uleb128 0x1
+ 251 015a 51       		.byte	0x51
+ 252 015b 0A       		.uleb128 0xa
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 7
+
+
+ 253 015c 06020000 		.4byte	.LASF28
+ 254 0160 01       		.byte	0x1
+ 255 0161 1B       		.byte	0x1b
+ 256 0162 9E000000 		.4byte	0x9e
+ 257 0166 01       		.uleb128 0x1
+ 258 0167 52       		.byte	0x52
+ 259 0168 0A       		.uleb128 0xa
+ 260 0169 2A000000 		.4byte	.LASF30
+ 261 016d 01       		.byte	0x1
+ 262 016e 1C       		.byte	0x1c
+ 263 016f 92010000 		.4byte	0x192
+ 264 0173 01       		.uleb128 0x1
+ 265 0174 53       		.byte	0x53
+ 266 0175 0A       		.uleb128 0xa
+ 267 0176 11000000 		.4byte	.LASF31
+ 268 017a 01       		.byte	0x1
+ 269 017b 1C       		.byte	0x1c
+ 270 017c 2C000000 		.4byte	0x2c
+ 271 0180 02       		.uleb128 0x2
+ 272 0181 91       		.byte	0x91
+ 273 0182 00       		.sleb128 0
+ 274 0183 0A       		.uleb128 0xa
+ 275 0184 2F010000 		.4byte	.LASF32
+ 276 0188 01       		.byte	0x1
+ 277 0189 1C       		.byte	0x1c
+ 278 018a 93000000 		.4byte	0x93
+ 279 018e 02       		.uleb128 0x2
+ 280 018f 91       		.byte	0x91
+ 281 0190 04       		.sleb128 4
+ 282 0191 00       		.byte	0
+ 283 0192 0B       		.uleb128 0xb
+ 284 0193 04       		.byte	0x4
+ 285 0194 93000000 		.4byte	0x93
+ 286 0198 0C       		.uleb128 0xc
+ 287 0199 10010000 		.4byte	.LASF36
+ 288 019d 01       		.byte	0x1
+ 289 019e 2C       		.byte	0x2c
+ 290 019f 9E000000 		.4byte	0x9e
+ 291 01a3 00000000 		.4byte	.LFB2
+ 292 01a7 02000000 		.4byte	.LFE2-.LFB2
+ 293 01ab 01       		.uleb128 0x1
+ 294 01ac 9C       		.byte	0x9c
+ 295 01ad 08       		.uleb128 0x8
+ 296 01ae 1E020000 		.4byte	.LASF29
+ 297 01b2 01       		.byte	0x1
+ 298 01b3 2C       		.byte	0x2c
+ 299 01b4 EC000000 		.4byte	0xec
+ 300 01b8 42000000 		.4byte	.LLST2
+ 301 01bc 09       		.uleb128 0x9
+ 302 01bd 697000   		.ascii	"ip\000"
+ 303 01c0 01       		.byte	0x1
+ 304 01c1 2C       		.byte	0x2c
+ 305 01c2 9E000000 		.4byte	0x9e
+ 306 01c6 01       		.uleb128 0x1
+ 307 01c7 51       		.byte	0x51
+ 308 01c8 0A       		.uleb128 0xa
+ 309 01c9 06020000 		.4byte	.LASF28
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 8
+
+
+ 310 01cd 01       		.byte	0x1
+ 311 01ce 2C       		.byte	0x2c
+ 312 01cf 9E000000 		.4byte	0x9e
+ 313 01d3 01       		.uleb128 0x1
+ 314 01d4 52       		.byte	0x52
+ 315 01d5 0A       		.uleb128 0xa
+ 316 01d6 2A000000 		.4byte	.LASF30
+ 317 01da 01       		.byte	0x1
+ 318 01db 2D       		.byte	0x2d
+ 319 01dc 92010000 		.4byte	0x192
+ 320 01e0 01       		.uleb128 0x1
+ 321 01e1 53       		.byte	0x53
+ 322 01e2 0A       		.uleb128 0xa
+ 323 01e3 11000000 		.4byte	.LASF31
+ 324 01e7 01       		.byte	0x1
+ 325 01e8 2D       		.byte	0x2d
+ 326 01e9 2C000000 		.4byte	0x2c
+ 327 01ed 02       		.uleb128 0x2
+ 328 01ee 91       		.byte	0x91
+ 329 01ef 00       		.sleb128 0
+ 330 01f0 0A       		.uleb128 0xa
+ 331 01f1 2F010000 		.4byte	.LASF32
+ 332 01f5 01       		.byte	0x1
+ 333 01f6 2D       		.byte	0x2d
+ 334 01f7 93000000 		.4byte	0x93
+ 335 01fb 02       		.uleb128 0x2
+ 336 01fc 91       		.byte	0x91
+ 337 01fd 04       		.sleb128 4
+ 338 01fe 00       		.byte	0
+ 339 01ff 00       		.byte	0
+ 340              		.section	.debug_abbrev,"",%progbits
+ 341              	.Ldebug_abbrev0:
+ 342 0000 01       		.uleb128 0x1
+ 343 0001 11       		.uleb128 0x11
+ 344 0002 01       		.byte	0x1
+ 345 0003 25       		.uleb128 0x25
+ 346 0004 0E       		.uleb128 0xe
+ 347 0005 13       		.uleb128 0x13
+ 348 0006 0B       		.uleb128 0xb
+ 349 0007 03       		.uleb128 0x3
+ 350 0008 0E       		.uleb128 0xe
+ 351 0009 1B       		.uleb128 0x1b
+ 352 000a 0E       		.uleb128 0xe
+ 353 000b 55       		.uleb128 0x55
+ 354 000c 17       		.uleb128 0x17
+ 355 000d 11       		.uleb128 0x11
+ 356 000e 01       		.uleb128 0x1
+ 357 000f 10       		.uleb128 0x10
+ 358 0010 17       		.uleb128 0x17
+ 359 0011 00       		.byte	0
+ 360 0012 00       		.byte	0
+ 361 0013 02       		.uleb128 0x2
+ 362 0014 24       		.uleb128 0x24
+ 363 0015 00       		.byte	0
+ 364 0016 0B       		.uleb128 0xb
+ 365 0017 0B       		.uleb128 0xb
+ 366 0018 3E       		.uleb128 0x3e
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 9
+
+
+ 367 0019 0B       		.uleb128 0xb
+ 368 001a 03       		.uleb128 0x3
+ 369 001b 08       		.uleb128 0x8
+ 370 001c 00       		.byte	0
+ 371 001d 00       		.byte	0
+ 372 001e 03       		.uleb128 0x3
+ 373 001f 16       		.uleb128 0x16
+ 374 0020 00       		.byte	0
+ 375 0021 03       		.uleb128 0x3
+ 376 0022 0E       		.uleb128 0xe
+ 377 0023 3A       		.uleb128 0x3a
+ 378 0024 0B       		.uleb128 0xb
+ 379 0025 3B       		.uleb128 0x3b
+ 380 0026 0B       		.uleb128 0xb
+ 381 0027 49       		.uleb128 0x49
+ 382 0028 13       		.uleb128 0x13
+ 383 0029 00       		.byte	0
+ 384 002a 00       		.byte	0
+ 385 002b 04       		.uleb128 0x4
+ 386 002c 24       		.uleb128 0x24
+ 387 002d 00       		.byte	0
+ 388 002e 0B       		.uleb128 0xb
+ 389 002f 0B       		.uleb128 0xb
+ 390 0030 3E       		.uleb128 0x3e
+ 391 0031 0B       		.uleb128 0xb
+ 392 0032 03       		.uleb128 0x3
+ 393 0033 0E       		.uleb128 0xe
+ 394 0034 00       		.byte	0
+ 395 0035 00       		.byte	0
+ 396 0036 05       		.uleb128 0x5
+ 397 0037 04       		.uleb128 0x4
+ 398 0038 01       		.byte	0x1
+ 399 0039 0B       		.uleb128 0xb
+ 400 003a 0B       		.uleb128 0xb
+ 401 003b 49       		.uleb128 0x49
+ 402 003c 13       		.uleb128 0x13
+ 403 003d 3A       		.uleb128 0x3a
+ 404 003e 0B       		.uleb128 0xb
+ 405 003f 3B       		.uleb128 0x3b
+ 406 0040 0B       		.uleb128 0xb
+ 407 0041 01       		.uleb128 0x1
+ 408 0042 13       		.uleb128 0x13
+ 409 0043 00       		.byte	0
+ 410 0044 00       		.byte	0
+ 411 0045 06       		.uleb128 0x6
+ 412 0046 28       		.uleb128 0x28
+ 413 0047 00       		.byte	0
+ 414 0048 03       		.uleb128 0x3
+ 415 0049 0E       		.uleb128 0xe
+ 416 004a 1C       		.uleb128 0x1c
+ 417 004b 0B       		.uleb128 0xb
+ 418 004c 00       		.byte	0
+ 419 004d 00       		.byte	0
+ 420 004e 07       		.uleb128 0x7
+ 421 004f 2E       		.uleb128 0x2e
+ 422 0050 01       		.byte	0x1
+ 423 0051 3F       		.uleb128 0x3f
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 10
+
+
+ 424 0052 19       		.uleb128 0x19
+ 425 0053 03       		.uleb128 0x3
+ 426 0054 0E       		.uleb128 0xe
+ 427 0055 3A       		.uleb128 0x3a
+ 428 0056 0B       		.uleb128 0xb
+ 429 0057 3B       		.uleb128 0x3b
+ 430 0058 0B       		.uleb128 0xb
+ 431 0059 27       		.uleb128 0x27
+ 432 005a 19       		.uleb128 0x19
+ 433 005b 49       		.uleb128 0x49
+ 434 005c 13       		.uleb128 0x13
+ 435 005d 11       		.uleb128 0x11
+ 436 005e 01       		.uleb128 0x1
+ 437 005f 12       		.uleb128 0x12
+ 438 0060 06       		.uleb128 0x6
+ 439 0061 40       		.uleb128 0x40
+ 440 0062 18       		.uleb128 0x18
+ 441 0063 9742     		.uleb128 0x2117
+ 442 0065 19       		.uleb128 0x19
+ 443 0066 01       		.uleb128 0x1
+ 444 0067 13       		.uleb128 0x13
+ 445 0068 00       		.byte	0
+ 446 0069 00       		.byte	0
+ 447 006a 08       		.uleb128 0x8
+ 448 006b 05       		.uleb128 0x5
+ 449 006c 00       		.byte	0
+ 450 006d 03       		.uleb128 0x3
+ 451 006e 0E       		.uleb128 0xe
+ 452 006f 3A       		.uleb128 0x3a
+ 453 0070 0B       		.uleb128 0xb
+ 454 0071 3B       		.uleb128 0x3b
+ 455 0072 0B       		.uleb128 0xb
+ 456 0073 49       		.uleb128 0x49
+ 457 0074 13       		.uleb128 0x13
+ 458 0075 02       		.uleb128 0x2
+ 459 0076 17       		.uleb128 0x17
+ 460 0077 00       		.byte	0
+ 461 0078 00       		.byte	0
+ 462 0079 09       		.uleb128 0x9
+ 463 007a 05       		.uleb128 0x5
+ 464 007b 00       		.byte	0
+ 465 007c 03       		.uleb128 0x3
+ 466 007d 08       		.uleb128 0x8
+ 467 007e 3A       		.uleb128 0x3a
+ 468 007f 0B       		.uleb128 0xb
+ 469 0080 3B       		.uleb128 0x3b
+ 470 0081 0B       		.uleb128 0xb
+ 471 0082 49       		.uleb128 0x49
+ 472 0083 13       		.uleb128 0x13
+ 473 0084 02       		.uleb128 0x2
+ 474 0085 18       		.uleb128 0x18
+ 475 0086 00       		.byte	0
+ 476 0087 00       		.byte	0
+ 477 0088 0A       		.uleb128 0xa
+ 478 0089 05       		.uleb128 0x5
+ 479 008a 00       		.byte	0
+ 480 008b 03       		.uleb128 0x3
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 11
+
+
+ 481 008c 0E       		.uleb128 0xe
+ 482 008d 3A       		.uleb128 0x3a
+ 483 008e 0B       		.uleb128 0xb
+ 484 008f 3B       		.uleb128 0x3b
+ 485 0090 0B       		.uleb128 0xb
+ 486 0091 49       		.uleb128 0x49
+ 487 0092 13       		.uleb128 0x13
+ 488 0093 02       		.uleb128 0x2
+ 489 0094 18       		.uleb128 0x18
+ 490 0095 00       		.byte	0
+ 491 0096 00       		.byte	0
+ 492 0097 0B       		.uleb128 0xb
+ 493 0098 0F       		.uleb128 0xf
+ 494 0099 00       		.byte	0
+ 495 009a 0B       		.uleb128 0xb
+ 496 009b 0B       		.uleb128 0xb
+ 497 009c 49       		.uleb128 0x49
+ 498 009d 13       		.uleb128 0x13
+ 499 009e 00       		.byte	0
+ 500 009f 00       		.byte	0
+ 501 00a0 0C       		.uleb128 0xc
+ 502 00a1 2E       		.uleb128 0x2e
+ 503 00a2 01       		.byte	0x1
+ 504 00a3 3F       		.uleb128 0x3f
+ 505 00a4 19       		.uleb128 0x19
+ 506 00a5 03       		.uleb128 0x3
+ 507 00a6 0E       		.uleb128 0xe
+ 508 00a7 3A       		.uleb128 0x3a
+ 509 00a8 0B       		.uleb128 0xb
+ 510 00a9 3B       		.uleb128 0x3b
+ 511 00aa 0B       		.uleb128 0xb
+ 512 00ab 27       		.uleb128 0x27
+ 513 00ac 19       		.uleb128 0x19
+ 514 00ad 49       		.uleb128 0x49
+ 515 00ae 13       		.uleb128 0x13
+ 516 00af 11       		.uleb128 0x11
+ 517 00b0 01       		.uleb128 0x1
+ 518 00b1 12       		.uleb128 0x12
+ 519 00b2 06       		.uleb128 0x6
+ 520 00b3 40       		.uleb128 0x40
+ 521 00b4 18       		.uleb128 0x18
+ 522 00b5 9742     		.uleb128 0x2117
+ 523 00b7 19       		.uleb128 0x19
+ 524 00b8 00       		.byte	0
+ 525 00b9 00       		.byte	0
+ 526 00ba 00       		.byte	0
+ 527              		.section	.debug_loc,"",%progbits
+ 528              	.Ldebug_loc0:
+ 529              	.LLST0:
+ 530 0000 00000000 		.4byte	.LVL0
+ 531 0004 00000000 		.4byte	.LVL1
+ 532 0008 0100     		.2byte	0x1
+ 533 000a 50       		.byte	0x50
+ 534 000b 00000000 		.4byte	.LVL1
+ 535 000f 02000000 		.4byte	.LFE0
+ 536 0013 0400     		.2byte	0x4
+ 537 0015 F3       		.byte	0xf3
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 12
+
+
+ 538 0016 01       		.uleb128 0x1
+ 539 0017 50       		.byte	0x50
+ 540 0018 9F       		.byte	0x9f
+ 541 0019 00000000 		.4byte	0
+ 542 001d 00000000 		.4byte	0
+ 543              	.LLST1:
+ 544 0021 00000000 		.4byte	.LVL2
+ 545 0025 00000000 		.4byte	.LVL3
+ 546 0029 0100     		.2byte	0x1
+ 547 002b 50       		.byte	0x50
+ 548 002c 00000000 		.4byte	.LVL3
+ 549 0030 02000000 		.4byte	.LFE1
+ 550 0034 0400     		.2byte	0x4
+ 551 0036 F3       		.byte	0xf3
+ 552 0037 01       		.uleb128 0x1
+ 553 0038 50       		.byte	0x50
+ 554 0039 9F       		.byte	0x9f
+ 555 003a 00000000 		.4byte	0
+ 556 003e 00000000 		.4byte	0
+ 557              	.LLST2:
+ 558 0042 00000000 		.4byte	.LVL4
+ 559 0046 00000000 		.4byte	.LVL5
+ 560 004a 0100     		.2byte	0x1
+ 561 004c 50       		.byte	0x50
+ 562 004d 00000000 		.4byte	.LVL5
+ 563 0051 02000000 		.4byte	.LFE2
+ 564 0055 0400     		.2byte	0x4
+ 565 0057 F3       		.byte	0xf3
+ 566 0058 01       		.uleb128 0x1
+ 567 0059 50       		.byte	0x50
+ 568 005a 9F       		.byte	0x9f
+ 569 005b 00000000 		.4byte	0
+ 570 005f 00000000 		.4byte	0
+ 571              		.section	.debug_aranges,"",%progbits
+ 572 0000 2C000000 		.4byte	0x2c
+ 573 0004 0200     		.2byte	0x2
+ 574 0006 00000000 		.4byte	.Ldebug_info0
+ 575 000a 04       		.byte	0x4
+ 576 000b 00       		.byte	0
+ 577 000c 0000     		.2byte	0
+ 578 000e 0000     		.2byte	0
+ 579 0010 00000000 		.4byte	.LFB0
+ 580 0014 02000000 		.4byte	.LFE0-.LFB0
+ 581 0018 00000000 		.4byte	.LFB1
+ 582 001c 02000000 		.4byte	.LFE1-.LFB1
+ 583 0020 00000000 		.4byte	.LFB2
+ 584 0024 02000000 		.4byte	.LFE2-.LFB2
+ 585 0028 00000000 		.4byte	0
+ 586 002c 00000000 		.4byte	0
+ 587              		.section	.debug_ranges,"",%progbits
+ 588              	.Ldebug_ranges0:
+ 589 0000 00000000 		.4byte	.LFB0
+ 590 0004 02000000 		.4byte	.LFE0
+ 591 0008 00000000 		.4byte	.LFB1
+ 592 000c 02000000 		.4byte	.LFE1
+ 593 0010 00000000 		.4byte	.LFB2
+ 594 0014 02000000 		.4byte	.LFE2
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 13
+
+
+ 595 0018 00000000 		.4byte	0
+ 596 001c 00000000 		.4byte	0
+ 597              		.section	.debug_line,"",%progbits
+ 598              	.Ldebug_line0:
+ 599 0000 E1010000 		.section	.debug_str,"MS",%progbits,1
+ 599      0200A701 
+ 599      00000201 
+ 599      FB0E0D00 
+ 599      01010101 
+ 600              	.LASF5:
+ 601 0000 5F5F7569 		.ascii	"__uint8_t\000"
+ 601      6E74385F 
+ 601      7400
+ 602              	.LASF4:
+ 603 000a 73697A65 		.ascii	"size_t\000"
+ 603      5F7400
+ 604              	.LASF31:
+ 605 0011 64617461 		.ascii	"data_size\000"
+ 605      5F73697A 
+ 605      6500
+ 606              	.LASF26:
+ 607 001b 77353530 		.ascii	"w5500_udp_open\000"
+ 607      305F7564 
+ 607      705F6F70 
+ 607      656E00
+ 608              	.LASF30:
+ 609 002a 64617461 		.ascii	"data\000"
+ 609      00
+ 610              	.LASF6:
+ 611 002f 756E7369 		.ascii	"unsigned char\000"
+ 611      676E6564 
+ 611      20636861 
+ 611      7200
+ 612              	.LASF33:
+ 613 003d 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 613      43313120 
+ 613      352E342E 
+ 613      31203230 
+ 613      31363036 
+ 614 0070 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 614      20726576 
+ 614      6973696F 
+ 614      6E203233 
+ 614      37373135 
+ 615 00a3 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 615      66756E63 
+ 615      74696F6E 
+ 615      2D736563 
+ 615      74696F6E 
+ 616              	.LASF11:
+ 617 00cb 6C6F6E67 		.ascii	"long unsigned int\000"
+ 617      20756E73 
+ 617      69676E65 
+ 617      6420696E 
+ 617      7400
+ 618              	.LASF9:
+ 619 00dd 73686F72 		.ascii	"short unsigned int\000"
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 14
+
+
+ 619      7420756E 
+ 619      7369676E 
+ 619      65642069 
+ 619      6E7400
+ 620              	.LASF23:
+ 621 00f0 534F434B 		.ascii	"SOCKET_INVALID\000"
+ 621      45545F49 
+ 621      4E56414C 
+ 621      494400
+ 622              	.LASF34:
+ 623 00ff 7564702E 		.ascii	"udp.c\000"
+ 623      6300
+ 624              	.LASF8:
+ 625 0105 5F5F7569 		.ascii	"__uint16_t\000"
+ 625      6E743136 
+ 625      5F7400
+ 626              	.LASF36:
+ 627 0110 77353530 		.ascii	"w5500_udp_receive\000"
+ 627      305F7564 
+ 627      705F7265 
+ 627      63656976 
+ 627      6500
+ 628              	.LASF0:
+ 629 0122 756E7369 		.ascii	"unsigned int\000"
+ 629      676E6564 
+ 629      20696E74 
+ 629      00
+ 630              	.LASF32:
+ 631 012f 666C6167 		.ascii	"flags\000"
+ 631      7300
+ 632              	.LASF12:
+ 633 0135 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 633      206C6F6E 
+ 633      6720756E 
+ 633      7369676E 
+ 633      65642069 
+ 634              	.LASF13:
+ 635 014c 75696E74 		.ascii	"uint8_t\000"
+ 635      385F7400 
+ 636              	.LASF35:
+ 637 0154 433A5C55 		.ascii	"C:\\Users\\d3bug\\Documents\\Creator\\W5x00\\test_p"
+ 637      73657273 
+ 637      5C643362 
+ 637      75675C44 
+ 637      6F63756D 
+ 638 0181 72696E74 		.ascii	"rint_remote_mac_ip_isr.cydsn\000"
+ 638      5F72656D 
+ 638      6F74655F 
+ 638      6D61635F 
+ 638      69705F69 
+ 639              	.LASF24:
+ 640 019e 736F636B 		.ascii	"socket_n\000"
+ 640      65745F6E 
+ 640      00
+ 641              	.LASF15:
+ 642 01a7 534F434B 		.ascii	"SOCKET_0\000"
+ 642      45545F30 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 15
+
+
+ 642      00
+ 643              	.LASF16:
+ 644 01b0 534F434B 		.ascii	"SOCKET_1\000"
+ 644      45545F31 
+ 644      00
+ 645              	.LASF17:
+ 646 01b9 534F434B 		.ascii	"SOCKET_2\000"
+ 646      45545F32 
+ 646      00
+ 647              	.LASF18:
+ 648 01c2 534F434B 		.ascii	"SOCKET_3\000"
+ 648      45545F33 
+ 648      00
+ 649              	.LASF19:
+ 650 01cb 534F434B 		.ascii	"SOCKET_4\000"
+ 650      45545F34 
+ 650      00
+ 651              	.LASF20:
+ 652 01d4 534F434B 		.ascii	"SOCKET_5\000"
+ 652      45545F35 
+ 652      00
+ 653              	.LASF21:
+ 654 01dd 534F434B 		.ascii	"SOCKET_6\000"
+ 654      45545F36 
+ 654      00
+ 655              	.LASF22:
+ 656 01e6 534F434B 		.ascii	"SOCKET_7\000"
+ 656      45545F37 
+ 656      00
+ 657              	.LASF25:
+ 658 01ef 73697A65 		.ascii	"sizetype\000"
+ 658      74797065 
+ 658      00
+ 659              	.LASF1:
+ 660 01f8 6C6F6E67 		.ascii	"long long int\000"
+ 660      206C6F6E 
+ 660      6720696E 
+ 660      7400
+ 661              	.LASF28:
+ 662 0206 706F7274 		.ascii	"port\000"
+ 662      00
+ 663              	.LASF7:
+ 664 020b 73686F72 		.ascii	"short int\000"
+ 664      7420696E 
+ 664      7400
+ 665              	.LASF14:
+ 666 0215 75696E74 		.ascii	"uint16_t\000"
+ 666      31365F74 
+ 666      00
+ 667              	.LASF29:
+ 668 021e 736F636B 		.ascii	"socket\000"
+ 668      657400
+ 669              	.LASF10:
+ 670 0225 6C6F6E67 		.ascii	"long int\000"
+ 670      20696E74 
+ 670      00
+ 671              	.LASF2:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccKWUL56.s 			page 16
+
+
+ 672 022e 6C6F6E67 		.ascii	"long double\000"
+ 672      20646F75 
+ 672      626C6500 
+ 673              	.LASF3:
+ 674 023a 7369676E 		.ascii	"signed char\000"
+ 674      65642063 
+ 674      68617200 
+ 675              	.LASF27:
+ 676 0246 77353530 		.ascii	"w5500_udp_send\000"
+ 676      305F7564 
+ 676      705F7365 
+ 676      6E6400
+ 677              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

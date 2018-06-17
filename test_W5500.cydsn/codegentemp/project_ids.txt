@@ -1,0 +1,8 @@
+C:\Users\d3bug\Documents\Creator\W5x00\W5500.cylib\W5500.cyprj|f60eece3-ec76-4247-a07b-3772612ea9bf
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|ab763e84-b82f-45ff-9e77-f46fe7e15e94
+C:\Users\d3bug\Documents\PSoC Creator\4.2\Downloads ( 4.2).cylib\Downloads ( 4.2).cyprj|9f9a4718-048a-4dc8-a94a-2e28bc61db4c
+C:\Users\d3bug\Documents\PSoC Creator\4.1\Downloads ( 4.1).cylib\Downloads ( 4.1).cyprj|54c3d2f9-bcc8-4d0a-a0ae-9ebe14cff46d
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|c67c43ff-b7d7-40dd-a443-1f0abaab4b1b
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|a387b52f-4ef9-44e9-a85b-ac95d2e76084
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|8f57a06c-a360-46ca-a92e-5baf3885c607
+C:\Users\d3bug\Documents\Creator\W5x00\test_W5500.cydsn\test_W5500.cyprj|f1bcc2be-e760-40e3-91b1-d38f6cc52f5c

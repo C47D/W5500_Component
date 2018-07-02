@@ -1,11 +1,14 @@
 #if !defined(W5500_H_)
 #define W5500_H_
 
-#include "common.h"
+#include <stdint.h>
+#include <stddef.h>
 
-extern struct W5500 this;
+void wiz_soft_reset(void);
+void wiz_hard_reset(void);
 
-socket_sts print_socket_state(socket_id socket_n);
+void W5500_write_reg(uint16_t reg_addr, uint8_t *data, size_t data_size);
+void W5500_write_reg_byte(uint16_t reg_addr, uint8_t data);
 
 #endif
 

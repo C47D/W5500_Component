@@ -1,32 +1,41 @@
 #include "udp.h"
+#include "socket.h"
 
-uint8_t w5500_udp_open(uint16_t port)
+// maybe we can setup another struct describing a udp
+// socket, maybe it's just a wrapper around a socket +
+// some interesting information
+
+struct udp_t {
+    struct skt_t    *socket;
+};
+
+extern struct skt_t _skt;
+
+struct udp_t *W5500_udp_open(socket_id socket, uint16_t port)
 {
-#if 0
-	uint8_t socket = 0;
-    uint8_t status = ETH_SR_CLOSED;
-    uint8_t tries = 0;
-	
-	do {
-		socket = ETH_SocketOpen(port, ETH_PROTO_UDP);
-	
-		if (socket < ETH_MAX_SOCKETS) {
-			ETH_Send(ETH_SREG_SR, ETH_SOCKET_BASE(socket), 0, &status, 1);
-			if (status != ETH_SR_UDP) {
-				ETH_SocketClose(socket,0);
-				socket = 0xFF;
-			}
-		}
-		++tries;
-	} while ( (tries < 5) && ( status != ETH_SR_UDP ) );
-	
-	return socket;
-#endif
+    struct udp_t *udp = NULL;
+    struct skt_t *skt = NULL;
+    
+    // socket "sanity" checks gets done in the socket funcs so i don't have to pollute
+    // the "higher level" API
+    skt = W5500_socket_init(socket, SOCKET_PROTOCOL_UDP, SOCKET_MEM_2KB, SOCKET_MEM_2KB);
+    
+    if (NULL != skt) {
+        W5500_socket_set_port(skt, port);
+        udp->socket = skt;
+    }
+    
+    return udp;
 }
 
-uint16_t w5500_udp_send(socket_n socket, uint16_t ip, uint16_t port,
-                        uint8_t *data, size_t data_size, uint8_t flags)
+void W5500_udp_send(struct udp_t *udp, uint32_t ip, uint16_t port, uint8_t *buffer, uint16_t len)
 {
+    (void)udp;
+    (void)ip;
+    (void)port;
+    (void)buffer;
+    (void)len;
+    
 #if 0
 	uint16_t tx_length = ETH_GetTxLength(socket,len,flags);
 	
@@ -41,9 +50,13 @@ uint16_t w5500_udp_send(socket_n socket, uint16_t ip, uint16_t port,
 #endif
 }
 
-uint16_t w5500_udp_receive(socket_n socket, uint16_t ip, uint16_t port,
-                           uint8_t *data, size_t data_size, uint8_t flags)
+void W5500_udp_rcv(struct udp_t *udp, uint32_t *header, uint8_t *buffer, uint16_t len)
 {
+    (void)udp;
+    (void)header;
+    (void)buffer;
+    (void)len;
+    
 #if 0
 	uint16_t rx_size = 0;
     uint16_t bytes = 0;
@@ -89,12 +102,25 @@ uint16_t w5500_udp_receive(socket_n socket, uint16_t ip, uint16_t port,
 #endif
 }
 
+#if 0
 /**
  * \todo Open Multi-cast socket
  */
 
+/* Start EthernetUDP socket, listening at local port PORT */
+uint8_t EthernetUDP::beginMulticast(IPAddress ip, uint16_t port)
+{
+	if (sockindex < MAX_SOCK_NUM) Ethernet.socketClose(sockindex);
+	sockindex = Ethernet.socketBeginMulticast(SnMR::UDP | SnMR::MULTI, ip, port);
+	if (sockindex >= MAX_SOCK_NUM) return 0;
+	_port = port;
+	_remaining = 0;
+	return 1;
+}
+
 /**
  * \todo Send Multi-cast data
  */
+#endif
 
 /* [] END OF FILE */

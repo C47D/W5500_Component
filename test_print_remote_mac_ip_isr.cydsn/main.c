@@ -1,13 +1,17 @@
 #include "project.h"
+
 #include <stdio.h>
 #include <stdbool.h>
 
 #include "W5500.h"
+#include "socket.h"
+#include "tcp.h"
 #include "hal_spi.h"
+
+#include "UTILS.h"
 
 void wiz_init(const uint8_t *ip_addr);
 void socket0_init(void);
-void close_socket0(void);
 
 /* Interrupt handlers */
 void handle_connection(void);
@@ -16,10 +20,55 @@ void handle_disconnection(void);
 void w5500_isr(void);
 
 volatile bool w5500_interrupt_flag = false;
+
+struct skt_t *tcp_server = NULL;
 volatile uint8_t sir_sts = 0;
+
+uint8_t data[1024] = {0};
+char data_str[1024];
+
+void send_data(void)
+{
+    uint16_t cnt = 0;
+    uint16_t tx_ptr = 0;
+    
+    char headers[200];
+    memset(headers, '\0', 100);
+    
+    const char *status_code = "HTTP/1.1 200 OK\n";
+    const char *reply =
+        "<!doctype html>\n"
+        "<html><meta http-equiv=\"refresh\" content=\"10\"><body>\n"
+        "<h1>Olduino 1802 BAGELS Server On Wiznet W5500</h1>\n"
+        "</body></html>\n";
+    
+    sprintf(headers,
+        "Content-Type: text/html; charset=UTF-8\n"
+        "Content-Length: %d\r\n\r\n",
+        strlen(reply));
+    
+    tx_ptr = W5500_socket_tx_write_ptr(tcp_server);
+    W5500_socket_write(tcp_server, tx_ptr, (uint8_t *) status_code, strlen(status_code));
+    tx_ptr += strlen(status_code);
+    W5500_socket_tx_update_write_ptr(tcp_server, tx_ptr);
+    W5500_socket_cmd(tcp_server, SOCKET_CMD_SEND);
+    
+    tx_ptr = W5500_socket_tx_write_ptr(tcp_server);
+    W5500_socket_write(tcp_server, tx_ptr, (uint8_t *) headers, strlen(headers));
+    tx_ptr += strlen(headers);
+    W5500_socket_tx_update_write_ptr(tcp_server, tx_ptr);
+    W5500_socket_cmd(tcp_server, SOCKET_CMD_SEND);
+    
+    tx_ptr = W5500_socket_tx_write_ptr(tcp_server);
+    W5500_socket_write(tcp_server, tx_ptr, (uint8_t *) reply, strlen(reply));
+    tx_ptr += strlen(reply);    
+    W5500_socket_tx_update_write_ptr(tcp_server, tx_ptr);
+    W5500_socket_cmd(tcp_server, SOCKET_CMD_SEND);
+}
 
 int main(void)
 {
+    memset(data_str, '\0', sizeof(data_str));
     const uint8_t ip_addr[] = {192, 168, 137, 70};
     
     isr_W5500_StartEx(w5500_isr);
@@ -28,64 +77,104 @@ int main(void)
 
     SPI_Start();
     UART_Start();
+    
+    /* "Clean" the serial port console */
     UART_PutChar(0x0C);
     
+    /* Wait for the W5500 to start-up */
     CyDelay(100);
     
-    W5500_spi_write_byte(BLOCK_COMMON_REGISTER, SOCKET_REG_MODE, 0x80);
+    wiz_soft_reset();
     
+    /* W5500: Configure the MAC, IP, SUBNET and Gateway addresses */
     wiz_init(ip_addr);
     
-    socket0_init();
+    /* W5500: enable socket 0 interrupts */
+    W5500_write_reg_byte(COMMON_REG_SOCKET_INTERRUPT_MASK, 0x01);
+
+    /* Socket configuration, all others configurations are set to default */
+    tcp_server = wiz_tcp_init_server(SOCKET_ID_0, 80);
+    if (NULL == tcp_server) {
+        UART_PutString("Error opening the socket\r\n");
+        while(1);
+    }
+    
+    W5500_socket_cmd(tcp_server, SOCKET_CMD_LISTEN);
+
+    // Enable the CONN interrupt, disable all others first
+    W5500_socket_set_imr(tcp_server, 0x00);
+    W5500_socket_set_imr(tcp_server, 0x01);
+    
     UART_PutString("Waiting for connection...\r\n");
     
     while (1) {
         
         if (true == w5500_interrupt_flag) {
             w5500_interrupt_flag = false;
-            UART_PutString("Socket 0 interrupt\r\n");
             
-            // clearing socket 0 interrupt
-            W5500_spi_write_byte(BLOCK_COMMON_REGISTER, 0x0017, 0x01);
-        
-            sir_sts = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT);
-            UART_PutString("Socket 0 Interrupt Register: 0x");
-            UART_PutHexByte(sir_sts);
-            UART_PutCRLF();
-        
-            W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, sir_sts);
+            // clearing socket 0 interrupt on the general interrupt register
+            W5500_spi_write_byte(BLOCK_COMMON_REGISTER, COMMON_REG_SOCKET_INTERRUPT, 0x01);
             
+            // aca teniamos retrazo en limpiar la interrupcion por el uart
+        
+            sir_sts = W5500_socket_get_interrupt(tcp_server);
+
             if (sir_sts & 0x01) { // CON interrupt flag
                 // Clear the interrupt flag
-                W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, 0x01);
+                // TODO: Add in the socket functions
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT, 0x01);
                 
                 handle_connection();
                 
                 // Enable the RECV and DISCON interrupts, but disable all others first
-                W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x00);
-                W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x04 | 0x02);
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT_MASK, 0x00);
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT_MASK, 0x04 | 0x02);
             }
             
             if (sir_sts & 0x02) { // DISCON interrupt flag
                 // Clear the interrupt flag
-                W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, 0x02);
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT, 0x02);
                 
                 handle_disconnection();
                 
                 // Enable the CON interrupt, but disable all others first
-                W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x00);
-                W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x01);
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT_MASK, 0x00);
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT_MASK, 0x01);
             }
 
             if (sir_sts & 0x04) { // RECV interrupt flag
                 // Clear the interrupt flag
-                W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, 0x04);
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT, 0x04);
                 
                 handle_data();
                 
+                // Enable the SEND_OK RECV and DISCON interrupts, but disable all others first
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT_MASK, 0x00);
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT_MASK, 0x10 | 0x04 | 0x02);
+                
+                send_data();
+            }
+            
+            if (sir_sts & 0x10) { // SEND interrupt flag
+                // Clear the interrupt flag
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT, 0x10);
+                
                 // Enable the RECV and DISCON interrupts, but disable all others first
-                W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x00);
-                W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x04 | 0x02);
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT_MASK, 0x00);
+                W5500_spi_write_byte(1, SOCKET_REG_INTERRUPT_MASK, 0x04 | 0x02);
+                
+                UART_PutString("Data sent\r\n");
+                /* data back to normal */
+                memset(data_str, '\0', sizeof(data_str));
+                memset(data, 0, sizeof(data));
+                
+                /*
+                UART_PutString("Closing the socket\r\n");
+                W5500_socket_cmd_disconnect(tcp_server);
+                W5500_socket_cmd_open(tcp_server);
+                W5500_socket_cmd_listen(tcp_server);
+                UART_PutString("Socket open and listening\r\n");
+                */
             }
         }
         
@@ -97,12 +186,7 @@ void wiz_init(const uint8_t *ip_addr)
     const uint8_t mac_addr[] = {0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00};
     const uint8_t submask[] = {255, 255, 255, 0};
     const uint8_t gtw_addr[] = {192, 168, 1, 70}; // pc addr
-    
-    // set receive buffer for socket 0 to 1k
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_BUFFER_SIZE, 1);
-    // set transmit buffer for socket 0 to 1k
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_TX_BUFFER_SIZE, 2);
-    
+        
     // SHAR (Source Hardware Address Register)
     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x0009, mac_addr, sizeof(mac_addr));
     // gateway address register
@@ -111,67 +195,20 @@ void wiz_init(const uint8_t *ip_addr)
     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x0005, submask, sizeof(submask));
     // ip address
     W5500_spi_write(BLOCK_COMMON_REGISTER, 0x000F, ip_addr, sizeof(ip_addr));
-    // enable socket 0 interrupts
-    W5500_spi_write_byte(BLOCK_COMMON_REGISTER, 0x0018, 0x01);
-}
-
-void socket0_init(void)
-{
-    uint8_t tcp_port[] = {0, 80}; // 80d = 50h
-    
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_MODE, SOCKET_MODE_TCP);
-    // set tcp port to 80
-    W5500_spi_write(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_SOURCE_PORT0, tcp_port, sizeof(tcp_port));
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_OPEN);
-    
-    CyDelay(10);
-    
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_LISTEN);
-    
-    // Enable only the CON interrupt, but disable all others first
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x00);
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT_MASK, 0x01);
 }
 
 void handle_connection(void)
 {
-    uint8_t skt_remote_ip[4] = {0};
-    uint8_t skt_remote_mac[6] = {0};
-    char remote_mac[100];
-    char remote_ip[50];
-    
     UART_PutString("Remote connection...\r\n");
-    
-    // Reading the remote MAC
-    W5500_spi_read(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_DESTINATION_HW_ADDR0,
-        skt_remote_mac, sizeof(skt_remote_mac));
-    // Reading the remote IP Address
-    W5500_spi_read(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_DESTINATION_IP_ADDR0,
-        skt_remote_ip, sizeof(skt_remote_ip));
-    
-    snprintf(remote_mac, sizeof(remote_mac), "Remote MAC: %X %X %X %X %X %X\r\n", skt_remote_mac[0],
-        skt_remote_mac[1], skt_remote_mac[2], skt_remote_mac[3], skt_remote_mac[4], skt_remote_mac[5]);
-    
-    snprintf(remote_ip, sizeof(remote_ip), "Remote IP: %d %d %d %d\r\n", skt_remote_ip[0],
-        skt_remote_ip[1], skt_remote_ip[2], skt_remote_ip[3]);
-    
-    UART_PutString(remote_mac);
-    UART_PutString(remote_ip);
-}
-
-void close_socket0(void)
-{
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_DISCONNECT);
-    UART_PutString("Socket 0 closed\r\n");
 }
 
 void handle_disconnection(void)
 {
     UART_PutString("Closing the socket\r\n");
-    close_socket0();
+    W5500_socket_cmd(tcp_server, SOCKET_CMD_DISCONNECT);
+    W5500_socket_cmd(tcp_server, SOCKET_CMD_OPEN);
+    W5500_socket_cmd(tcp_server, SOCKET_CMD_LISTEN);
     UART_PutString("Socket open and listening\r\n");
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_OPEN);
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_LISTEN);
 }
 
 /* Socket Status Register:
@@ -189,67 +226,26 @@ void w5500_isr(void)
 
 void handle_data(void)
 {
-    uint8_t skt_rcv_data_size[2] = {0};
-    uint8_t data_ptr[2] = {0};
-    uint16_t bytes_rcvd = 0;
-    uint16_t new_rx_addr = 0;
+    uint16_t rcv_size = 0;
     uint16_t data_addr = 0;
-    uint8_t data[100] = {0};
-    char data_str[100];
     
     LED_Write(~LED_Read());
-
-    W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_INTERRUPT, sir_sts);
-    
-    // Read Sn_RX_RSR (Socket n Received Size), if it's > 0 then we have data
-    // Se calcula apartir de la diferencia entre el Sn_RX_WR y Sn_RX_RD
-    skt_rcv_data_size[0] = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_RECEIVED_SIZE0);
-    skt_rcv_data_size[1] = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_RECEIVED_SIZE1);
-    bytes_rcvd = (skt_rcv_data_size[0] << 8) | skt_rcv_data_size[1];
         
-    if (0 < bytes_rcvd) {
-        UART_PutString("Size of received data: ");
-        UART_PutHexInt(bytes_rcvd);
-        UART_PutCRLF();
-            
-        UART_PutString("Getting the received data\r\n");
-            
-        /* Read Sn_RX_RD (Socket n RX Read Pointer) to get RX Data Start Address */
-        data_ptr[0] = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_READ_POINTER0);
-        data_ptr[1] = W5500_spi_read_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_READ_POINTER1);
-        data_addr = (data_ptr[0] << 8 | data_ptr[1]);
-            
-        UART_PutString("Address of data: ");
-        UART_PutHexInt(data_addr);
-        UART_PutCRLF();
-            
-        /* Read received Data from Sn_RX_BUF */
-        W5500_spi_read(BLOCK_SOCKET_0_RX_BUFFER, data_addr, data, sizeof(data));
+    rcv_size = W5500_socket_rx_rcv_size(tcp_server);
+    
+    if (0 < rcv_size) {
+
+        data_addr = W5500_socket_rx_read_ptr(tcp_server);
+        W5500_socket_read(tcp_server, data_addr, data, rcv_size);
             
         /* Despues de leer los datos tenemos que actualizar Sn_RX_RD con el
         * tamaño de los datos que leimos. Mandar el comando RECV para notificar
         * al W5500. */
-        new_rx_addr = data_addr + bytes_rcvd;
-        data_ptr[0] = (new_rx_addr & 0xFF00) >> 8;
-        data_ptr[1] = new_rx_addr & 0xFF;
-        UART_PutString("Bytes received: ");
-        UART_PutHexInt(bytes_rcvd);
-        UART_PutCRLF();            
-        UART_PutString("New rx addr: ");
-        UART_PutHexInt(new_rx_addr);
-        UART_PutCRLF();                      
-        W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_READ_POINTER0, data_ptr[0]);
-        W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_RX_READ_POINTER1, data_ptr[1]);
-            
-        W5500_spi_write_byte(BLOCK_SOCKET_0_REGISTER, SOCKET_REG_COMMAND, SOCKET_CMD_RECV);
-            
-        /* Add a NULL char so we can print the received data without problems */
-        data[bytes_rcvd] = '\0';
-        snprintf(data_str, sizeof(data_str), "data received: %s\r\n", data);
-        UART_PutString(data_str);
-            
-        memset(data_str, '\0', sizeof(data_str));
-        memset(data, 0, sizeof(data));
+        data_addr += rcv_size;
+        W5500_socket_rx_update_read_ptr(tcp_server, data_addr);
+        
+        data[rcv_size] = '\0';
+        snprintf(data_str, sizeof(data_str), "%s", data);
     }
 }
 

@@ -1,36 +1,105 @@
-Los sockets del W5500 estan representados por un struct, de esta forma sabemos
-su estado y diferentes propiedades sin necesidad de leer los registros del
-W5500.
+# UDP - User Datagram Protocol (RFC 768)
 
-struct socket {
-    socket_sts  status;
-    uint32_t    base_address;
-    uint16_t    port;
-    uint8_t     protocol;
-};
+One of the core members of the interne protocol suite, with UDP,
+computer applications can send messages, in this case referred to as
+datagrams, to other hosts on an Internet Protocol (IP) network.
+Prior communications are not required in order to set up communication
+channels or data paths.
 
-El struct socket no deberia de ser modificado por el usuario, las funciones
-en socket.c son las encargadas de la modificacion de este struct.
+UDP uses a simple connectionless communication model with a minimum
+of protocol mechanism. UDP provides checksums for data integrity, and
+port numbers for addressing different functions at the source and
+destination of the datagram.
 
-Por defecto el registro Socket n Mode Register (SnMR) tiene un valor de 0x00
-por lo que:
+## Attibutes
 
-socket.protocol = Closed
-socket.unicast blocking in udp mode: disabled
-socket.use no delayed ACK: disabled
-socket.broadcast blocking in MACRAW and UDO mode: disabled
-socket.multicasting in UDP mode: disabled
+- It's transaction-oriented
+- It provides datagrams, suitable for modeling other protocols such
+    as IP tunneling or Remote Procedure Call and the Network File System
+- It is simple, suitable for bootstrapping, DHCP and Trivial File Transfer Protocol
+- It is stateless
+- Lack of retransmission delays makes it suitable for real-time applications
+    such as Voice over IP, online games.
+- Supports multicast
 
-Sn_IR (Socket n Interrupt Register) [RCW1] [0x0002] [0x00]
-Indicates the status of Socket Interrupt such as establishment, termination,
-receiving data, timeout. When an interrupt occurs and the corresponding bit of
-Sn_IMR is 1, the corresponding bit of Sn_IR becomes 1.
-In order to clear the Sn_IR bit, the host should write the bit to 1.
+## Service ports
 
-Bit     Symbol      Description
-4       SEND_OK     This is issued when SEND command is completed.
-3       TIMEOUT     This is issued when ARP_TO or TCP_TO occurs.
-2       RECV        This is issued whenever data is received from a peer.
-1       DISCON      This is issued when FIN or FIN/ACK packet is received from a peer.
-0       CON         This is issued one time when the connection with peer is successful
-                    and then SN_SR is changed to SOCK_ESTABLISHED
+An application binds a socket to its endpoint of data transmission, which is a
+combination of an IP address and a service port (0 - 65535 (16bit integer)).
+Port 0 is reserved.
+
+UDP provides application multiplexing and integrity verification (via checksum)
+of the header and payload.
+
+The Internet Assigned Numbers Authority (IANA) has divided port numbers into
+three ranges.
+- Port numbers 0 through 1023 are used for common, well-known services.
+- Port numbers 1024 trough 49151 are the registeres ports used for IANA-registered
+  services.
+- Port numbers 49152 though 65535 are dynamic ports that are not officially designated
+  for any specific service, and may be used for any purpose.
+
+There also are used as ephemeral ports, from which software running on the host
+may randomly choose a port in order to define itself.
+
+## Packet structure
+
+- Source port number
+- Destination port number
+- Length
+- Checksum
+
+
+
+# DNS - Domain Name System
+
+Hierarchical decentralized naming system for computers, services,
+or other resources connected to the Internet or a private network.
+It associates various information with domain names assigned
+to each of the participating entities.
+Most prominently, it translates more readily memorized domain
+names to the numerical IP addresses needed for locating and
+identifying computer services and devices with the underlying
+network protocols.
+
+- DNS Resolver
+
+- DNS Protocol transport
+DNS primarily uses the UDP on port 53 to serve requests. DNS queries
+consist of a single UDP request from the client followed by a single
+UDP reply from the server.
+When the length of the answer exceeds 512bytes and both client and
+server support EDNS, larger UDP packets are used. Otherwise, the query
+is sent again using the TCP, also used for tasks such as zone transfers.
+
+
+
+# HTML Meta
+
+https://en.wikipedia.org/wiki/Meta_refresh
+
+Meta refresh es un metodo para indicarle al web browser que automaticamente
+refresque la pagina despues de cierto tiempo, indicado en segundos.
+No es recomendado hacerlo ya que puede ocasionar problemas.
+
+Para refrescar una pagina despues de 5 segundos:
+<html>
+<meta http-equiv="refresh" content="5">
+
+Para redireccionar despues de 5 segundos
+<meta http-equiv="refresh" content="5;
+url=http://example.com/">
+
+Redireccionar inmediatamente:
+<meta http-equiv="refresh" content="0;
+url=http://example.com/">
+
+## Alternativas
+
+### Para refresh
+Proveer un dispositivo de interaccion, como un boton,
+para darle al usuario la opcion de elegir cuando refrescar
+el contenido.
+Otra opcion es usar una tecnica conocida como Ajax [1] para
+update pastes de un sitio web sin la necesidad de refrezcar toda
+la pagina, esto requiere que el usuario active JS en su browser.

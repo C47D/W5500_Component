@@ -43,6 +43,7 @@
           <File BuildType="BUILD" Toolchain="">socket.c</File>
           <File BuildType="BUILD" Toolchain="">hal_spi.c</File>
           <File BuildType="BUILD" Toolchain="">common.c</File>
+          <File BuildType="BUILD" Toolchain="">UTILS.c</File>
           <File BuildType="BUILD" Toolchain="">cyapicallbacks.h</File>
           <File BuildType="BUILD" Toolchain="">W5500.h</File>
           <File BuildType="BUILD" Toolchain="">tcp.h</File>
@@ -50,6 +51,7 @@
           <File BuildType="BUILD" Toolchain="">socket.h</File>
           <File BuildType="BUILD" Toolchain="">hal_spi.h</File>
           <File BuildType="BUILD" Toolchain="">common.h</File>
+          <File BuildType="BUILD" Toolchain="">UTILS.h</File>
         </Files>
       </Folder>
       <Folder BuildType="STRICT" Path="C:\Users\d3bug\Documents\Creator\W5x00\test_print_remote_mac_ip_isr.cydsn\Generated_Source\PSoC5">

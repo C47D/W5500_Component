@@ -6,30 +6,27 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// MACRO functions to calculate the socket region block selects from the socket
-// number.  These are helpful when working with the socket based commands.
-#define ETH_SOCKET_BASE(s)  (((s * 4) + 1) << 3)
-#define ETH_TX_BASE(s)      (((s * 4) + 2) << 3)
-#define ETH_RX_BASE(s)      (((s * 4) + 3) << 3
+#define SWAP_16BIT(x)   ((uint16_t)((uint16_t) x >> 8) | ((uint16_t) x << 8))
 
 /* Sockets info */
 /* i personally prefer enums over defines */
 typedef enum {
-    SOCKET_0,
-    SOCKET_1,
-    SOCKET_2,
-    SOCKET_3,
-    SOCKET_4,
-    SOCKET_5,
-    SOCKET_6,
-    SOCKET_7,
-    SOCKET_INVALID
+    SOCKET_ID_0,
+    SOCKET_ID_1,
+    SOCKET_ID_2,
+    SOCKET_ID_3,
+    SOCKET_ID_4,
+    SOCKET_ID_5,
+    SOCKET_ID_6,
+    SOCKET_ID_7,
+    SOCKET_ID_INVALID
 } socket_id;
 
 typedef enum {
-    SOCKET_MODE_TCP     = 0x01,
-    SOCKET_MODE_UDP     = 0x02,
-    SOCKET_MODE_MACRAW  = 0x04,
+    SOCKET_PROTOCOL_CLOSED  = 0x00,
+    SOCKET_PROTOCOL_TCP     = 0x01,
+    SOCKET_PROTOCOL_UDP     = 0x02,
+    SOCKET_PROTOCOL_MACRAW  = 0x04,
 } socket_protocol;
 
 typedef enum {
@@ -103,40 +100,76 @@ typedef enum {
     SOCKET_REG_KEEP_ALIVE_TIMER     = 0x002F
 } socket_reg;
 
-/* Remove unnecesary enums, use base address + offset */
 typedef enum {
-    BLOCK_COMMON_REGISTER   = 0,
-    BLOCK_SOCKET_0_REGISTER,
-    BLOCK_SOCKET_0_TX_BUFFER,
-    BLOCK_SOCKET_0_RX_BUFFER,
-    BLOCK_RESERVED_0,
-    BLOCK_SOCKET_1_REGISTER,
-    BLOCK_SOCKET_1_TX_BUFFER,
-    BLOCK_SOCKET_1_RX_BUFFER,
-    BLOCK_RESERVED_1,
-    BLOCK_SOCKET_2_REGISTER,
-    BLOCK_SOCKET_2_TX_BUFFER,
-    BLOCK_SOCKET_2_RX_BUFFER,
-    BLOCK_RESERVED_2,
-    BLOCK_SOCKET_3_REGISTER,
-    BLOCK_SOCKET_3_TX_BUFFER,
-    BLOCK_SOCKET_3_RX_BUFFER,
-    BLOCK_RESERVED_3,
-    BLOCK_SOCKET_4_REGISTER,
-    BLOCK_SOCKET_4_TX_BUFFER,
-    BLOCK_SOCKET_4_RX_BUFFER,
-    BLOCK_RESERVED_4,
-    BLOCK_SOCKET_5_REGISTER,
-    BLOCK_SOCKET_5_TX_BUFFER,
-    BLOCK_SOCKET_5_RX_BUFFER,
-    BLOCK_RESERVED_5,
-    BLOCK_SOCKET_6_REGISTER,
-    BLOCK_SOCKET_6_TX_BUFFER,
-    BLOCK_SOCKET_6_RX_BUFFER,
-    BLOCK_RESERVED_6,
-    BLOCK_SOCKET_7_REGISTER,
-    BLOCK_SOCKET_7_TX_BUFFER,
-    BLOCK_SOCKET_7_RX_BUFFER,
+    COMMON_REG_MODE                         = 0x0000,
+    COMMON_REG_GATEWAY_ADDR0                = 0x0001,
+    COMMON_REG_GATEWAY_ADDR1                = 0x0002,
+    COMMON_REG_GATEWAY_ADDR2                = 0x0003,
+    COMMON_REG_GATEWAY_ADDR3                = 0x0004,
+    COMMON_REG_SUBNET_MASK_ADDR0            = 0x0005,
+    COMMON_REG_SUBNET_MASK_ADDR1            = 0x0006,
+    COMMON_REG_SUBNET_MASK_ADDR2            = 0x0007,
+    COMMON_REG_SUBNET_MASK_ADDR3            = 0x0008,
+    COMMON_REG_SRC_HARDWARE_ADDR0           = 0x0009,
+    COMMON_REG_SRC_HARDWARE_ADDR1           = 0x000A,
+    COMMON_REG_SRC_HARDWARE_ADDR2           = 0x000B,
+    COMMON_REG_SRC_HARDWARE_ADDR3           = 0x000C,
+    COMMON_REG_SRC_HARDWARE_ADDR4           = 0x000D,
+    COMMON_REG_SRC_HARDWARE_ADDR5           = 0x000E,
+    COMMON_REG_SRC_IP_ADDR0                 = 0x000F,
+    COMMON_REG_SRC_IP_ADDR1                 = 0x0010,
+    COMMON_REG_SRC_IP_ADDR2                 = 0x0011,
+    COMMON_REG_SRC_IP_ADDR3                 = 0x0012,
+    COMMON_REG_INTERRUPT_LOW_LVL_TIMER0     = 0x0013,
+    COMMON_REG_INTERRUPT_LOW_LVL_TIMER1     = 0x0014,
+    COMMON_REG_INTERRUPT                    = 0x0015,
+    COMMON_REG_INTERRUPT_MASK               = 0x0016,
+    COMMON_REG_SOCKET_INTERRUPT             = 0x0017,
+    COMMON_REG_SOCKET_INTERRUPT_MASK        = 0x0018,
+    COMMON_REG_RETRY_TIME0                  = 0x0019,
+    COMMON_REG_RETRY_TIME1                  = 0x001A,
+    COMMON_REG_RETRY_CNT                    = 0x001B,
+    COMMON_REG_PPP_LCP_REQUEST_TIMER        = 0x001C,
+    COMMON_REG_PPP_LCP_MAGIC_NUMBER         = 0x001D,
+    COMMON_REG_PPP_DESTINATION_MAC_ADDR0    = 0x001E,
+    COMMON_REG_PPP_DESTINATION_MAC_ADDR1    = 0x001F,
+    COMMON_REG_PPP_DESTINATION_MAC_ADDR2    = 0x0020,
+    COMMON_REG_PPP_DESTINATION_MAC_ADDR3    = 0x0021,
+    COMMON_REG_PPP_DESTINATION_MAC_ADDR4    = 0x0022,
+    COMMON_REG_PPP_DESTINATION_MAC_ADDR5    = 0x0023,
+    COMMON_REG_PPP_SESSION_IDENTIFICATION0  = 0x0024,
+    COMMON_REG_PPP_SESSION_IDENTIFICATION1  = 0x0025,
+    COMMON_REG_PPP_MAXIMUM_SEGMENT_SIZE0    = 0x0026,
+    COMMON_REG_PPP_MAXIMUM_SEGMENT_SIZE1    = 0x0027,
+    COMMON_REG_UNREACHEABLE_IP_ADDR0        = 0x0028,
+    COMMON_REG_UNREACHEABLE_IP_ADDR1        = 0x0029,
+    COMMON_REG_UNREACHEABLE_IP_ADDR2        = 0x002A,
+    COMMON_REG_UNREACHEABLE_IP_ADDR3        = 0x002B,
+    COMMON_REG_UNREACHEABLE_PORT0           = 0x002C,
+    COMMON_REG_UNREACHEABLE_PORT1           = 0x002D,
+    COMMON_REG_PHY_CONFIGURATION            = 0x002E,
+    COMMON_REG_CHIP_VERSION                 = 0x0039,
+} common_reg;
+
+typedef enum {
+    SOCKET_MEM_0KB  = 0,
+    SOCKET_MEM_1KB  = 1,
+    SOCKET_MEM_2KB  = 2,
+    SOCKET_MEM_4KB  = 4,
+    SOCKET_MEM_8KB  = 8,
+    SOCKET_MEM_16KB = 16
+} socket_mem;
+
+/* TODO: Remove unnecesary enums, use base address + offset */
+typedef enum {
+    BLOCK_COMMON_REGISTER   = 0x00000,
+    BLOCK_RESERVED_0        = 0x00100,
+    BLOCK_RESERVED_1        = 0x01000,
+    BLOCK_RESERVED_2        = 0x01100,
+    BLOCK_RESERVED_3        = 0x10000,
+    BLOCK_RESERVED_4        = 0x10100,
+    BLOCK_RESERVED_5        = 0x11000,
+    BLOCK_RESERVED_6        = 0x11100,
     BLOCK_INVALID
 } block;
 
@@ -157,19 +190,12 @@ typedef enum {
 /* module representation */
 #define OPAQUE_STRUCTS  0
 #if (OPAQUE_STRUCTS == 0)
-struct socket {
-    socket_sts  status;
-    socket_protocol protocol;
-    uint16_t    port;
-};
-
 #define W5500_SOCKETS   8
 struct W5500 {
     uint8_t         mac[6];
     uint8_t         ip[4];
     uint8_t         gateway[4];
     uint8_t         subnet[4];
-    struct socket   socket[W5500_SOCKETS];
 };
 #else
 struct socket;

@@ -6,7 +6,7 @@
 
 #Build Date:         Dec  5 2017 15:35:27
 
-#File Generated:     Jun 16 2018 10:28:03
+#File Generated:     Jun 24 2018 14:14:35
 
 #Purpose:            
 
@@ -14,7 +14,7 @@
 
 #***************************************************************************
 
-Executing : C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\bin/sjplacer.exe --proj-name test_print_remote_mac_ip_isr --netlist-vh2 test_print_remote_mac_ip_isr_p.vh2 --arch p35_udb4x6 --arch-file C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\dev\arch/udbdsi_4x6_24.cydata --ip-file C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\dev\psoc5/psoc5lp/ip_blocks.cydata --rrg-file C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\dev\psoc5/psoc5lp/route_arch-rrg.cydata --irq-file C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\dev\psoc5/psoc5lp/irqconn.cydata --drq-file C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\dev\psoc5/psoc5lp/dmaconn.cydata --dsi-conn-file C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\dev\psoc5/psoc5lp/dsiconn.cydata --pins-file pins_68-QFN.xml --lib-file test_print_remote_mac_ip_isr_p.lib --sdc-file test_print_remote_mac_ip_isr.sdc --io-pcf test_print_remote_mac_ip_isr.pci --outdir .
+Executing : C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\bin/sjplacer.exe --proj-name test_print_remote_mac_ip_isr --netlist-vh2 test_print_remote_mac_ip_isr_p.vh2 --arch p35_udb4x6 --arch-file C:\Users\d3bug\Documents\PSoC Creator\4.2\Devices\arch/udbdsi_4x6_24.cydata --ip-file C:\Users\d3bug\Documents\PSoC Creator\4.2\Devices\psoc5/psoc5lp/ip_blocks.cydata --rrg-file C:\Users\d3bug\Documents\PSoC Creator\4.2\Devices\psoc5/psoc5lp/route_arch-rrg.cydata --irq-file C:\Users\d3bug\Documents\PSoC Creator\4.2\Devices\psoc5/psoc5lp/irqconn.cydata --drq-file C:\Users\d3bug\Documents\PSoC Creator\4.2\Devices\psoc5/psoc5lp/dmaconn.cydata --dsi-conn-file C:\Users\d3bug\Documents\PSoC Creator\4.2\Devices\psoc5/psoc5lp/dsiconn.cydata --pins-file pins_68-QFN.xml --lib-file test_print_remote_mac_ip_isr_p.lib --sdc-file test_print_remote_mac_ip_isr.sdc --io-pcf test_print_remote_mac_ip_isr.pci --outdir .
 
 		Softjin Techologies Placer, Version 1.1
 
@@ -23,7 +23,7 @@ Build Date : Dec  5 2017	15:33:41
 D2004: Option and Settings Summary
 =============================================================
 Netlist vh2 file          - test_print_remote_mac_ip_isr_p.vh2
-Architecture file         - C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\dev\arch/udbdsi_4x6_24.cydata
+Architecture file         - C:\Users\d3bug\Documents\PSoC Creator\4.2\Devices\arch/udbdsi_4x6_24.cydata
 Package                   - 
 Defparam file             - 
 SDC file                  - test_print_remote_mac_ip_isr.sdc
@@ -34,7 +34,7 @@ IO Placement file         - test_print_remote_mac_ip_isr.pci
 D2050: Starting reading inputs for placer
 =============================================================
 D2065: Reading netlist file : "test_print_remote_mac_ip_isr_p.vh2"
-D2065: Reading arch file : "C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\dev\arch/udbdsi_4x6_24.cydata"
+D2065: Reading arch file : "C:\Users\d3bug\Documents\PSoC Creator\4.2\Devices\arch/udbdsi_4x6_24.cydata"
 D2051: Reading of inputs for placer completed successfully
 
 D2053: Starting placement of the design
@@ -108,7 +108,7 @@ Clock: SPI_IntClock         | Frequency:  65.0 MHz | Target:   2.0 MHz
 ======================================================================
                      End of Clock Summary
 ######################################################################
-D2088: Phase 7, elapsed time : 0.5 (sec)
+D2088: Phase 7, elapsed time : 0.3 (sec)
 
 Final Design Statistics
     Number of Combinational MCs 	:	4
@@ -155,5 +155,5 @@ D2088: Phase 8, elapsed time : 0.0 (sec)
 
 D2054: Placement of the design completed successfully
 
-I2076: Total run-time: 6.2 sec.
+I2076: Total run-time: 5.9 sec.
 

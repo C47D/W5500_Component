@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\d3bug\AppData\Local\Temp\cc5aNmu5.s 			page 1
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 1
 
 
    1              		.syntax unified
@@ -19,38 +19,957 @@ ARM GAS  C:\Users\d3bug\AppData\Local\Temp\cc5aNmu5.s 			page 1
   16              		.text
   17              	.Ltext0:
   18              		.cfi_sections	.debug_frame
-  19              	.Letext0:
-  20              		.section	.debug_line,"",%progbits
-  21              	.Ldebug_line0:
-  22              		.section	.debug_str,"MS",%progbits,1
-  23              	.LASF0:
-  24 0000 433A5C55 		.ascii	"C:\\Users\\d3bug\\Documents\\Creator\\W5x00\\test_p"
-  24      73657273 
-  24      5C643362 
-  24      75675C44 
-  24      6F63756D 
-  25 002d 72696E74 		.ascii	"rint_remote_mac_ip_isr.cydsn\000"
-  25      5F72656D 
-  25      6F74655F 
-  25      6D61635F 
-  25      69705F69 
-  26              	.LASF1:
-  27 004a 7463702E 		.ascii	"tcp.c\000"
-  27      6300
-  28              	.LASF2:
-  29 0050 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
-  29      43313120 
-  29      352E342E 
-  29      31203230 
-  29      31363036 
-  30 0083 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
-  30      20726576 
-  30      6973696F 
-  30      6E203233 
-  30      37373135 
-  31 00b6 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
-  31      66756E63 
-  31      74696F6E 
-  31      2D736563 
-  31      74696F6E 
-  32              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
+  19              		.section	.text.wiz_tcp_init_server,"ax",%progbits
+  20              		.align	2
+  21              		.global	wiz_tcp_init_server
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	wiz_tcp_init_server, %function
+  25              	wiz_tcp_init_server:
+  26              	.LFB0:
+  27              		.file 1 "tcp.c"
+   1:tcp.c         **** #include "tcp.h"
+   2:tcp.c         **** #include "socket.h"
+   3:tcp.c         **** 
+   4:tcp.c         **** struct skt_t *wiz_tcp_init_server(socket_id socket, uint16_t port)
+   5:tcp.c         **** {
+  28              		.loc 1 5 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              	.LVL0:
+  33 0000 38B5     		push	{r3, r4, r5, lr}
+  34              		.cfi_def_cfa_offset 16
+  35              		.cfi_offset 3, -16
+  36              		.cfi_offset 4, -12
+  37              		.cfi_offset 5, -8
+  38              		.cfi_offset 14, -4
+  39 0002 0D46     		mov	r5, r1
+  40              	.LVL1:
+   6:tcp.c         ****     struct skt_t *tcp_server = NULL;
+   7:tcp.c         ****     
+   8:tcp.c         ****     tcp_server = W5500_socket_init(socket, SOCKET_PROTOCOL_TCP,
+  41              		.loc 1 8 0
+  42 0004 1023     		movs	r3, #16
+  43 0006 1A46     		mov	r2, r3
+  44 0008 0121     		movs	r1, #1
+  45              	.LVL2:
+  46 000a FFF7FEFF 		bl	W5500_socket_init
+  47              	.LVL3:
+  48 000e 0446     		mov	r4, r0
+  49              	.LVL4:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 2
+
+
+   9:tcp.c         ****                                    SOCKET_MEM_16KB, SOCKET_MEM_16KB);
+  10:tcp.c         ****     W5500_socket_set_port(tcp_server, port);
+  50              		.loc 1 10 0
+  51 0010 2946     		mov	r1, r5
+  52 0012 FFF7FEFF 		bl	W5500_socket_set_port
+  53              	.LVL5:
+  11:tcp.c         ****     W5500_socket_cmd(tcp_server, SOCKET_CMD_OPEN);
+  54              		.loc 1 11 0
+  55 0016 0121     		movs	r1, #1
+  56 0018 2046     		mov	r0, r4
+  57 001a FFF7FEFF 		bl	W5500_socket_cmd
+  58              	.LVL6:
+  12:tcp.c         ****     
+  13:tcp.c         ****     return tcp_server;
+  14:tcp.c         **** }
+  59              		.loc 1 14 0
+  60 001e 2046     		mov	r0, r4
+  61 0020 38BD     		pop	{r3, r4, r5, pc}
+  62              		.cfi_endproc
+  63              	.LFE0:
+  64              		.size	wiz_tcp_init_server, .-wiz_tcp_init_server
+  65 0022 00BF     		.text
+  66              	.Letext0:
+  67              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+  68              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+  69              		.file 4 "common.h"
+  70              		.file 5 "socket.h"
+  71              		.section	.debug_info,"",%progbits
+  72              	.Ldebug_info0:
+  73 0000 32020000 		.4byte	0x232
+  74 0004 0400     		.2byte	0x4
+  75 0006 00000000 		.4byte	.Ldebug_abbrev0
+  76 000a 04       		.byte	0x4
+  77 000b 01       		.uleb128 0x1
+  78 000c F3020000 		.4byte	.LASF47
+  79 0010 0C       		.byte	0xc
+  80 0011 F8010000 		.4byte	.LASF48
+  81 0015 98020000 		.4byte	.LASF49
+  82 0019 00000000 		.4byte	.Ldebug_ranges0+0
+  83 001d 00000000 		.4byte	0
+  84 0021 00000000 		.4byte	.Ldebug_line0
+  85 0025 02       		.uleb128 0x2
+  86 0026 01       		.byte	0x1
+  87 0027 06       		.byte	0x6
+  88 0028 81010000 		.4byte	.LASF0
+  89 002c 02       		.uleb128 0x2
+  90 002d 01       		.byte	0x1
+  91 002e 08       		.byte	0x8
+  92 002f 63010000 		.4byte	.LASF1
+  93 0033 02       		.uleb128 0x2
+  94 0034 02       		.byte	0x2
+  95 0035 05       		.byte	0x5
+  96 0036 15000000 		.4byte	.LASF2
+  97 003a 03       		.uleb128 0x3
+  98 003b 4B000000 		.4byte	.LASF9
+  99 003f 02       		.byte	0x2
+ 100 0040 2B       		.byte	0x2b
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 3
+
+
+ 101 0041 45000000 		.4byte	0x45
+ 102 0045 02       		.uleb128 0x2
+ 103 0046 02       		.byte	0x2
+ 104 0047 07       		.byte	0x7
+ 105 0048 FE010000 		.4byte	.LASF3
+ 106 004c 02       		.uleb128 0x2
+ 107 004d 04       		.byte	0x4
+ 108 004e 05       		.byte	0x5
+ 109 004f 12010000 		.4byte	.LASF4
+ 110 0053 02       		.uleb128 0x2
+ 111 0054 04       		.byte	0x4
+ 112 0055 07       		.byte	0x7
+ 113 0056 86020000 		.4byte	.LASF5
+ 114 005a 02       		.uleb128 0x2
+ 115 005b 08       		.byte	0x8
+ 116 005c 05       		.byte	0x5
+ 117 005d AB000000 		.4byte	.LASF6
+ 118 0061 02       		.uleb128 0x2
+ 119 0062 08       		.byte	0x8
+ 120 0063 07       		.byte	0x7
+ 121 0064 8D010000 		.4byte	.LASF7
+ 122 0068 04       		.uleb128 0x4
+ 123 0069 04       		.byte	0x4
+ 124 006a 05       		.byte	0x5
+ 125 006b 696E7400 		.ascii	"int\000"
+ 126 006f 02       		.uleb128 0x2
+ 127 0070 04       		.byte	0x4
+ 128 0071 07       		.byte	0x7
+ 129 0072 B7010000 		.4byte	.LASF8
+ 130 0076 03       		.uleb128 0x3
+ 131 0077 C4010000 		.4byte	.LASF10
+ 132 007b 03       		.byte	0x3
+ 133 007c 24       		.byte	0x24
+ 134 007d 3A000000 		.4byte	0x3a
+ 135 0081 02       		.uleb128 0x2
+ 136 0082 08       		.byte	0x8
+ 137 0083 04       		.byte	0x4
+ 138 0084 57010000 		.4byte	.LASF11
+ 139 0088 05       		.uleb128 0x5
+ 140 0089 01       		.byte	0x1
+ 141 008a 2C000000 		.4byte	0x2c
+ 142 008e 04       		.byte	0x4
+ 143 008f 0D       		.byte	0xd
+ 144 0090 CB000000 		.4byte	0xcb
+ 145 0094 06       		.uleb128 0x6
+ 146 0095 93000000 		.4byte	.LASF12
+ 147 0099 00       		.byte	0
+ 148 009a 06       		.uleb128 0x6
+ 149 009b 9F000000 		.4byte	.LASF13
+ 150 009f 01       		.byte	0x1
+ 151 00a0 06       		.uleb128 0x6
+ 152 00a1 4B010000 		.4byte	.LASF14
+ 153 00a5 02       		.byte	0x2
+ 154 00a6 06       		.uleb128 0x6
+ 155 00a7 B9000000 		.4byte	.LASF15
+ 156 00ab 03       		.byte	0x3
+ 157 00ac 06       		.uleb128 0x6
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 4
+
+
+ 158 00ad C5000000 		.4byte	.LASF16
+ 159 00b1 04       		.byte	0x4
+ 160 00b2 06       		.uleb128 0x6
+ 161 00b3 D1000000 		.4byte	.LASF17
+ 162 00b7 05       		.byte	0x5
+ 163 00b8 06       		.uleb128 0x6
+ 164 00b9 DD000000 		.4byte	.LASF18
+ 165 00bd 06       		.byte	0x6
+ 166 00be 06       		.uleb128 0x6
+ 167 00bf E9000000 		.4byte	.LASF19
+ 168 00c3 07       		.byte	0x7
+ 169 00c4 06       		.uleb128 0x6
+ 170 00c5 25020000 		.4byte	.LASF20
+ 171 00c9 08       		.byte	0x8
+ 172 00ca 00       		.byte	0
+ 173 00cb 03       		.uleb128 0x3
+ 174 00cc 79000000 		.4byte	.LASF21
+ 175 00d0 04       		.byte	0x4
+ 176 00d1 17       		.byte	0x17
+ 177 00d2 88000000 		.4byte	0x88
+ 178 00d6 05       		.uleb128 0x5
+ 179 00d7 01       		.byte	0x1
+ 180 00d8 2C000000 		.4byte	0x2c
+ 181 00dc 04       		.byte	0x4
+ 182 00dd 19       		.byte	0x19
+ 183 00de FB000000 		.4byte	0xfb
+ 184 00e2 06       		.uleb128 0x6
+ 185 00e3 E1010000 		.4byte	.LASF22
+ 186 00e7 00       		.byte	0
+ 187 00e8 06       		.uleb128 0x6
+ 188 00e9 56000000 		.4byte	.LASF23
+ 189 00ed 01       		.byte	0x1
+ 190 00ee 06       		.uleb128 0x6
+ 191 00ef 28000000 		.4byte	.LASF24
+ 192 00f3 02       		.byte	0x2
+ 193 00f4 06       		.uleb128 0x6
+ 194 00f5 34010000 		.4byte	.LASF25
+ 195 00f9 04       		.byte	0x4
+ 196 00fa 00       		.byte	0
+ 197 00fb 05       		.uleb128 0x5
+ 198 00fc 01       		.byte	0x1
+ 199 00fd 2C000000 		.4byte	0x2c
+ 200 0101 04       		.byte	0x4
+ 201 0102 30       		.byte	0x30
+ 202 0103 3E010000 		.4byte	0x13e
+ 203 0107 06       		.uleb128 0x6
+ 204 0108 A6030000 		.4byte	.LASF26
+ 205 010c 01       		.byte	0x1
+ 206 010d 06       		.uleb128 0x6
+ 207 010e 00010000 		.4byte	.LASF27
+ 208 0112 02       		.byte	0x2
+ 209 0113 06       		.uleb128 0x6
+ 210 0114 A4010000 		.4byte	.LASF28
+ 211 0118 04       		.byte	0x4
+ 212 0119 06       		.uleb128 0x6
+ 213 011a 47020000 		.4byte	.LASF29
+ 214 011e 08       		.byte	0x8
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 5
+
+
+ 215 011f 06       		.uleb128 0x6
+ 216 0120 B6030000 		.4byte	.LASF30
+ 217 0124 10       		.byte	0x10
+ 218 0125 06       		.uleb128 0x6
+ 219 0126 37020000 		.4byte	.LASF31
+ 220 012a 20       		.byte	0x20
+ 221 012b 06       		.uleb128 0x6
+ 222 012c 11020000 		.4byte	.LASF32
+ 223 0130 21       		.byte	0x21
+ 224 0131 06       		.uleb128 0x6
+ 225 0132 5D020000 		.4byte	.LASF33
+ 226 0136 22       		.byte	0x22
+ 227 0137 06       		.uleb128 0x6
+ 228 0138 71010000 		.4byte	.LASF34
+ 229 013c 40       		.byte	0x40
+ 230 013d 00       		.byte	0
+ 231 013e 05       		.uleb128 0x5
+ 232 013f 01       		.byte	0x1
+ 233 0140 2C000000 		.4byte	0x2c
+ 234 0144 04       		.byte	0x4
+ 235 0145 67       		.byte	0x67
+ 236 0146 6F010000 		.4byte	0x16f
+ 237 014a 06       		.uleb128 0x6
+ 238 014b 3C000000 		.4byte	.LASF35
+ 239 014f 00       		.byte	0
+ 240 0150 06       		.uleb128 0x6
+ 241 0151 06000000 		.4byte	.LASF36
+ 242 0155 01       		.byte	0x1
+ 243 0156 06       		.uleb128 0x6
+ 244 0157 81030000 		.4byte	.LASF37
+ 245 015b 02       		.byte	0x2
+ 246 015c 06       		.uleb128 0x6
+ 247 015d 72020000 		.4byte	.LASF38
+ 248 0161 04       		.byte	0x4
+ 249 0162 06       		.uleb128 0x6
+ 250 0163 6A000000 		.4byte	.LASF39
+ 251 0167 08       		.byte	0x8
+ 252 0168 06       		.uleb128 0x6
+ 253 0169 83000000 		.4byte	.LASF40
+ 254 016d 10       		.byte	0x10
+ 255 016e 00       		.byte	0
+ 256 016f 02       		.uleb128 0x2
+ 257 0170 04       		.byte	0x4
+ 258 0171 07       		.byte	0x7
+ 259 0172 1F000000 		.4byte	.LASF41
+ 260 0176 07       		.uleb128 0x7
+ 261 0177 00000000 		.4byte	.LASF50
+ 262 017b 08       		.uleb128 0x8
+ 263 017c CD010000 		.4byte	.LASF51
+ 264 0180 01       		.byte	0x1
+ 265 0181 04       		.byte	0x4
+ 266 0182 0E020000 		.4byte	0x20e
+ 267 0186 00000000 		.4byte	.LFB0
+ 268 018a 22000000 		.4byte	.LFE0-.LFB0
+ 269 018e 01       		.uleb128 0x1
+ 270 018f 9C       		.byte	0x9c
+ 271 0190 0E020000 		.4byte	0x20e
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 6
+
+
+ 272 0194 09       		.uleb128 0x9
+ 273 0195 1B010000 		.4byte	.LASF42
+ 274 0199 01       		.byte	0x1
+ 275 019a 04       		.byte	0x4
+ 276 019b CB000000 		.4byte	0xcb
+ 277 019f 00000000 		.4byte	.LLST0
+ 278 01a3 09       		.uleb128 0x9
+ 279 01a4 81020000 		.4byte	.LASF43
+ 280 01a8 01       		.byte	0x1
+ 281 01a9 04       		.byte	0x4
+ 282 01aa 76000000 		.4byte	0x76
+ 283 01ae 21000000 		.4byte	.LLST1
+ 284 01b2 0A       		.uleb128 0xa
+ 285 01b3 F5000000 		.4byte	.LASF52
+ 286 01b7 01       		.byte	0x1
+ 287 01b8 06       		.byte	0x6
+ 288 01b9 0E020000 		.4byte	0x20e
+ 289 01bd 42000000 		.4byte	.LLST2
+ 290 01c1 0B       		.uleb128 0xb
+ 291 01c2 0E000000 		.4byte	.LVL3
+ 292 01c6 14020000 		.4byte	0x214
+ 293 01ca DE010000 		.4byte	0x1de
+ 294 01ce 0C       		.uleb128 0xc
+ 295 01cf 01       		.uleb128 0x1
+ 296 01d0 51       		.byte	0x51
+ 297 01d1 01       		.uleb128 0x1
+ 298 01d2 31       		.byte	0x31
+ 299 01d3 0C       		.uleb128 0xc
+ 300 01d4 01       		.uleb128 0x1
+ 301 01d5 52       		.byte	0x52
+ 302 01d6 01       		.uleb128 0x1
+ 303 01d7 40       		.byte	0x40
+ 304 01d8 0C       		.uleb128 0xc
+ 305 01d9 01       		.uleb128 0x1
+ 306 01da 53       		.byte	0x53
+ 307 01db 01       		.uleb128 0x1
+ 308 01dc 40       		.byte	0x40
+ 309 01dd 00       		.byte	0
+ 310 01de 0B       		.uleb128 0xb
+ 311 01df 16000000 		.4byte	.LVL5
+ 312 01e3 1F020000 		.4byte	0x21f
+ 313 01e7 F8010000 		.4byte	0x1f8
+ 314 01eb 0C       		.uleb128 0xc
+ 315 01ec 01       		.uleb128 0x1
+ 316 01ed 50       		.byte	0x50
+ 317 01ee 02       		.uleb128 0x2
+ 318 01ef 74       		.byte	0x74
+ 319 01f0 00       		.sleb128 0
+ 320 01f1 0C       		.uleb128 0xc
+ 321 01f2 01       		.uleb128 0x1
+ 322 01f3 51       		.byte	0x51
+ 323 01f4 02       		.uleb128 0x2
+ 324 01f5 75       		.byte	0x75
+ 325 01f6 00       		.sleb128 0
+ 326 01f7 00       		.byte	0
+ 327 01f8 0D       		.uleb128 0xd
+ 328 01f9 1E000000 		.4byte	.LVL6
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 7
+
+
+ 329 01fd 2A020000 		.4byte	0x22a
+ 330 0201 0C       		.uleb128 0xc
+ 331 0202 01       		.uleb128 0x1
+ 332 0203 50       		.byte	0x50
+ 333 0204 02       		.uleb128 0x2
+ 334 0205 74       		.byte	0x74
+ 335 0206 00       		.sleb128 0
+ 336 0207 0C       		.uleb128 0xc
+ 337 0208 01       		.uleb128 0x1
+ 338 0209 51       		.byte	0x51
+ 339 020a 01       		.uleb128 0x1
+ 340 020b 31       		.byte	0x31
+ 341 020c 00       		.byte	0
+ 342 020d 00       		.byte	0
+ 343 020e 0E       		.uleb128 0xe
+ 344 020f 04       		.byte	0x4
+ 345 0210 76010000 		.4byte	0x176
+ 346 0214 0F       		.uleb128 0xf
+ 347 0215 22010000 		.4byte	.LASF44
+ 348 0219 22010000 		.4byte	.LASF44
+ 349 021d 05       		.byte	0x5
+ 350 021e 2F       		.byte	0x2f
+ 351 021f 0F       		.uleb128 0xf
+ 352 0220 90030000 		.4byte	.LASF45
+ 353 0224 90030000 		.4byte	.LASF45
+ 354 0228 05       		.byte	0x5
+ 355 0229 32       		.byte	0x32
+ 356 022a 0F       		.uleb128 0xf
+ 357 022b E2020000 		.4byte	.LASF46
+ 358 022f E2020000 		.4byte	.LASF46
+ 359 0233 05       		.byte	0x5
+ 360 0234 33       		.byte	0x33
+ 361 0235 00       		.byte	0
+ 362              		.section	.debug_abbrev,"",%progbits
+ 363              	.Ldebug_abbrev0:
+ 364 0000 01       		.uleb128 0x1
+ 365 0001 11       		.uleb128 0x11
+ 366 0002 01       		.byte	0x1
+ 367 0003 25       		.uleb128 0x25
+ 368 0004 0E       		.uleb128 0xe
+ 369 0005 13       		.uleb128 0x13
+ 370 0006 0B       		.uleb128 0xb
+ 371 0007 03       		.uleb128 0x3
+ 372 0008 0E       		.uleb128 0xe
+ 373 0009 1B       		.uleb128 0x1b
+ 374 000a 0E       		.uleb128 0xe
+ 375 000b 55       		.uleb128 0x55
+ 376 000c 17       		.uleb128 0x17
+ 377 000d 11       		.uleb128 0x11
+ 378 000e 01       		.uleb128 0x1
+ 379 000f 10       		.uleb128 0x10
+ 380 0010 17       		.uleb128 0x17
+ 381 0011 00       		.byte	0
+ 382 0012 00       		.byte	0
+ 383 0013 02       		.uleb128 0x2
+ 384 0014 24       		.uleb128 0x24
+ 385 0015 00       		.byte	0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 8
+
+
+ 386 0016 0B       		.uleb128 0xb
+ 387 0017 0B       		.uleb128 0xb
+ 388 0018 3E       		.uleb128 0x3e
+ 389 0019 0B       		.uleb128 0xb
+ 390 001a 03       		.uleb128 0x3
+ 391 001b 0E       		.uleb128 0xe
+ 392 001c 00       		.byte	0
+ 393 001d 00       		.byte	0
+ 394 001e 03       		.uleb128 0x3
+ 395 001f 16       		.uleb128 0x16
+ 396 0020 00       		.byte	0
+ 397 0021 03       		.uleb128 0x3
+ 398 0022 0E       		.uleb128 0xe
+ 399 0023 3A       		.uleb128 0x3a
+ 400 0024 0B       		.uleb128 0xb
+ 401 0025 3B       		.uleb128 0x3b
+ 402 0026 0B       		.uleb128 0xb
+ 403 0027 49       		.uleb128 0x49
+ 404 0028 13       		.uleb128 0x13
+ 405 0029 00       		.byte	0
+ 406 002a 00       		.byte	0
+ 407 002b 04       		.uleb128 0x4
+ 408 002c 24       		.uleb128 0x24
+ 409 002d 00       		.byte	0
+ 410 002e 0B       		.uleb128 0xb
+ 411 002f 0B       		.uleb128 0xb
+ 412 0030 3E       		.uleb128 0x3e
+ 413 0031 0B       		.uleb128 0xb
+ 414 0032 03       		.uleb128 0x3
+ 415 0033 08       		.uleb128 0x8
+ 416 0034 00       		.byte	0
+ 417 0035 00       		.byte	0
+ 418 0036 05       		.uleb128 0x5
+ 419 0037 04       		.uleb128 0x4
+ 420 0038 01       		.byte	0x1
+ 421 0039 0B       		.uleb128 0xb
+ 422 003a 0B       		.uleb128 0xb
+ 423 003b 49       		.uleb128 0x49
+ 424 003c 13       		.uleb128 0x13
+ 425 003d 3A       		.uleb128 0x3a
+ 426 003e 0B       		.uleb128 0xb
+ 427 003f 3B       		.uleb128 0x3b
+ 428 0040 0B       		.uleb128 0xb
+ 429 0041 01       		.uleb128 0x1
+ 430 0042 13       		.uleb128 0x13
+ 431 0043 00       		.byte	0
+ 432 0044 00       		.byte	0
+ 433 0045 06       		.uleb128 0x6
+ 434 0046 28       		.uleb128 0x28
+ 435 0047 00       		.byte	0
+ 436 0048 03       		.uleb128 0x3
+ 437 0049 0E       		.uleb128 0xe
+ 438 004a 1C       		.uleb128 0x1c
+ 439 004b 0B       		.uleb128 0xb
+ 440 004c 00       		.byte	0
+ 441 004d 00       		.byte	0
+ 442 004e 07       		.uleb128 0x7
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 9
+
+
+ 443 004f 13       		.uleb128 0x13
+ 444 0050 00       		.byte	0
+ 445 0051 03       		.uleb128 0x3
+ 446 0052 0E       		.uleb128 0xe
+ 447 0053 3C       		.uleb128 0x3c
+ 448 0054 19       		.uleb128 0x19
+ 449 0055 00       		.byte	0
+ 450 0056 00       		.byte	0
+ 451 0057 08       		.uleb128 0x8
+ 452 0058 2E       		.uleb128 0x2e
+ 453 0059 01       		.byte	0x1
+ 454 005a 3F       		.uleb128 0x3f
+ 455 005b 19       		.uleb128 0x19
+ 456 005c 03       		.uleb128 0x3
+ 457 005d 0E       		.uleb128 0xe
+ 458 005e 3A       		.uleb128 0x3a
+ 459 005f 0B       		.uleb128 0xb
+ 460 0060 3B       		.uleb128 0x3b
+ 461 0061 0B       		.uleb128 0xb
+ 462 0062 27       		.uleb128 0x27
+ 463 0063 19       		.uleb128 0x19
+ 464 0064 49       		.uleb128 0x49
+ 465 0065 13       		.uleb128 0x13
+ 466 0066 11       		.uleb128 0x11
+ 467 0067 01       		.uleb128 0x1
+ 468 0068 12       		.uleb128 0x12
+ 469 0069 06       		.uleb128 0x6
+ 470 006a 40       		.uleb128 0x40
+ 471 006b 18       		.uleb128 0x18
+ 472 006c 9742     		.uleb128 0x2117
+ 473 006e 19       		.uleb128 0x19
+ 474 006f 01       		.uleb128 0x1
+ 475 0070 13       		.uleb128 0x13
+ 476 0071 00       		.byte	0
+ 477 0072 00       		.byte	0
+ 478 0073 09       		.uleb128 0x9
+ 479 0074 05       		.uleb128 0x5
+ 480 0075 00       		.byte	0
+ 481 0076 03       		.uleb128 0x3
+ 482 0077 0E       		.uleb128 0xe
+ 483 0078 3A       		.uleb128 0x3a
+ 484 0079 0B       		.uleb128 0xb
+ 485 007a 3B       		.uleb128 0x3b
+ 486 007b 0B       		.uleb128 0xb
+ 487 007c 49       		.uleb128 0x49
+ 488 007d 13       		.uleb128 0x13
+ 489 007e 02       		.uleb128 0x2
+ 490 007f 17       		.uleb128 0x17
+ 491 0080 00       		.byte	0
+ 492 0081 00       		.byte	0
+ 493 0082 0A       		.uleb128 0xa
+ 494 0083 34       		.uleb128 0x34
+ 495 0084 00       		.byte	0
+ 496 0085 03       		.uleb128 0x3
+ 497 0086 0E       		.uleb128 0xe
+ 498 0087 3A       		.uleb128 0x3a
+ 499 0088 0B       		.uleb128 0xb
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 10
+
+
+ 500 0089 3B       		.uleb128 0x3b
+ 501 008a 0B       		.uleb128 0xb
+ 502 008b 49       		.uleb128 0x49
+ 503 008c 13       		.uleb128 0x13
+ 504 008d 02       		.uleb128 0x2
+ 505 008e 17       		.uleb128 0x17
+ 506 008f 00       		.byte	0
+ 507 0090 00       		.byte	0
+ 508 0091 0B       		.uleb128 0xb
+ 509 0092 898201   		.uleb128 0x4109
+ 510 0095 01       		.byte	0x1
+ 511 0096 11       		.uleb128 0x11
+ 512 0097 01       		.uleb128 0x1
+ 513 0098 31       		.uleb128 0x31
+ 514 0099 13       		.uleb128 0x13
+ 515 009a 01       		.uleb128 0x1
+ 516 009b 13       		.uleb128 0x13
+ 517 009c 00       		.byte	0
+ 518 009d 00       		.byte	0
+ 519 009e 0C       		.uleb128 0xc
+ 520 009f 8A8201   		.uleb128 0x410a
+ 521 00a2 00       		.byte	0
+ 522 00a3 02       		.uleb128 0x2
+ 523 00a4 18       		.uleb128 0x18
+ 524 00a5 9142     		.uleb128 0x2111
+ 525 00a7 18       		.uleb128 0x18
+ 526 00a8 00       		.byte	0
+ 527 00a9 00       		.byte	0
+ 528 00aa 0D       		.uleb128 0xd
+ 529 00ab 898201   		.uleb128 0x4109
+ 530 00ae 01       		.byte	0x1
+ 531 00af 11       		.uleb128 0x11
+ 532 00b0 01       		.uleb128 0x1
+ 533 00b1 31       		.uleb128 0x31
+ 534 00b2 13       		.uleb128 0x13
+ 535 00b3 00       		.byte	0
+ 536 00b4 00       		.byte	0
+ 537 00b5 0E       		.uleb128 0xe
+ 538 00b6 0F       		.uleb128 0xf
+ 539 00b7 00       		.byte	0
+ 540 00b8 0B       		.uleb128 0xb
+ 541 00b9 0B       		.uleb128 0xb
+ 542 00ba 49       		.uleb128 0x49
+ 543 00bb 13       		.uleb128 0x13
+ 544 00bc 00       		.byte	0
+ 545 00bd 00       		.byte	0
+ 546 00be 0F       		.uleb128 0xf
+ 547 00bf 2E       		.uleb128 0x2e
+ 548 00c0 00       		.byte	0
+ 549 00c1 3F       		.uleb128 0x3f
+ 550 00c2 19       		.uleb128 0x19
+ 551 00c3 3C       		.uleb128 0x3c
+ 552 00c4 19       		.uleb128 0x19
+ 553 00c5 6E       		.uleb128 0x6e
+ 554 00c6 0E       		.uleb128 0xe
+ 555 00c7 03       		.uleb128 0x3
+ 556 00c8 0E       		.uleb128 0xe
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 11
+
+
+ 557 00c9 3A       		.uleb128 0x3a
+ 558 00ca 0B       		.uleb128 0xb
+ 559 00cb 3B       		.uleb128 0x3b
+ 560 00cc 0B       		.uleb128 0xb
+ 561 00cd 00       		.byte	0
+ 562 00ce 00       		.byte	0
+ 563 00cf 00       		.byte	0
+ 564              		.section	.debug_loc,"",%progbits
+ 565              	.Ldebug_loc0:
+ 566              	.LLST0:
+ 567 0000 00000000 		.4byte	.LVL0
+ 568 0004 0D000000 		.4byte	.LVL3-1
+ 569 0008 0100     		.2byte	0x1
+ 570 000a 50       		.byte	0x50
+ 571 000b 0D000000 		.4byte	.LVL3-1
+ 572 000f 22000000 		.4byte	.LFE0
+ 573 0013 0400     		.2byte	0x4
+ 574 0015 F3       		.byte	0xf3
+ 575 0016 01       		.uleb128 0x1
+ 576 0017 50       		.byte	0x50
+ 577 0018 9F       		.byte	0x9f
+ 578 0019 00000000 		.4byte	0
+ 579 001d 00000000 		.4byte	0
+ 580              	.LLST1:
+ 581 0021 00000000 		.4byte	.LVL0
+ 582 0025 0A000000 		.4byte	.LVL2
+ 583 0029 0100     		.2byte	0x1
+ 584 002b 51       		.byte	0x51
+ 585 002c 0A000000 		.4byte	.LVL2
+ 586 0030 22000000 		.4byte	.LFE0
+ 587 0034 0400     		.2byte	0x4
+ 588 0036 F3       		.byte	0xf3
+ 589 0037 01       		.uleb128 0x1
+ 590 0038 51       		.byte	0x51
+ 591 0039 9F       		.byte	0x9f
+ 592 003a 00000000 		.4byte	0
+ 593 003e 00000000 		.4byte	0
+ 594              	.LLST2:
+ 595 0042 04000000 		.4byte	.LVL1
+ 596 0046 10000000 		.4byte	.LVL4
+ 597 004a 0200     		.2byte	0x2
+ 598 004c 30       		.byte	0x30
+ 599 004d 9F       		.byte	0x9f
+ 600 004e 10000000 		.4byte	.LVL4
+ 601 0052 15000000 		.4byte	.LVL5-1
+ 602 0056 0100     		.2byte	0x1
+ 603 0058 50       		.byte	0x50
+ 604 0059 15000000 		.4byte	.LVL5-1
+ 605 005d 22000000 		.4byte	.LFE0
+ 606 0061 0100     		.2byte	0x1
+ 607 0063 54       		.byte	0x54
+ 608 0064 00000000 		.4byte	0
+ 609 0068 00000000 		.4byte	0
+ 610              		.section	.debug_aranges,"",%progbits
+ 611 0000 1C000000 		.4byte	0x1c
+ 612 0004 0200     		.2byte	0x2
+ 613 0006 00000000 		.4byte	.Ldebug_info0
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 12
+
+
+ 614 000a 04       		.byte	0x4
+ 615 000b 00       		.byte	0
+ 616 000c 0000     		.2byte	0
+ 617 000e 0000     		.2byte	0
+ 618 0010 00000000 		.4byte	.LFB0
+ 619 0014 22000000 		.4byte	.LFE0-.LFB0
+ 620 0018 00000000 		.4byte	0
+ 621 001c 00000000 		.4byte	0
+ 622              		.section	.debug_ranges,"",%progbits
+ 623              	.Ldebug_ranges0:
+ 624 0000 00000000 		.4byte	.LFB0
+ 625 0004 22000000 		.4byte	.LFE0
+ 626 0008 00000000 		.4byte	0
+ 627 000c 00000000 		.4byte	0
+ 628              		.section	.debug_line,"",%progbits
+ 629              	.Ldebug_line0:
+ 630 0000 48010000 		.section	.debug_str,"MS",%progbits,1
+ 630      02003101 
+ 630      00000201 
+ 630      FB0E0D00 
+ 630      01010101 
+ 631              	.LASF50:
+ 632 0000 736B745F 		.ascii	"skt_t\000"
+ 632      7400
+ 633              	.LASF36:
+ 634 0006 534F434B 		.ascii	"SOCKET_MEM_1KB\000"
+ 634      45545F4D 
+ 634      454D5F31 
+ 634      4B4200
+ 635              	.LASF2:
+ 636 0015 73686F72 		.ascii	"short int\000"
+ 636      7420696E 
+ 636      7400
+ 637              	.LASF41:
+ 638 001f 73697A65 		.ascii	"sizetype\000"
+ 638      74797065 
+ 638      00
+ 639              	.LASF24:
+ 640 0028 534F434B 		.ascii	"SOCKET_PROTOCOL_UDP\000"
+ 640      45545F50 
+ 640      524F544F 
+ 640      434F4C5F 
+ 640      55445000 
+ 641              	.LASF35:
+ 642 003c 534F434B 		.ascii	"SOCKET_MEM_0KB\000"
+ 642      45545F4D 
+ 642      454D5F30 
+ 642      4B4200
+ 643              	.LASF9:
+ 644 004b 5F5F7569 		.ascii	"__uint16_t\000"
+ 644      6E743136 
+ 644      5F7400
+ 645              	.LASF23:
+ 646 0056 534F434B 		.ascii	"SOCKET_PROTOCOL_TCP\000"
+ 646      45545F50 
+ 646      524F544F 
+ 646      434F4C5F 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 13
+
+
+ 646      54435000 
+ 647              	.LASF39:
+ 648 006a 534F434B 		.ascii	"SOCKET_MEM_8KB\000"
+ 648      45545F4D 
+ 648      454D5F38 
+ 648      4B4200
+ 649              	.LASF21:
+ 650 0079 736F636B 		.ascii	"socket_id\000"
+ 650      65745F69 
+ 650      6400
+ 651              	.LASF40:
+ 652 0083 534F434B 		.ascii	"SOCKET_MEM_16KB\000"
+ 652      45545F4D 
+ 652      454D5F31 
+ 652      364B4200 
+ 653              	.LASF12:
+ 654 0093 534F434B 		.ascii	"SOCKET_ID_0\000"
+ 654      45545F49 
+ 654      445F3000 
+ 655              	.LASF13:
+ 656 009f 534F434B 		.ascii	"SOCKET_ID_1\000"
+ 656      45545F49 
+ 656      445F3100 
+ 657              	.LASF6:
+ 658 00ab 6C6F6E67 		.ascii	"long long int\000"
+ 658      206C6F6E 
+ 658      6720696E 
+ 658      7400
+ 659              	.LASF15:
+ 660 00b9 534F434B 		.ascii	"SOCKET_ID_3\000"
+ 660      45545F49 
+ 660      445F3300 
+ 661              	.LASF16:
+ 662 00c5 534F434B 		.ascii	"SOCKET_ID_4\000"
+ 662      45545F49 
+ 662      445F3400 
+ 663              	.LASF17:
+ 664 00d1 534F434B 		.ascii	"SOCKET_ID_5\000"
+ 664      45545F49 
+ 664      445F3500 
+ 665              	.LASF18:
+ 666 00dd 534F434B 		.ascii	"SOCKET_ID_6\000"
+ 666      45545F49 
+ 666      445F3600 
+ 667              	.LASF19:
+ 668 00e9 534F434B 		.ascii	"SOCKET_ID_7\000"
+ 668      45545F49 
+ 668      445F3700 
+ 669              	.LASF52:
+ 670 00f5 7463705F 		.ascii	"tcp_server\000"
+ 670      73657276 
+ 670      657200
+ 671              	.LASF27:
+ 672 0100 534F434B 		.ascii	"SOCKET_CMD_LISTEN\000"
+ 672      45545F43 
+ 672      4D445F4C 
+ 672      49535445 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 14
+
+
+ 672      4E00
+ 673              	.LASF4:
+ 674 0112 6C6F6E67 		.ascii	"long int\000"
+ 674      20696E74 
+ 674      00
+ 675              	.LASF42:
+ 676 011b 736F636B 		.ascii	"socket\000"
+ 676      657400
+ 677              	.LASF44:
+ 678 0122 57353530 		.ascii	"W5500_socket_init\000"
+ 678      305F736F 
+ 678      636B6574 
+ 678      5F696E69 
+ 678      7400
+ 679              	.LASF25:
+ 680 0134 534F434B 		.ascii	"SOCKET_PROTOCOL_MACRAW\000"
+ 680      45545F50 
+ 680      524F544F 
+ 680      434F4C5F 
+ 680      4D414352 
+ 681              	.LASF14:
+ 682 014b 534F434B 		.ascii	"SOCKET_ID_2\000"
+ 682      45545F49 
+ 682      445F3200 
+ 683              	.LASF11:
+ 684 0157 6C6F6E67 		.ascii	"long double\000"
+ 684      20646F75 
+ 684      626C6500 
+ 685              	.LASF1:
+ 686 0163 756E7369 		.ascii	"unsigned char\000"
+ 686      676E6564 
+ 686      20636861 
+ 686      7200
+ 687              	.LASF34:
+ 688 0171 534F434B 		.ascii	"SOCKET_CMD_RECV\000"
+ 688      45545F43 
+ 688      4D445F52 
+ 688      45435600 
+ 689              	.LASF0:
+ 690 0181 7369676E 		.ascii	"signed char\000"
+ 690      65642063 
+ 690      68617200 
+ 691              	.LASF7:
+ 692 018d 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 692      206C6F6E 
+ 692      6720756E 
+ 692      7369676E 
+ 692      65642069 
+ 693              	.LASF28:
+ 694 01a4 534F434B 		.ascii	"SOCKET_CMD_CONNECT\000"
+ 694      45545F43 
+ 694      4D445F43 
+ 694      4F4E4E45 
+ 694      435400
+ 695              	.LASF8:
+ 696 01b7 756E7369 		.ascii	"unsigned int\000"
+ 696      676E6564 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 15
+
+
+ 696      20696E74 
+ 696      00
+ 697              	.LASF10:
+ 698 01c4 75696E74 		.ascii	"uint16_t\000"
+ 698      31365F74 
+ 698      00
+ 699              	.LASF51:
+ 700 01cd 77697A5F 		.ascii	"wiz_tcp_init_server\000"
+ 700      7463705F 
+ 700      696E6974 
+ 700      5F736572 
+ 700      76657200 
+ 701              	.LASF22:
+ 702 01e1 534F434B 		.ascii	"SOCKET_PROTOCOL_CLOSED\000"
+ 702      45545F50 
+ 702      524F544F 
+ 702      434F4C5F 
+ 702      434C4F53 
+ 703              	.LASF48:
+ 704 01f8 7463702E 		.ascii	"tcp.c\000"
+ 704      6300
+ 705              	.LASF3:
+ 706 01fe 73686F72 		.ascii	"short unsigned int\000"
+ 706      7420756E 
+ 706      7369676E 
+ 706      65642069 
+ 706      6E7400
+ 707              	.LASF32:
+ 708 0211 534F434B 		.ascii	"SOCKET_CMD_SEND_MAC\000"
+ 708      45545F43 
+ 708      4D445F53 
+ 708      454E445F 
+ 708      4D414300 
+ 709              	.LASF20:
+ 710 0225 534F434B 		.ascii	"SOCKET_ID_INVALID\000"
+ 710      45545F49 
+ 710      445F494E 
+ 710      56414C49 
+ 710      4400
+ 711              	.LASF31:
+ 712 0237 534F434B 		.ascii	"SOCKET_CMD_SEND\000"
+ 712      45545F43 
+ 712      4D445F53 
+ 712      454E4400 
+ 713              	.LASF29:
+ 714 0247 534F434B 		.ascii	"SOCKET_CMD_DISCONNECT\000"
+ 714      45545F43 
+ 714      4D445F44 
+ 714      4953434F 
+ 714      4E4E4543 
+ 715              	.LASF33:
+ 716 025d 534F434B 		.ascii	"SOCKET_CMD_SEND_KEEP\000"
+ 716      45545F43 
+ 716      4D445F53 
+ 716      454E445F 
+ 716      4B454550 
+ 717              	.LASF38:
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 16
+
+
+ 718 0272 534F434B 		.ascii	"SOCKET_MEM_4KB\000"
+ 718      45545F4D 
+ 718      454D5F34 
+ 718      4B4200
+ 719              	.LASF43:
+ 720 0281 706F7274 		.ascii	"port\000"
+ 720      00
+ 721              	.LASF5:
+ 722 0286 6C6F6E67 		.ascii	"long unsigned int\000"
+ 722      20756E73 
+ 722      69676E65 
+ 722      6420696E 
+ 722      7400
+ 723              	.LASF49:
+ 724 0298 433A5C55 		.ascii	"C:\\Users\\d3bug\\Documents\\Creator\\W5x00\\test_p"
+ 724      73657273 
+ 724      5C643362 
+ 724      75675C44 
+ 724      6F63756D 
+ 725 02c5 72696E74 		.ascii	"rint_remote_mac_ip_isr.cydsn\000"
+ 725      5F72656D 
+ 725      6F74655F 
+ 725      6D61635F 
+ 725      69705F69 
+ 726              	.LASF46:
+ 727 02e2 57353530 		.ascii	"W5500_socket_cmd\000"
+ 727      305F736F 
+ 727      636B6574 
+ 727      5F636D64 
+ 727      00
+ 728              	.LASF47:
+ 729 02f3 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 729      43313120 
+ 729      352E342E 
+ 729      31203230 
+ 729      31363036 
+ 730 0326 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 730      20726576 
+ 730      6973696F 
+ 730      6E203233 
+ 730      37373135 
+ 731 0359 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 731      66756E63 
+ 731      74696F6E 
+ 731      2D736563 
+ 731      74696F6E 
+ 732              	.LASF37:
+ 733 0381 534F434B 		.ascii	"SOCKET_MEM_2KB\000"
+ 733      45545F4D 
+ 733      454D5F32 
+ 733      4B4200
+ 734              	.LASF45:
+ 735 0390 57353530 		.ascii	"W5500_socket_set_port\000"
+ 735      305F736F 
+ 735      636B6574 
+ 735      5F736574 
+ 735      5F706F72 
+ARM GAS  C:\Users\d3bug\AppData\Local\Temp\ccIcayek.s 			page 17
+
+
+ 736              	.LASF26:
+ 737 03a6 534F434B 		.ascii	"SOCKET_CMD_OPEN\000"
+ 737      45545F43 
+ 737      4D445F4F 
+ 737      50454E00 
+ 738              	.LASF30:
+ 739 03b6 534F434B 		.ascii	"SOCKET_CMD_CLOSE\000"
+ 739      45545F43 
+ 739      4D445F43 
+ 739      4C4F5345 
+ 739      00
+ 740              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

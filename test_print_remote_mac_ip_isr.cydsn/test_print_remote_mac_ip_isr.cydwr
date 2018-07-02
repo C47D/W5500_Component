@@ -244,7 +244,7 @@
   <Group key="Component">
     <Group key="v1">
       <Data key="cy_boot" value="cy_boot_v5_70" />
-      <Data key="Em_EEPROM_Dynamic" value="Em_EEPROM_Dynamic_v2_0" />
+      <Data key="Em_EEPROM_Dynamic" value="Em_EEPROM_Dynamic_v2_10" />
       <Data key="LIN_Dynamic" value="LIN_Dynamic_v4_0" />
     </Group>
   </Group>
@@ -254,7 +254,11 @@
       <Data key="8d318d8b-cf7b-4b6b-b02c-ab1c5c49d0ba" value="W5500_ISR" />
       <Data key="31e841d3-e772-4726-9d13-fa8acd5f9f8b" value="RST" />
       <Data key="46ae69f7-ee25-4f34-8f2f-2dcb61b0b66d" value="LED" />
+      <Data key="50b51500-69ad-457d-883b-78c5fa83bbd4" value="SCLK_1" />
       <Data key="83b2fde2-60ad-45b6-9e5c-cb3baa6e3f9a" value="SCLK" />
+      <Data key="307ea709-cd28-4666-a032-e34bb2ee4958" value="SS_hook" />
+      <Data key="898d5ceb-06fe-44a6-a707-eba2925c4838" value="MISO_1" />
+      <Data key="4594c267-fcac-4615-a20b-067b1b821a32" value="MOSI_1" />
       <Data key="1425177d-0d0e-4468-8bcc-e638e5509a9b" value="MISO" />
       <Data key="e52b017c-8202-48f5-8ae2-ba41a5fe0100/52f31aa9-2f0a-497d-9a1f-1424095e13e6" value="UART_tx" />
       <Data key="e851a3b9-efb8-48be-bbb8-b303b216c393" value="SS" />
@@ -3360,9 +3364,29 @@
         <Data key="Port Format" value="2,1" />
       </Group>
     </Group>
+    <Group key="50b51500-69ad-457d-883b-78c5fa83bbd4">
+      <Group key="0">
+        <Data key="Port Format" value="15,2" />
+      </Group>
+    </Group>
     <Group key="83b2fde2-60ad-45b6-9e5c-cb3baa6e3f9a">
       <Group key="0">
         <Data key="Port Format" value="12,2" />
+      </Group>
+    </Group>
+    <Group key="307ea709-cd28-4666-a032-e34bb2ee4958">
+      <Group key="0">
+        <Data key="Port Format" value="0,1" />
+      </Group>
+    </Group>
+    <Group key="898d5ceb-06fe-44a6-a707-eba2925c4838">
+      <Group key="0">
+        <Data key="Port Format" value="15,3" />
+      </Group>
+    </Group>
+    <Group key="4594c267-fcac-4615-a20b-067b1b821a32">
+      <Group key="0">
+        <Data key="Port Format" value="15,1" />
       </Group>
     </Group>
     <Group key="1425177d-0d0e-4468-8bcc-e638e5509a9b">

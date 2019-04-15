@@ -29,7 +29,16 @@
 #define `$INSTANCE_NAME`_VERSION_MINOR  `=$CY_MINOR_VERSION`
 #define `$INSTANCE_NAME`_VERSION        `=$CY_MAJOR_VERSION`.`=$CY_MINOR_VERSION`
 
-#define `$INSTANCE_NAME`_HW_RST         `$Hardware_RST`    
+#define `$INSTANCE_NAME`_HW_RST         `$Hardware_RST`
+
+/* Enable Protocols */
+#define ENABLE_UDP                      `$USE_UDP`
+#define ENABLE_TCP                      `$USE_TCP`
+
+#define `$INSTANCE_NAME`_MAC_ADDR       "`$MAC`"
+#define `$INSTANCE_NAME`_IP_ADDR        "`$IP`"
+#define `$INSTANCE_NAME`_SUBMASK_ADDR   "`$SUBMASK`"
+#define `$INSTANCE_NAME`_GATEWAY_ADDR   "`$GATEWAY`"
 
 #endif /* `$INSTANCE_NAME`_CONFIG_H */
 

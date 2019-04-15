@@ -26,48 +26,15 @@
 
 static void `$INSTANCE_NAME`_spi_clear_fifo(void);
 
-nrf_spi_xfer `$INSTANCE_NAME`_spi_xfer = `$INSTANCE_NAME`_default_spi_xfer;
+spi_xfer `$INSTANCE_NAME`_spi_xfer = `$INSTANCE_NAME`_default_spi_xfer;
 
-void `$INSTANCE_NAME`_register_spi_xfer(nrf_spi_xfer new_spi_xfer)
+void `$INSTANCE_NAME`_register_spi_xfer(spi_xfer new_spi_xfer)
 {
     `$INSTANCE_NAME`_spi_xfer = new_spi_xfer;
 }
 
-#if 0
-// spi2 hooks
-static void spi_hook_write_byte(const uint8_t *addr_ctrl_phase, const size_t addr_ctrl_phase_size,
-                                const uint8_t data)
-{
-    `$SPI_NAME`_ClearFIFO();
-    
-    `$SS_PIN`_Write(0);
-    
-    for (size_t i = 0; i < addr_ctrl_phase_size; i++) {
-        SPI_hook_WriteTxData(addr_ctrl_phase[i]);
-        while (!(SPI_hook_ReadTxStatus() & SPI_hook_STS_BYTE_COMPLETE)) {
-        }
-    }
-    SPI_hook_ClearFIFO();
-
-    SPI_hook_WriteTxData(data);
-    while (!(SPI_hook_ReadTxStatus() & SPI_hook_STS_BYTE_COMPLETE)) {
-    }
-    
-    `$SS_PIN`_Write(1);
-}
-#endif
-
-static void `$INSTANCE_NAME`_soft_reset(void)
-{
-    `$INSTANCE_NAME`_spi_write_byte(BLOCK_COMMON_REGISTER, SOCKET_REG_MODE, 0x80);
-}
-
-static void `$INSTANCE_NAME`_hard_reset(void)
-{
-    `$RST_PIN`_Write(0);
-    CyDelay(50);
-    `$RST_PIN`_Write(1);
-}
+static void `$INSTANCE_NAME`_soft_reset(void);
+static void `$INSTANCE_NAME`_hard_reset(void);
 
 // FIXME: Only use hardware reset if the reset pin is being used.
 void `$INSTANCE_NAME`_reset(wiz_rst rst)
@@ -95,7 +62,7 @@ enum {
     _BLOCK_POS          = 3,
 };
 
-void W5500_spi_read(const uint8_t block, const uint16_t reg_addr, uint8_t *data, const size_t data_size)
+void `$INSTANCE_NAME`_spi_read(const uint8_t block, const uint16_t reg_addr, uint8_t *data, const size_t data_size)
 {
     const uint8_t control_phase = (block << _BLOCK_POS) |
                                   (ACCESS_MODE_READ << _ACCESS_MODE_POS) |
@@ -108,7 +75,12 @@ void W5500_spi_read(const uint8_t block, const uint16_t reg_addr, uint8_t *data,
     `$INSTANCE_NAME`_spi_clear_fifo();
     
     `$INSTANCE_NAME`_ss_write(GPIO_RESET);
+
+#if defined (_PSOC6)
     
+#elif defined (_PSOC4_SCB)
+
+#else
     for (size_t i = 0; i < data_size; i++) {
         `$SPI_MASTER`_WriteTxData(addr_ctrl_phase[i]);
         while (!(`$SPI_MASTER`_ReadTxStatus() & `$SPI_MASTER`_STS_BYTE_COMPLETE)) {
@@ -122,13 +94,14 @@ void W5500_spi_read(const uint8_t block, const uint16_t reg_addr, uint8_t *data,
         `$SPI_MASTER`_WriteTxData(0x00);
         while (!(`$SPI_MASTER`_ReadTxStatus() & `$SPI_MASTER`_STS_BYTE_COMPLETE)) {
         }
-        data = `$SPI_MASTER`_ReadRxData();
+        data[i] = `$SPI_MASTER`_ReadRxData();
     }
+#endif
     
     `$INSTANCE_NAME`_ss_write(GPIO_SET);
 }
 
-void W5500_spi_write(const uint8_t block, const uint16_t reg_addr, const uint8_t *data, const size_t data_size)
+void `$INSTANCE_NAME`_spi_write(const uint8_t block, const uint16_t reg_addr, const uint8_t *data, const size_t data_size)
 {
     const uint8_t control_phase = (block << _BLOCK_POS) |
                                   (ACCESS_MODE_WRITE << _ACCESS_MODE_POS) |
@@ -141,7 +114,12 @@ void W5500_spi_write(const uint8_t block, const uint16_t reg_addr, const uint8_t
     `$INSTANCE_NAME`_spi_clear_fifo();
     
     `$INSTANCE_NAME`_ss_write(GPIO_RESET);
+
+#if defined (_PSOC6)
     
+#elif defined (_PSOC4_SCB)
+
+#else
     for (size_t i = 0; i < data_size; i++) {
         `$SPI_MASTER`_WriteTxData(addr_ctrl_phase[i]);
         while (!(`$SPI_MASTER`_ReadTxStatus() & `$SPI_MASTER`_STS_BYTE_COMPLETE)) {
@@ -157,11 +135,12 @@ void W5500_spi_write(const uint8_t block, const uint16_t reg_addr, const uint8_t
         }
         (void) `$SPI_MASTER`_ReadRxData();
     }
-    
+#endif
+
     `$INSTANCE_NAME`_ss_write(GPIO_SET);
 }
 
-uint8_t W5500_spi_read_byte(const uint8_t block, const uint16_t reg_addr)
+uint8_t `$INSTANCE_NAME`_spi_read_byte(const uint8_t block, const uint16_t reg_addr)
 {
     uint8_t result = 0;
     
@@ -177,6 +156,11 @@ uint8_t W5500_spi_read_byte(const uint8_t block, const uint16_t reg_addr)
     
     `$INSTANCE_NAME`_ss_write(GPIO_RESET);
     
+#if defined (_PSOC6)
+    
+#elif defined (_PSOC4_SCB)
+
+#else    
     for (size_t i = 0; i < sizeof(addr_ctrl_phase); i++) {
         `$SPI_MASTER`_WriteTxData(addr_ctrl_phase[i]);
         while (!(`$SPI_MASTER`_ReadTxStatus() & `$SPI_MASTER`_STS_BYTE_COMPLETE)) {
@@ -191,13 +175,14 @@ uint8_t W5500_spi_read_byte(const uint8_t block, const uint16_t reg_addr)
     while (!(`$SPI_MASTER`_ReadTxStatus() & `$SPI_MASTER`_STS_BYTE_COMPLETE)) {
     }
     result = `$SPI_MASTER`_ReadRxData();
-    
+#endif
+
     `$INSTANCE_NAME`_ss_write(GPIO_SET);
     
     return result;
 }
 
-void W5500_spi_write_byte(const uint8_t block, const uint16_t reg_addr, uint8_t data)
+void `$INSTANCE_NAME`_spi_write_byte(const uint8_t block, const uint16_t reg_addr, uint8_t data)
 {
     const uint8_t control_phase = (block << _BLOCK_POS) |
                                   (ACCESS_MODE_WRITE << _ACCESS_MODE_POS) |
@@ -210,7 +195,12 @@ void W5500_spi_write_byte(const uint8_t block, const uint16_t reg_addr, uint8_t 
     `$INSTANCE_NAME`_spi_clear_fifo();
     
     `$INSTANCE_NAME`_ss_write(GPIO_RESET);
+
+#if defined (_PSOC6)
     
+#elif defined (_PSOC4_SCB)
+
+#else
     for (size_t i = 0; i < sizeof(addr_ctrl_phase); i++) {
         `$SPI_MASTER`_WriteTxData(addr_ctrl_phase[i]);
         while (!(`$SPI_MASTER`_ReadTxStatus() & `$SPI_MASTER`_STS_BYTE_COMPLETE)) {
@@ -225,8 +215,21 @@ void W5500_spi_write_byte(const uint8_t block, const uint16_t reg_addr, uint8_t 
     while (!(`$SPI_MASTER`_ReadTxStatus() & `$SPI_MASTER`_STS_BYTE_COMPLETE)) {
     }
     (void) `$SPI_MASTER`_ReadRxData();
-    
+#endif
+
     `$INSTANCE_NAME`_ss_write(GPIO_SET);
+}
+
+static void `$INSTANCE_NAME`_soft_reset(void)
+{
+    `$INSTANCE_NAME`_spi_write_byte(BLOCK_COMMON_REGISTER, SOCKET_REG_MODE, 0x80);
+}
+
+static void `$INSTANCE_NAME`_hard_reset(void)
+{
+    `$RST_PIN`_Write(0);
+    CyDelay(50);
+    `$RST_PIN`_Write(1);
 }
 
 static void `$INSTANCE_NAME`_spi_clear_fifo(void)

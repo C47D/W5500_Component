@@ -19,14 +19,14 @@ extern "C" {
 /* SPI Control */
 
 // Function pointer to send and receive data from the W5500 chip
-typedef void (*nrf_spi_xfer)(const uint8_t *in, uint8_t *out, const size_t xfer_size);
+typedef void (*spi_xfer)(const uint8_t *in, uint8_t *out, const size_t xfer_size);
 
-extern nrf_spi_xfer `$INSTANCE_NAME`_spi_xfer;
+extern spi_xfer `$INSTANCE_NAME`_spi_xfer;
 
 // Default function, spi sends byte by byte
 void `$INSTANCE_NAME`_default_spi_xfer(const uint8_t *in, uint8_t *out, const size_t xfer_size);
 // Register your own spi xfer function
-void `$INSTANCE_NAME`_register_spi_xfer(nrf_spi_xfer new_spi_xfer);
+void `$INSTANCE_NAME`_register_spi_xfer(spi_xfer new_spi_xfer);
 
 void `$INSTANCE_NAME`_spi_read(const uint8_t block, const uint16_t reg_addr, uint8_t *data, const size_t data_size);
 void `$INSTANCE_NAME`_spi_write(const uint8_t block, const uint16_t reg_addr, const uint8_t *data, const size_t data_size);

@@ -116,12 +116,12 @@ void `$INSTANCE_NAME`_socket_set_remote_address(struct skt_t *socket, const stru
         _port, sizeof(_port));
 #if 1
     `$INSTANCE_NAME`_spi_write(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR0,
-        addr->addr._addr, sizeof(addr->addr._addr));
+        addr->addr.octect, sizeof(addr->addr.octect));
 #else
-    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR0, addr->addr._addr[0]);
-    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR1, addr->addr._addr[1]);
-    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR2, addr->addr._addr[2]);
-    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR3, addr->addr._addr[3]);
+    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR0, addr->addr.octect[0]);
+    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR1, addr->addr.octect[1]);
+    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR2, addr->addr.octect[2]);
+    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR3, addr->addr.octect[3]);
 #endif
 }
 
@@ -380,13 +380,13 @@ int ETH_TcpGetLine( uint8_t socket, char *buffer )
 void `$INSTANCE_NAME`_socket_get_remote_mac(struct skt_t *socket, struct mac_addr *mac)
 {
     `$INSTANCE_NAME`_spi_read(socket->reg_base_addr, SOCKET_REG_DESTINATION_HW_ADDR0,
-        mac->_addr, sizeof(mac->_addr));
+        mac->octect, sizeof(mac->octect));
 }
 
 void `$INSTANCE_NAME`_socket_get_remote_ip(struct skt_t *socket, struct ip_addr *ip)
 {
     `$INSTANCE_NAME`_spi_read(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR0,
-        ip->_addr, sizeof(ip->_addr));
+        ip->octect, sizeof(ip->octect));
 }
 
 uint16_t `$INSTANCE_NAME`_socket_get_remote_port(struct skt_t *socket)
@@ -402,13 +402,13 @@ uint16_t `$INSTANCE_NAME`_socket_get_remote_port(struct skt_t *socket)
 void `$INSTANCE_NAME`_socket_set_remote_ip(struct skt_t *socket, struct ip_addr *ip)
 {
 #if 0
-    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR0, ip->_addr[0]);
-    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR1, ip->_addr[1]);
-    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR2, ip->_addr[2]);
-    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR3, ip->_addr[3]);
+    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR0, ip->octect[0]);
+    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR1, ip->octect[1]);
+    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR2, ip->octect[2]);
+    `$INSTANCE_NAME`_spi_write_byte(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR3, ip->octect[3]);
 #else
     `$INSTANCE_NAME`_spi_write(socket->reg_base_addr, SOCKET_REG_DESTINATION_IP_ADDR0,
-        ip->_addr, sizeof(ip->_addr));
+        ip->octect, sizeof(ip->octect));
 #endif
 }
 

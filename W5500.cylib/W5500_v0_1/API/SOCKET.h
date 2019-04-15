@@ -63,7 +63,7 @@
   if KAT is 0, an KA packet can be transmitted by SEND_KEEP command by the
   host (Manual keep alive proccess)
 */
-#if !defined(`$INSTANCE_NAME`_SOCKET_H_)
+#ifndef `$INSTANCE_NAME`_SOCKET_H_
 #define `$INSTANCE_NAME`_SOCKET_H_
 
 #include <stdint.h>
